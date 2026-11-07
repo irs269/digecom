@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dig'eCom – Connexion</title>
+<link rel="icon" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0B2FE0}a:hover{color:#071C99}
+button,input{font-family:inherit}
+
+html,body{height:100%}
+body{background:#DCE3FF;display:flex;align-items:center;justify-content:center;min-height:100vh}
+#app{box-shadow:0 20px 60px rgba(11,47,224,.25);border-radius:32px;overflow:hidden}
+@media (max-width:520px),(max-height:880px) and (max-width:900px){
+  body{display:block;background:#0B2FE0}
+  #app{border-radius:0;box-shadow:none}
+  #app>div{width:100vw!important;height:100vh!important;height:100dvh!important}
+}</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/plain" id="tpl">
+<div style="width: 390px; height: 844px; box-sizing: border-box; font-family: 'Poppins', system-ui, sans-serif; background: #0B2FE0; color: #FFFFFF; position: relative; overflow: hidden; display: flex; flex-direction: column">
+  <div aria-hidden="true" style="position: absolute; top: -70px; right: -70px; width: 200px; height: 200px; border-radius: 999px; background: #FFA500"></div>
+  <div aria-hidden="true" style="position: absolute; top: 40px; left: -120px; width: 360px; height: 360px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.55)"></div>
+
+  <div style="position: relative; flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 56px 24px 24px">
+    <img src="logo.jpg" alt="Logo Dig'eCom Agency" style="width: 132px; height: 132px; border-radius: 999px; object-fit: cover; border: 4px solid #FFFFFF">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center">
+      <span style="font-size: 30px; font-weight: 800; letter-spacing: -0.5px">Dig'eCom</span>
+      <span style="font-size: 14px; color: #DCE3FF">Vends, livre, encaisse. Tout au même endroit.</span>
+    </div>
+  </div>
+
+  <form style="position: relative; background: #FFFFFF; color: #0F1535; border-radius: 28px 28px 0 0; padding: 28px 24px 32px; display: flex; flex-direction: column; gap: 16px">
+    <h1 style="margin: 0; font-size: 22px; font-weight: 800">Connexion</h1>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="tel" style="font-size: 13px; font-weight: 600; color: #4A5275">Numéro de téléphone</label>
+      <input id="tel" type="tel" value="+269 332 14 87" style="height: 52px; padding: 0 16px; border: 1.5px solid #C9D2F5; border-radius: 14px; font-size: 16px; color: #0F1535; box-sizing: border-box">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="mdp" style="font-size: 13px; font-weight: 600; color: #4A5275">Mot de passe</label>
+      <input id="mdp" type="password" value="motdepasse" style="height: 52px; padding: 0 16px; border: 1.5px solid #C9D2F5; border-radius: 14px; font-size: 16px; color: #0F1535; box-sizing: border-box">
+    </div>
+    <a href="Mobile-Ecommercant.dc.html" style="display: flex; align-items: center; justify-content: center; height: 54px; border-radius: 14px; background: #FFA500; color: #0A1450; font-size: 16px; font-weight: 800; text-decoration: none">Se connecter</a>
+    <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+      <span style="font-size: 12px; color: #4A5275">Démo : choisir l'espace à ouvrir</span>
+      <div style="display: flex; gap: 8px">
+        <a href="Mobile-Ecommercant.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; background: #E6EBFF; color: #0A23B8; font-size: 13px; font-weight: 600; text-decoration: none">E-commerçant</a>
+        <a href="Mobile-Livreur.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; background: #E6EBFF; color: #0A23B8; font-size: 13px; font-weight: 600; text-decoration: none">Livreur</a>
+      </div>
+    </div>
+  </form>
+</div>
+</script>
+<script>window.DC_LINKS = {"Mobile-Connexion.dc.html": "index.html", "Mobile-Ecommercant.dc.html": "ecommercant.html", "Mobile-Livreur.dc.html": "livreur.html"};</script>
+<script>/* Mini moteur de rendu autonome pour les prototypes Dig'eCom.
+   Lit le gabarit (<template id="tpl">), la classe Component et affiche l'écran.
+   Gère {{chemin}}, <sc-if>, <sc-for>, onClick et la conservation des champs. */
+(function () {
+  "use strict";
+
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; this.state = {}; }
+    setState(patch) {
+      Object.assign(this.state, typeof patch === "function" ? patch(this.state) : patch);
+      schedule();
+    }
+    forceUpdate() { schedule(); }
+  };
+
+  var VOID = /<(input|img|br|hr|meta|link|source)\b([^>]*?)\s*\/?>/gi;
+  var HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+  var WHOLE = /^\{\{\s*([^}]+?)\s*\}\}$/;
+  var tree, comp, root, pending = false;
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === "true") return true;
+    if (path === "false") return false;
+    if (path === "null") return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+    if (/^(["']).*\1$/.test(path)) return path.slice(1, -1);
+    var parts = path.split("."), v;
+    for (var i = scope.length - 1; i >= 0; i--) {
+      if (scope[i] && Object.prototype.hasOwnProperty.call(scope[i], parts[0])) { v = scope[i][parts[0]]; break; }
+    }
+    for (var j = 1; j < parts.length && v != null; j++) v = v[parts[j]];
+    return v;
+  }
+
+  function interp(str, scope) {
+    return str.replace(HOLE, function (_, p) { var v = lookup(p, scope); return v == null ? "" : String(v); });
+  }
+
+  function renderChildren(node, scope, parent) {
+    for (var c = node.firstChild; c; c = c.nextSibling) renderNode(c, scope, parent);
+  }
+
+  function renderNode(node, scope, parent) {
+    if (node.nodeType === 3) { parent.appendChild(document.createTextNode(interp(node.nodeValue, scope))); return; }
+    if (node.nodeType !== 1) return;
+    var tag = node.localName;
+    if (tag === "sc-if") {
+      var m = (node.getAttribute("value") || "").match(WHOLE);
+      if (m ? lookup(m[1], scope) : false) renderChildren(node, scope, parent);
+      return;
+    }
+    if (tag === "sc-for") {
+      var lm = (node.getAttribute("list") || "").match(WHOLE);
+      var list = lm ? lookup(lm[1], scope) : [];
+      var as = node.getAttribute("as") || "item";
+      (list || []).forEach(function (item, i) {
+        var frame = { $index: i }; frame[as] = item;
+        renderChildren(node, scope.concat([frame]), parent);
+      });
+      return;
+    }
+    var el = document.createElement(tag);
+    for (var a = 0; a < node.attributes.length; a++) {
+      var name = node.attributes[a].name, raw = node.attributes[a].value;
+      if (name.indexOf("hint-") === 0) continue;
+      var wm = raw.match(WHOLE);
+      var val = wm ? lookup(wm[1], scope) : (raw.indexOf("{{") >= 0 ? interp(raw, scope) : raw);
+      if (/^on[A-Z]/.test(name) || /^on[a-z]+$/.test(name) && typeof val === "function") {
+        if (typeof val === "function") el.addEventListener(name.slice(2).toLowerCase(), val);
+        continue;
+      }
+      if (name === "defaultValue" || name === "defaultvalue" || (name === "value" && (tag === "input" || tag === "textarea"))) { el.value = val == null ? "" : String(val); continue; }
+      if (name === "className") name = "class";
+      if (name === "htmlFor") name = "for";
+      if (val === false || val == null) continue;
+      if (name === "href" && typeof val === "string") val = (window.DC_LINKS && window.DC_LINKS[val]) || val;
+      el.setAttribute(name, val === true ? "" : String(val));
+    }
+    renderChildren(node, scope, el);
+    parent.appendChild(el);
+  }
+
+  function snapshot() {
+    var all = root.querySelectorAll("*"), scroll = [], fields = {};
+    for (var i = 0; i < all.length; i++) if (all[i].scrollTop) scroll.push([i, all[i].scrollTop]);
+    root.querySelectorAll("input[id],textarea[id]").forEach(function (f) { fields[f.id] = f.value; });
+    return { scroll: scroll, fields: fields };
+  }
+  function restore(snap) {
+    var all = root.querySelectorAll("*");
+    snap.scroll.forEach(function (p) { if (all[p[0]]) all[p[0]].scrollTop = p[1]; });
+    Object.keys(snap.fields).forEach(function (id) { var f = document.getElementById(id); if (f && !f.disabled) f.value = snap.fields[id]; });
+  }
+
+  function render() {
+    pending = false;
+    var snap = root.firstChild ? snapshot() : null;
+    var vals = comp.renderVals() || {};
+    var frag = document.createDocumentFragment();
+    renderChildren(tree, [vals], frag);
+    root.replaceChildren(frag);
+    if (snap) restore(snap);
+  }
+  function schedule() { if (!pending) { pending = true; Promise.resolve().then(render); } }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    root = document.getElementById("app");
+    var src = document.getElementById("tpl").textContent.replace(VOID, "<$1$2/>")
+      .replace(/\s(disabled|checked|selected|readonly|required|hidden)(?=[\s\/>])/g, ' $1="$1"');
+    var doc = new DOMParser().parseFromString("<root>" + src + "</root>", "application/xml");
+    var err = doc.getElementsByTagName("parsererror")[0];
+    if (err) { root.textContent = "Erreur de gabarit : " + err.textContent; return; }
+    tree = doc.documentElement;
+    comp = new window.Component({});
+    render();
+  });
+})();
+</script>
+<script>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+
+window.Component = Component;
+</script>
+</body>
+</html>

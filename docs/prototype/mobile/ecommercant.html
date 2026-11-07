@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dig'eCom – Espace e-commerçant</title>
+<link rel="icon" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0B2FE0}a:hover{color:#071C99}
+button,input{font-family:inherit}
+
+html,body{height:100%}
+body{background:#DCE3FF;display:flex;align-items:center;justify-content:center;min-height:100vh}
+#app{box-shadow:0 20px 60px rgba(11,47,224,.25);border-radius:32px;overflow:hidden}
+@media (max-width:520px),(max-height:880px) and (max-width:900px){
+  body{display:block;background:#0B2FE0}
+  #app{border-radius:0;box-shadow:none}
+  #app>div{width:100vw!important;height:100vh!important;height:100dvh!important}
+}</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/plain" id="tpl">
+<div style="width: 390px; height: 844px; box-sizing: border-box; font-family: 'Poppins', system-ui, sans-serif; background: #F3F5FC; color: #0F1535; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column">
+
+    
+    <sc-if value="{{is.home}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column">
+        <div style="background: #0B2FE0; color: #FFFFFF; padding: 28px 20px 72px; border-radius: 0 0 28px 28px; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 16px">
+          <div aria-hidden="true" style="position: absolute; top: -60px; right: -50px; width: 160px; height: 160px; border-radius: 999px; background: #FFA500"></div>
+          <div style="position: relative; display: flex; align-items: center; gap: 12px">
+            <img src="logo.jpg" alt="Logo Dig'eCom" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 2px solid #FFFFFF">
+            <div style="display: flex; flex-direction: column">
+              <span style="font-size: 13px; color: #DCE3FF">Bonjour</span>
+              <span style="font-size: 20px; font-weight: 800">Fatima Said</span>
+            </div>
+          </div>
+          <span style="position: relative; font-size: 13px; color: #DCE3FF">Grande Comore · Catalogue d'Ali Mohamed</span>
+        </div>
+
+        <div style="margin: -52px 16px 0; background: #FFFFFF; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 24px rgba(11,47,224,0.12); position: relative">
+          <span style="font-size: 13px; color: #4A5275">Solde du cycle en cours (5 – 18 nov.)</span>
+          <span style="font-size: 32px; font-weight: 800; color: #0B2FE0; letter-spacing: -0.5px">{{solde.net}}</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <span style="font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8; padding: 4px 10px; border-radius: 999px">{{solde.ventes}} ventes validées</span>
+            <span style="font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100; padding: 4px 10px; border-radius: 999px">Abonnement : 20 000 KMF retenus</span>
+          </div>
+          <button type="button" onClick="{{go.vendre}}" style="height: 52px; border: 0; border-radius: 14px; background: #FFA500; color: #0A1450; font-size: 16px; font-weight: 800; cursor: pointer">+ Nouvelle vente</button>
+        </div>
+
+        <div style="padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700">À faire</h2>
+          <sc-for list="{{alerts}}" as="a" hint-placeholder-count="2">
+            <button type="button" onClick="{{a.open}}" style="text-align: left; display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 14px; cursor: pointer; color: #0F1535">
+              <span aria-hidden="true" style="flex: 0 0 auto; width: 10px; height: 10px; border-radius: 999px; background: #FFA500"></span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 600">{{a.titre}}</span>
+                <span style="font-size: 12px; color: #4A5275">#{{a.id}} · {{a.produit}}</span>
+              </span>
+            </button>
+          </sc-for>
+          <sc-if value="{{noAlerts}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 13px; color: #4A5275; background: #FFFFFF; border-radius: 16px; padding: 14px">Rien à faire pour l'instant. Bonne vente !</span>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+            <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800">{{stats.encours}}</span><span style="font-size: 12px; color: #4A5275">Commandes en cours</span></div>
+            <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800">2<sup style="font-size: 12px">e</sup></span><span style="font-size: 12px; color: #4A5275">Rang dans l'équipe</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.vendre}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 24px 16px; display: flex; flex-direction: column; gap: 18px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800">Nouvelle vente</h1>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">1. Produit · catalogue de ton leader</span>
+          <span style="font-size: 12px; color: #0A23B8; background: #E6EBFF; border-radius: 10px; padding: 8px 12px">Tu vois uniquement les produits et le stock publiés par Ali Mohamed.</span>
+          <sc-for list="{{produits}}" as="p" hint-placeholder-count="4">
+            <sc-if value="{{p.selected}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{p.pick}}" style="text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #E6EBFF; border: 2px solid #0B2FE0; border-radius: 14px; padding: 12px 14px; cursor: pointer; color: #0F1535">
+                <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 700">{{p.nom}}</span><span style="font-size: 12px; color: #4A5275">{{p.dispoTxt}}</span></span>
+                <span style="font-size: 14px; font-weight: 700; white-space: nowrap">{{p.prixTxt}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{p.libre}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{p.pick}}" style="text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px 14px; cursor: pointer; color: #0F1535">
+                <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600">{{p.nom}}</span><span style="font-size: 12px; color: #4A5275">{{p.dispoTxt}}</span></span>
+                <span style="font-size: 14px; font-weight: 600; white-space: nowrap">{{p.prixTxt}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{p.rupture}}" hint-placeholder-val="{{false}}">
+              <button type="button" disabled style="text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #F3F5FC; border: 1px dashed #C9D2F5; border-radius: 14px; padding: 12px 14px; color: #4A5275">
+                <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600">{{p.nom}}</span><span style="font-size: 12px; color: #991B1B; font-weight: 600">Rupture chez ton leader – vente bloquée</span></span>
+                <span style="font-size: 14px; white-space: nowrap">{{p.prixTxt}}</span>
+              </button>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">2. Client</span>
+          <label for="cn" style="font-size: 12px; color: #4A5275">Nom du client</label>
+          <input id="cn" type="text" placeholder="Ex. Hadja Mmadi" style="height: 48px; padding: 0 14px; border: 1.5px solid #C9D2F5; border-radius: 12px; font-size: 15px; box-sizing: border-box; margin-top: -6px">
+          <label for="ct" style="font-size: 12px; color: #4A5275">Téléphone</label>
+          <input id="ct" type="tel" placeholder="+269 …" style="height: 48px; padding: 0 14px; border: 1.5px solid #C9D2F5; border-radius: 12px; font-size: 15px; box-sizing: border-box; margin-top: -6px">
+          <label for="ca" style="font-size: 12px; color: #4A5275">Adresse ou quartier</label>
+          <input id="ca" type="text" placeholder="Ex. Moroni, Hamramba" style="height: 48px; padding: 0 14px; border: 1.5px solid #C9D2F5; border-radius: 12px; font-size: 15px; box-sizing: border-box; margin-top: -6px">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">3. Mode de remise</span>
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+            <sc-if value="{{m.selected}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{m.pick}}" style="text-align: left; display: flex; flex-direction: column; gap: 2px; background: #E6EBFF; border: 2px solid #0B2FE0; border-radius: 14px; padding: 12px 14px; cursor: pointer; color: #0F1535"><span style="font-size: 14px; font-weight: 700">{{m.nom}}</span><span style="font-size: 12px; color: #4A5275">{{m.desc}}</span></button>
+            </sc-if>
+            <sc-if value="{{m.idle}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{m.pick}}" style="text-align: left; display: flex; flex-direction: column; gap: 2px; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px 14px; cursor: pointer; color: #0F1535"><span style="font-size: 14px; font-weight: 600">{{m.nom}}</span><span style="font-size: 12px; color: #4A5275">{{m.desc}}</span></button>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">Ce que tu gagnes sur cette vente</span>
+          <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Prix de vente</span><span>{{calc.prix}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Ta part</span><span>{{calc.part}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Taxe e-commerçant</span><span>− 500 KMF</span></div>
+          <div style="height: 1px; background: #E1E5F2"></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 15px; font-weight: 700">Net pour toi</span><span style="font-size: 20px; font-weight: 800; color: #0B2FE0">{{calc.net}}</span></div>
+          <span style="font-size: 12px; color: #4A5275">Validé seulement quand le client a pris le produit.</span>
+        </div>
+
+        <button type="button" onClick="{{save}}" style="height: 54px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 16px; font-weight: 800; cursor: pointer">Enregistrer la vente</button>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.cmd}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 24px 16px; display: flex; flex-direction: column; gap: 14px">
+        <sc-if value="{{flash}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="background: #DDF5E5; color: #14532D; border-radius: 14px; padding: 12px 14px; font-size: 14px; font-weight: 600">Vente enregistrée. Le site de Moroni va la préparer.</div>
+        </sc-if>
+
+        <sc-if value="{{noDetail}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 800">Mes commandes</h1>
+            <sc-for list="{{orders}}" as="o" hint-placeholder-count="4">
+              <button type="button" onClick="{{o.open}}" style="text-align: left; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; color: #0F1535">
+                <span style="display: flex; justify-content: space-between; gap: 8px; width: 100%"><span style="font-size: 14px; font-weight: 700">{{o.produit}}</span><span style="font-size: 14px; font-weight: 600; white-space: nowrap">{{o.prixTxt}}</span></span>
+                <span style="font-size: 12px; color: #4A5275">#{{o.id}} · {{o.client}} · {{o.modeNom}}</span>
+                <span style="display: flex">
+                  <sc-if value="{{o.tBlue}}" hint-placeholder-val="{{false}}"><span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{o.status}}</span></sc-if>
+                  <sc-if value="{{o.tOrange}}" hint-placeholder-val="{{false}}"><span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{o.status}}</span></sc-if>
+                  <sc-if value="{{o.tGreen}}" hint-placeholder-val="{{false}}"><span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{o.status}}</span></sc-if>
+                  <sc-if value="{{o.tRed}}" hint-placeholder-val="{{false}}"><span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B">{{o.status}}</span></sc-if>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{hasDetail}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <button type="button" onClick="{{back}}" style="align-self: flex-start; min-height: 44px; padding: 0 14px; border: 1px solid #C9D2F5; border-radius: 999px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer">← Mes commandes</button>
+            <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 12px; font-weight: 600; color: #0B2FE0">COMMANDE #{{d.id}}</span>
+              <span style="font-size: 18px; font-weight: 800">{{d.produit}}</span>
+              <span style="font-size: 13px; color: #4A5275">{{d.client}} · {{d.modeNom}}</span>
+              <span style="font-size: 13px; font-weight: 600">{{d.status}}</span>
+            </div>
+            <ol style="list-style: none; margin: 0; padding: 16px; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; display: flex; flex-direction: column">
+              <sc-for list="{{steps}}" as="s" hint-placeholder-count="6">
+                <li style="display: flex; gap: 12px; align-items: flex-start; padding: 6px 0">
+                  <sc-if value="{{s.done}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">✓</span></sc-if>
+                  <sc-if value="{{s.todo}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 999px; border: 2px solid #C9D2F5; box-sizing: border-box"></span></sc-if>
+                  <span style="font-size: 14px">{{s.label}}</span>
+                </li>
+              </sc-for>
+            </ol>
+            <sc-if value="{{d.canReceive}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{receive}}" style="height: 54px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 16px; font-weight: 800; cursor: pointer">{{d.receiveLabel}}</button>
+            </sc-if>
+            <sc-if value="{{d.canDecide}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14px; font-weight: 600">Le client a-t-il pris le produit ?</span>
+                <button type="button" onClick="{{accept}}" style="height: 54px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 16px; font-weight: 800; cursor: pointer">Oui, le client a pris</button>
+                <button type="button" onClick="{{openRefuse}}" style="height: 54px; border: 1.5px solid #991B1B; border-radius: 14px; background: #FFFFFF; color: #991B1B; font-size: 16px; font-weight: 700; cursor: pointer">Non, le client a refusé</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{refuseOpen}}" hint-placeholder-val="{{false}}">
+              <div style="background: #FFFFFF; border: 1.5px solid #F5C2C2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 14px; font-weight: 700">Motif du refus</span>
+                <sc-for list="{{motifs}}" as="m" hint-placeholder-count="4">
+                  <button type="button" onClick="{{m.pick}}" style="text-align: left; min-height: 44px; padding: 10px 14px; border: 1px solid #E1E5F2; border-radius: 12px; background: #FFFFFF; color: #0F1535; font-size: 14px; cursor: pointer">{{m.label}}</button>
+                </sc-for>
+                <span style="font-size: 12px; color: #4A5275">Les propriétaires sont notifiés et le produit retourne au site.</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{d.isSold}}" hint-placeholder-val="{{false}}">
+              <div style="background: #DDF5E5; color: #14532D; border-radius: 14px; padding: 14px; font-size: 14px; font-weight: 600">Vente validée : {{d.netTxt}} ajoutés à ton solde.</div>
+            </sc-if>
+            <sc-if value="{{d.isRefused}}" hint-placeholder-val="{{false}}">
+              <div style="background: #FDE2E2; color: #7F1D1D; border-radius: 14px; padding: 14px; font-size: 14px; font-weight: 600">Refus enregistré. Aucune commission sur cette vente.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.solde}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 24px 16px; display: flex; flex-direction: column; gap: 14px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800">Mon solde</h1>
+        <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; color: #DCE3FF">Dernier relevé · 22 oct. – 4 nov.</span>
+          <span style="font-size: 30px; font-weight: 800">50 000 KMF</span>
+          <span style="align-self: flex-start; font-size: 12px; font-weight: 700; background: #FFA500; color: #0A1450; padding: 4px 10px; border-radius: 999px">En vérification</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">Détail du relevé</span>
+          <div style="display: flex; justify-content: space-between; font-size: 14px"><span>10 ventes × 7 500 KMF</span><span>75 000 KMF</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Taxes (10 × 500)</span><span>− 5 000 KMF</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Abonnement 2 semaines</span><span>− 20 000 KMF</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Autres retenues</span><span>0 KMF</span></div>
+          <div style="height: 1px; background: #E1E5F2"></div>
+          <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 700"><span>Net à recevoir</span><span style="color: #0B2FE0">50 000 KMF</span></div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">Cycle en cours · 5 – 18 nov.</span>
+          <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Ventes validées</span><span>{{solde.ventes}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700"><span>Net estimé après abonnement</span><span>{{solde.net}}</span></div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; font-weight: 600; color: #4A5275">Règlements précédents</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px"><span>8 – 21 oct.</span><span style="display: flex; gap: 8px; align-items: center"><strong>42 000 KMF</strong><span style="font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D; padding: 2px 8px; border-radius: 999px">Payé</span></span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px"><span>24 sept. – 7 oct.</span><span style="display: flex; gap: 8px; align-items: center"><strong>35 000 KMF</strong><span style="font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D; padding: 2px 8px; border-radius: 999px">Payé</span></span></div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <nav aria-label="Navigation" style="flex: 0 0 auto; height: 76px; background: #FFFFFF; border-top: 1px solid #E1E5F2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <sc-if value="{{t.active}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{t.go}}" style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #0B2FE0">
+          <span aria-hidden="true" style="width: 28px; height: 5px; border-radius: 999px; background: #FFA500"></span>
+          <span style="font-size: 12px; font-weight: 700">{{t.label}}</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{t.idle}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{t.go}}" style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #4A5275">
+          <span aria-hidden="true" style="width: 28px; height: 5px; border-radius: 999px; background: transparent"></span>
+          <span style="font-size: 12px; font-weight: 500">{{t.label}}</span>
+        </button>
+      </sc-if>
+    </sc-for>
+  </nav>
+</div>
+</script>
+<script>window.DC_LINKS = {"Mobile-Connexion.dc.html": "index.html", "Mobile-Ecommercant.dc.html": "ecommercant.html", "Mobile-Livreur.dc.html": "livreur.html"};</script>
+<script>/* Mini moteur de rendu autonome pour les prototypes Dig'eCom.
+   Lit le gabarit (<template id="tpl">), la classe Component et affiche l'écran.
+   Gère {{chemin}}, <sc-if>, <sc-for>, onClick et la conservation des champs. */
+(function () {
+  "use strict";
+
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; this.state = {}; }
+    setState(patch) {
+      Object.assign(this.state, typeof patch === "function" ? patch(this.state) : patch);
+      schedule();
+    }
+    forceUpdate() { schedule(); }
+  };
+
+  var VOID = /<(input|img|br|hr|meta|link|source)\b([^>]*?)\s*\/?>/gi;
+  var HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+  var WHOLE = /^\{\{\s*([^}]+?)\s*\}\}$/;
+  var tree, comp, root, pending = false;
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === "true") return true;
+    if (path === "false") return false;
+    if (path === "null") return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+    if (/^(["']).*\1$/.test(path)) return path.slice(1, -1);
+    var parts = path.split("."), v;
+    for (var i = scope.length - 1; i >= 0; i--) {
+      if (scope[i] && Object.prototype.hasOwnProperty.call(scope[i], parts[0])) { v = scope[i][parts[0]]; break; }
+    }
+    for (var j = 1; j < parts.length && v != null; j++) v = v[parts[j]];
+    return v;
+  }
+
+  function interp(str, scope) {
+    return str.replace(HOLE, function (_, p) { var v = lookup(p, scope); return v == null ? "" : String(v); });
+  }
+
+  function renderChildren(node, scope, parent) {
+    for (var c = node.firstChild; c; c = c.nextSibling) renderNode(c, scope, parent);
+  }
+
+  function renderNode(node, scope, parent) {
+    if (node.nodeType === 3) { parent.appendChild(document.createTextNode(interp(node.nodeValue, scope))); return; }
+    if (node.nodeType !== 1) return;
+    var tag = node.localName;
+    if (tag === "sc-if") {
+      var m = (node.getAttribute("value") || "").match(WHOLE);
+      if (m ? lookup(m[1], scope) : false) renderChildren(node, scope, parent);
+      return;
+    }
+    if (tag === "sc-for") {
+      var lm = (node.getAttribute("list") || "").match(WHOLE);
+      var list = lm ? lookup(lm[1], scope) : [];
+      var as = node.getAttribute("as") || "item";
+      (list || []).forEach(function (item, i) {
+        var frame = { $index: i }; frame[as] = item;
+        renderChildren(node, scope.concat([frame]), parent);
+      });
+      return;
+    }
+    var el = document.createElement(tag);
+    for (var a = 0; a < node.attributes.length; a++) {
+      var name = node.attributes[a].name, raw = node.attributes[a].value;
+      if (name.indexOf("hint-") === 0) continue;
+      var wm = raw.match(WHOLE);
+      var val = wm ? lookup(wm[1], scope) : (raw.indexOf("{{") >= 0 ? interp(raw, scope) : raw);
+      if (/^on[A-Z]/.test(name) || /^on[a-z]+$/.test(name) && typeof val === "function") {
+        if (typeof val === "function") el.addEventListener(name.slice(2).toLowerCase(), val);
+        continue;
+      }
+      if (name === "defaultValue" || name === "defaultvalue" || (name === "value" && (tag === "input" || tag === "textarea"))) { el.value = val == null ? "" : String(val); continue; }
+      if (name === "className") name = "class";
+      if (name === "htmlFor") name = "for";
+      if (val === false || val == null) continue;
+      if (name === "href" && typeof val === "string") val = (window.DC_LINKS && window.DC_LINKS[val]) || val;
+      el.setAttribute(name, val === true ? "" : String(val));
+    }
+    renderChildren(node, scope, el);
+    parent.appendChild(el);
+  }
+
+  function snapshot() {
+    var all = root.querySelectorAll("*"), scroll = [], fields = {};
+    for (var i = 0; i < all.length; i++) if (all[i].scrollTop) scroll.push([i, all[i].scrollTop]);
+    root.querySelectorAll("input[id],textarea[id]").forEach(function (f) { fields[f.id] = f.value; });
+    return { scroll: scroll, fields: fields };
+  }
+  function restore(snap) {
+    var all = root.querySelectorAll("*");
+    snap.scroll.forEach(function (p) { if (all[p[0]]) all[p[0]].scrollTop = p[1]; });
+    Object.keys(snap.fields).forEach(function (id) { var f = document.getElementById(id); if (f && !f.disabled) f.value = snap.fields[id]; });
+  }
+
+  function render() {
+    pending = false;
+    var snap = root.firstChild ? snapshot() : null;
+    var vals = comp.renderVals() || {};
+    var frag = document.createDocumentFragment();
+    renderChildren(tree, [vals], frag);
+    root.replaceChildren(frag);
+    if (snap) restore(snap);
+  }
+  function schedule() { if (!pending) { pending = true; Promise.resolve().then(render); } }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    root = document.getElementById("app");
+    var src = document.getElementById("tpl").textContent.replace(VOID, "<$1$2/>")
+      .replace(/\s(disabled|checked|selected|readonly|required|hidden)(?=[\s\/>])/g, ' $1="$1"');
+    var doc = new DOMParser().parseFromString("<root>" + src + "</root>", "application/xml");
+    var err = doc.getElementsByTagName("parsererror")[0];
+    if (err) { root.textContent = "Erreur de gabarit : " + err.textContent; return; }
+    tree = doc.documentElement;
+    comp = new window.Component({});
+    render();
+  });
+})();
+</script>
+<script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tab: "home", prod: "ec", mode: "client", detail: "", refuseOpen: false, flash: false, nextId: 1049,
+      orders: [
+        { id: "1048", produit: "Écouteurs sans fil", prix: 12500, client: "Hadja Mmadi", mode: "client", step: 0, fail: "" },
+        { id: "1044", produit: "Sac à main", prix: 14000, client: "Rahma Youssouf", mode: "ecom", step: 4, fail: "" },
+        { id: "1039", produit: "Ventilateur rechargeable", prix: 15000, client: "Nadia Ahamada", mode: "retrait", step: 2, fail: "" },
+        { id: "1036", produit: "Écouteurs sans fil", prix: 12500, client: "Said Ali", mode: "client", step: 6, fail: "" }
+      ]
+    };
+  }
+  num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  kmf(n) { return (n < 0 ? "− " : "") + this.num(Math.abs(n)) + " KMF"; }
+  status(o) {
+    if (o.fail) return o.fail;
+    if (o.step === 0) return "Envoyée au site";
+    if (o.step === 1) return "En préparation";
+    if (o.step === 2) return o.mode === "retrait" ? "Prête au retrait" : "Recherche d’un livreur";
+    if (o.step === 3) return "Livreur en route";
+    if (o.step === 4) return o.mode === "client" ? "Remise au client" : "Livrée – confirme la réception";
+    if (o.step === 5) return "Reçue – le client a-t-il pris ?";
+    return "Vendue";
+  }
+  tone(o) {
+    if (o.fail) return "red";
+    if (o.step === 6) return "green";
+    if (o.step === 4 || o.step === 5 || (o.step === 2 && o.mode === "retrait")) return "orange";
+    return "blue";
+  }
+  setOrder(id, fn) {
+    this.setState({ orders: this.state.orders.map((o) => (o.id === id ? fn(Object.assign({}, o)) : o)), refuseOpen: false, flash: false });
+  }
+  renderVals() {
+    const s = this.state;
+    const MODES = { client: "Livraison au client", ecom: "Livraison chez moi", retrait: "Je récupère au site" };
+    const tabDefs = [["home", "Accueil"], ["vendre", "Vendre"], ["cmd", "Commandes"], ["solde", "Solde"]];
+    const go = {};
+    tabDefs.forEach(([k]) => { go[k] = () => this.setState({ tab: k, detail: "", refuseOpen: false, flash: false }); });
+    const tabs = tabDefs.map(([k, label]) => ({ label, active: s.tab === k, idle: s.tab !== k, go: go[k] }));
+
+    const dec = (o) => {
+      const t = this.tone(o);
+      return Object.assign({}, o, {
+        status: this.status(o), modeNom: MODES[o.mode], prixTxt: this.kmf(o.prix),
+        tBlue: t === "blue", tOrange: t === "orange", tGreen: t === "green", tRed: t === "red",
+        open: () => this.setState({ tab: "cmd", detail: o.id, refuseOpen: false, flash: false })
+      });
+    };
+    const orders = s.orders.map(dec);
+    const needs = (o) => !o.fail && ((o.step === 4 && o.mode === "ecom") || (o.step === 2 && o.mode === "retrait") || o.step === 5 || (o.step === 4 && o.mode === "client"));
+    const TITRES = (o) => (o.step === 2 ? "Ta commande est prête au site" : o.step === 5 || (o.step === 4 && o.mode === "client") ? "Dis-nous si le client a pris le produit" : "Le livreur t’a remis le produit : confirme");
+    const alerts = orders.filter(needs).map((o) => Object.assign({}, o, { titre: TITRES(o) }));
+
+    const sold = 3 + s.orders.filter((o) => o.step === 6 && !o.fail).length;
+    const solde = { ventes: sold, net: this.kmf(sold * 7000 - 20000) };
+    const stats = { encours: s.orders.filter((o) => !o.fail && o.step < 6).length };
+
+    const PRODS = [
+      { k: "ec", nom: "Écouteurs sans fil", prix: 12500, dispo: 3 },
+      { k: "sa", nom: "Sac à main", prix: 14000, dispo: 12 },
+      { k: "ve", nom: "Ventilateur rechargeable", prix: 15000, dispo: 0 }
+    ];
+    const produits = PRODS.map((p) => ({
+      nom: p.nom, prixTxt: this.kmf(p.prix), dispoTxt: p.dispo + " en stock chez ton leader",
+      selected: p.dispo > 0 && s.prod === p.k, libre: p.dispo > 0 && s.prod !== p.k, rupture: p.dispo === 0,
+      pick: () => this.setState({ prod: p.k })
+    }));
+    const modeDefs = [
+      ["client", "Livraison au client", "Un livreur de l’île remet le produit au client"],
+      ["ecom", "Livraison chez moi", "Un livreur de l’île me remet le produit"],
+      ["retrait", "Je récupère au site", "Aucun livreur, je passe au site de Moroni"]
+    ];
+    const modes = modeDefs.map(([k, nom, desc]) => ({ nom, desc, selected: s.mode === k, idle: s.mode !== k, pick: () => this.setState({ mode: k }) }));
+    const cp = PRODS.find((p) => p.k === s.prod);
+    const part = Math.round(cp.prix * 0.6);
+    const calc = { prix: this.kmf(cp.prix), part: this.kmf(part), net: this.kmf(part - 500) };
+    const save = () => {
+      const id = String(s.nextId);
+      const o = { id, produit: cp.nom, prix: cp.prix, client: "Nouveau client", mode: s.mode, step: 0, fail: "" };
+      this.setState({ orders: [o].concat(s.orders), nextId: s.nextId + 1, tab: "cmd", detail: "", flash: true });
+    };
+
+    const raw = s.orders.find((o) => o.id === s.detail);
+    let d = { id: "", produit: "", client: "", modeNom: "", status: "", canReceive: false, canDecide: false, isSold: false, isRefused: false, receiveLabel: "", netTxt: "" };
+    let steps = [];
+    if (raw) {
+      const o = dec(raw);
+      const net = Math.round(raw.prix * 0.6) - 500;
+      d = Object.assign({}, o, {
+        canReceive: !raw.fail && ((raw.step === 4 && raw.mode === "ecom") || (raw.step === 2 && raw.mode === "retrait")),
+        receiveLabel: raw.mode === "retrait" ? "J’ai récupéré le produit au site" : "J’ai reçu le produit",
+        canDecide: !raw.fail && !s.refuseOpen && (raw.step === 5 || (raw.step === 4 && raw.mode === "client")),
+        isSold: raw.step === 6 && !raw.fail, isRefused: !!raw.fail, netTxt: this.kmf(net)
+      });
+      const labels = ["Vente enregistrée", "Préparée au site", raw.mode === "retrait" ? "Prête au retrait" : "Prête, livreur notifié", raw.mode === "retrait" ? "Retrait au site" : "Livreur en route", raw.mode === "client" ? "Remise au client" : "Remise confirmée", "Client a pris le produit"];
+      const lvl = raw.step >= 5 ? (raw.step === 6 ? 5 : 4) : raw.step;
+      steps = labels.map((label, i) => ({ label, done: i <= lvl && !(raw.fail && i === 5), todo: !(i <= lvl && !(raw.fail && i === 5)) }));
+      if (raw.fail) steps.push({ label: raw.fail, done: true, todo: false });
+    }
+    const motifs = ["Client absent", "Client a changé d’avis", "Produit ne correspond pas", "Autre motif"].map((label) => ({
+      label, pick: () => this.setOrder(s.detail, (x) => { x.fail = "Refusée : " + label.toLowerCase(); return x; })
+    }));
+
+    return {
+      is: { home: s.tab === "home", vendre: s.tab === "vendre", cmd: s.tab === "cmd", solde: s.tab === "solde" },
+      tabs, go, alerts, noAlerts: alerts.length === 0, solde, stats,
+      produits, modes, calc, save,
+      orders, flash: s.flash, hasDetail: !!raw, noDetail: !raw, d, steps,
+      back: () => this.setState({ detail: "", refuseOpen: false }),
+      receive: () => this.setOrder(s.detail, (x) => { x.step = 5; return x; }),
+      accept: () => this.setOrder(s.detail, (x) => { x.step = 6; return x; }),
+      openRefuse: () => this.setState({ refuseOpen: true }),
+      refuseOpen: s.refuseOpen && !!raw && !raw.fail, motifs
+    };
+  }
+}
+
+window.Component = Component;
+</script>
+</body>
+</html>

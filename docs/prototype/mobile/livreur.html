@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dig'eCom – Espace livreur</title>
+<link rel="icon" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0B2FE0}a:hover{color:#071C99}
+button,input{font-family:inherit}
+
+html,body{height:100%}
+body{background:#DCE3FF;display:flex;align-items:center;justify-content:center;min-height:100vh}
+#app{box-shadow:0 20px 60px rgba(11,47,224,.25);border-radius:32px;overflow:hidden}
+@media (max-width:520px),(max-height:880px) and (max-width:900px){
+  body{display:block;background:#0B2FE0}
+  #app{border-radius:0;box-shadow:none}
+  #app>div{width:100vw!important;height:100vh!important;height:100dvh!important}
+}</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/plain" id="tpl">
+<div style="width: 390px; height: 844px; box-sizing: border-box; font-family: 'Poppins', system-ui, sans-serif; background: #F3F5FC; color: #0F1535; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="flex: 0 0 auto; background: #0B2FE0; color: #FFFFFF; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden">
+    <div aria-hidden="true" style="position: absolute; bottom: -80px; right: -40px; width: 170px; height: 170px; border-radius: 999px; background: #FFA500"></div>
+    <div style="position: relative; display: flex; align-items: center; gap: 12px">
+      <img src="logo.jpg" alt="Logo Dig'eCom" style="width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 2px solid #FFFFFF">
+      <div style="display: flex; flex-direction: column">
+        <span style="font-size: 18px; font-weight: 800">Djamal Said</span>
+        <span style="font-size: 12px; color: #DCE3FF">Livreur · Anjouan</span>
+      </div>
+    </div>
+    <sc-if value="{{dispo}}" hint-placeholder-val="{{true}}">
+      <button type="button" aria-pressed="true" onClick="{{toggle}}" style="position: relative; align-self: flex-start; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 16px 6px 6px; border: 0; border-radius: 999px; background: #FFFFFF; color: #14532D; font-size: 14px; font-weight: 700; cursor: pointer">
+        <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 999px; background: #16A34A"></span>Disponible
+      </button>
+    </sc-if>
+    <sc-if value="{{indispo}}" hint-placeholder-val="{{false}}">
+      <button type="button" aria-pressed="false" onClick="{{toggle}}" style="position: relative; align-self: flex-start; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 16px 6px 6px; border: 0; border-radius: 999px; background: #0A26B8; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">
+        <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 999px; background: #8E9BD6"></span>Indisponible
+      </button>
+    </sc-if>
+  </header>
+
+  <div style="flex: 1 1 auto; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px">
+
+    
+    <sc-if value="{{is.courses}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+
+        <sc-if value="{{indispo}}" hint-placeholder-val="{{false}}">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px; text-align: center">
+            <span style="font-size: 16px; font-weight: 700">Tu es indisponible</span>
+            <span style="font-size: 13px; color: #4A5275">Aucune course ne te sera proposée. Repasse en disponible quand tu es prêt.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ph.offre}}" hint-placeholder-val="{{true}}">
+          <div style="background: #FFFFFF; border: 2px solid #FFA500; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+              <span style="font-size: 12px; font-weight: 800; color: #0A1450; background: #FFA500; padding: 4px 10px; border-radius: 999px">NOUVELLE LIVRAISON</span>
+              <span style="font-size: 12px; color: #4A5275">Commande #{{c.id}}</span>
+            </div>
+            <span style="font-size: 18px; font-weight: 800">{{c.produit}}</span>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div style="display: flex; gap: 10px"><span aria-hidden="true" style="flex: 0 0 auto; width: 12px; height: 12px; margin-top: 5px; border-radius: 999px; background: #0B2FE0"></span><span style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #4A5275">Récupérer au site</span><span style="font-size: 14px; font-weight: 600">{{c.site}}</span></span></div>
+              <div style="display: flex; gap: 10px"><span aria-hidden="true" style="flex: 0 0 auto; width: 12px; height: 12px; margin-top: 5px; border-radius: 3px; background: #FFA500"></span><span style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #4A5275">{{c.destLabel}}</span><span style="font-size: 14px; font-weight: 600">{{c.dest}}</span><span style="font-size: 12px; color: #4A5275">{{c.adresse}}</span></span></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 14px; background: #F3F5FC; border-radius: 12px; padding: 10px 12px"><span>Frais de course</span><strong>{{c.fraisTxt}}</strong></div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+              <button type="button" onClick="{{decline}}" style="height: 52px; border: 1.5px solid #C9D2F5; border-radius: 14px; background: #FFFFFF; color: #0F1535; font-size: 15px; font-weight: 600; cursor: pointer">Ignorer</button>
+              <button type="button" onClick="{{acceptCourse}}" style="height: 52px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 15px; font-weight: 800; cursor: pointer">Accepter</button>
+            </div>
+            <span style="font-size: 12px; color: #4A5275">Proposée aux livreurs disponibles d'Anjouan. Le premier qui accepte la prend.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ph.active}}" hint-placeholder-val="{{false}}">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+              <span style="font-size: 12px; font-weight: 700; color: #0A23B8; background: #E6EBFF; padding: 4px 10px; border-radius: 999px">COURSE EN COURS</span>
+              <span style="font-size: 12px; color: #4A5275">#{{c.id}}</span>
+            </div>
+            <span style="font-size: 18px; font-weight: 800">{{c.produit}}</span>
+            <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+              <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+                <li style="display: flex; gap: 10px; align-items: center">
+                  <sc-if value="{{s.done}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">✓</span></sc-if>
+                  <sc-if value="{{s.now}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 999px; border: 6px solid #FFA500; box-sizing: border-box"></span></sc-if>
+                  <sc-if value="{{s.todo}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 999px; border: 2px solid #C9D2F5; box-sizing: border-box"></span></sc-if>
+                  <span style="font-size: 14px">{{s.label}}</span>
+                </li>
+              </sc-for>
+            </ol>
+
+            <sc-if value="{{ph.recup}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14px">Rends-toi à <strong>{{c.site}}</strong> et récupère le colis.</span>
+                <button type="button" onClick="{{picked}}" style="height: 54px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 16px; font-weight: 800; cursor: pointer">J'ai récupéré le produit</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ph.route}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; flex-direction: column; background: #F3F5FC; border-radius: 12px; padding: 12px">
+                  <span style="font-size: 12px; color: #4A5275">{{c.destLabel}}</span>
+                  <span style="font-size: 15px; font-weight: 700">{{c.dest}}</span>
+                  <span style="font-size: 13px; color: #4A5275">{{c.adresse}} · {{c.tel}}</span>
+                </div>
+                <a href="tel:+269" style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 14px; border: 1.5px solid #0B2FE0; color: #0B2FE0; font-size: 15px; font-weight: 700; text-decoration: none">Appeler {{c.dest}}</a>
+                <button type="button" onClick="{{arrive}}" style="height: 54px; border: 0; border-radius: 14px; background: #0B2FE0; color: #FFFFFF; font-size: 16px; font-weight: 800; cursor: pointer">{{c.remiseLabel}}</button>
+                <button type="button" onClick="{{openFail}}" style="min-height: 44px; border: 0; background: transparent; color: #991B1B; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline">Signaler un problème</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ph.preuve}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <label for="enc" style="font-size: 13px; font-weight: 600; color: #4A5275">Montant encaissé auprès du client</label>
+                <input id="enc" type="text" inputmode="numeric" value="{{c.prixTxt}}" style="height: 52px; padding: 0 14px; border: 1.5px solid #C9D2F5; border-radius: 12px; font-size: 17px; font-weight: 700; box-sizing: border-box">
+                <sc-if value="{{photoNo}}" hint-placeholder-val="{{true}}">
+                  <button type="button" onClick="{{photo}}" style="height: 96px; border: 2px dashed #C9D2F5; border-radius: 14px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 700; cursor: pointer">+ Prendre une photo de preuve</button>
+                </sc-if>
+                <sc-if value="{{photoOk}}" hint-placeholder-val="{{false}}">
+                  <div style="height: 96px; border-radius: 14px; background: #DDF5E5; color: #14532D; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">Photo de preuve ajoutée</div>
+                </sc-if>
+                <button type="button" onClick="{{finish}}" style="height: 54px; border: 0; border-radius: 14px; background: #FFA500; color: #0A1450; font-size: 16px; font-weight: 800; cursor: pointer">Confirmer la livraison</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ph.attenteEcom}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <span style="font-size: 14px">Remise confirmée de ton côté. {{c.dest}} doit maintenant confirmer la réception dans son application.</span>
+                <button type="button" onClick="{{finish}}" style="height: 54px; border: 0; border-radius: 14px; background: #FFA500; color: #0A1450; font-size: 16px; font-weight: 800; cursor: pointer">Simuler la confirmation de l'e-commerçant</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{failOpen}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E1E5F2; padding-top: 12px">
+                <span style="font-size: 14px; font-weight: 700">Que s'est-il passé ?</span>
+                <sc-for list="{{motifs}}" as="m" hint-placeholder-count="3">
+                  <button type="button" onClick="{{m.pick}}" style="text-align: left; min-height: 44px; padding: 10px 14px; border: 1px solid #E1E5F2; border-radius: 12px; background: #FFFFFF; color: #0F1535; font-size: 14px; cursor: pointer">{{m.label}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ph.vide}}" hint-placeholder-val="{{false}}">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 6px; text-align: center">
+            <span style="font-size: 16px; font-weight: 700">Aucune course pour le moment</span>
+            <span style="font-size: 13px; color: #4A5275">Tu recevras une notification dès qu'une livraison est prête sur Anjouan.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{lastMsg}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="background: #DDF5E5; color: #14532D; border-radius: 14px; padding: 12px 14px; font-size: 14px; font-weight: 600">{{lastText}}</div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.hist}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800">Historique</h1>
+        <sc-for list="{{hist}}" as="h" hint-placeholder-count="4">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px">
+            <div style="display: flex; flex-direction: column; min-width: 0">
+              <span style="font-size: 14px; font-weight: 700">#{{h.id}} · {{h.produit}}</span>
+              <span style="font-size: 12px; color: #4A5275">{{h.quand}} · {{h.dest}}</span>
+            </div>
+            <sc-if value="{{h.ok}}" hint-placeholder-val="{{true}}"><span style="font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D; padding: 4px 10px; border-radius: 999px; white-space: nowrap">Livrée</span></sc-if>
+            <sc-if value="{{h.ko}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B; padding: 4px 10px; border-radius: 999px; white-space: nowrap">Échouée</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.gains}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800">Mes gains</h1>
+        <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: #DCE3FF">Frais de course du cycle</span>
+          <span style="font-size: 30px; font-weight: 800">{{gains.frais}}</span>
+          <span style="font-size: 13px; color: #DCE3FF">{{gains.courses}} courses livrées</span>
+        </div>
+        <div style="background: #FFF0D1; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; color: #7A4100">Argent encaissé à remettre à la caisse</span>
+          <span style="font-size: 24px; font-weight: 800; color: #7A4100">{{gains.cash}}</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <nav aria-label="Navigation" style="flex: 0 0 auto; height: 76px; background: #FFFFFF; border-top: 1px solid #E1E5F2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr))">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+      <sc-if value="{{t.active}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{t.go}}" style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #0B2FE0">
+          <span aria-hidden="true" style="width: 28px; height: 5px; border-radius: 999px; background: #FFA500"></span>
+          <span style="font-size: 12px; font-weight: 700">{{t.label}}</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{t.idle}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{t.go}}" style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #4A5275">
+          <span aria-hidden="true" style="width: 28px; height: 5px; border-radius: 999px; background: transparent"></span>
+          <span style="font-size: 12px; font-weight: 500">{{t.label}}</span>
+        </button>
+      </sc-if>
+    </sc-for>
+  </nav>
+</div>
+</script>
+<script>window.DC_LINKS = {"Mobile-Connexion.dc.html": "index.html", "Mobile-Ecommercant.dc.html": "ecommercant.html", "Mobile-Livreur.dc.html": "livreur.html"};</script>
+<script>/* Mini moteur de rendu autonome pour les prototypes Dig'eCom.
+   Lit le gabarit (<template id="tpl">), la classe Component et affiche l'écran.
+   Gère {{chemin}}, <sc-if>, <sc-for>, onClick et la conservation des champs. */
+(function () {
+  "use strict";
+
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; this.state = {}; }
+    setState(patch) {
+      Object.assign(this.state, typeof patch === "function" ? patch(this.state) : patch);
+      schedule();
+    }
+    forceUpdate() { schedule(); }
+  };
+
+  var VOID = /<(input|img|br|hr|meta|link|source)\b([^>]*?)\s*\/?>/gi;
+  var HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+  var WHOLE = /^\{\{\s*([^}]+?)\s*\}\}$/;
+  var tree, comp, root, pending = false;
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === "true") return true;
+    if (path === "false") return false;
+    if (path === "null") return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+    if (/^(["']).*\1$/.test(path)) return path.slice(1, -1);
+    var parts = path.split("."), v;
+    for (var i = scope.length - 1; i >= 0; i--) {
+      if (scope[i] && Object.prototype.hasOwnProperty.call(scope[i], parts[0])) { v = scope[i][parts[0]]; break; }
+    }
+    for (var j = 1; j < parts.length && v != null; j++) v = v[parts[j]];
+    return v;
+  }
+
+  function interp(str, scope) {
+    return str.replace(HOLE, function (_, p) { var v = lookup(p, scope); return v == null ? "" : String(v); });
+  }
+
+  function renderChildren(node, scope, parent) {
+    for (var c = node.firstChild; c; c = c.nextSibling) renderNode(c, scope, parent);
+  }
+
+  function renderNode(node, scope, parent) {
+    if (node.nodeType === 3) { parent.appendChild(document.createTextNode(interp(node.nodeValue, scope))); return; }
+    if (node.nodeType !== 1) return;
+    var tag = node.localName;
+    if (tag === "sc-if") {
+      var m = (node.getAttribute("value") || "").match(WHOLE);
+      if (m ? lookup(m[1], scope) : false) renderChildren(node, scope, parent);
+      return;
+    }
+    if (tag === "sc-for") {
+      var lm = (node.getAttribute("list") || "").match(WHOLE);
+      var list = lm ? lookup(lm[1], scope) : [];
+      var as = node.getAttribute("as") || "item";
+      (list || []).forEach(function (item, i) {
+        var frame = { $index: i }; frame[as] = item;
+        renderChildren(node, scope.concat([frame]), parent);
+      });
+      return;
+    }
+    var el = document.createElement(tag);
+    for (var a = 0; a < node.attributes.length; a++) {
+      var name = node.attributes[a].name, raw = node.attributes[a].value;
+      if (name.indexOf("hint-") === 0) continue;
+      var wm = raw.match(WHOLE);
+      var val = wm ? lookup(wm[1], scope) : (raw.indexOf("{{") >= 0 ? interp(raw, scope) : raw);
+      if (/^on[A-Z]/.test(name) || /^on[a-z]+$/.test(name) && typeof val === "function") {
+        if (typeof val === "function") el.addEventListener(name.slice(2).toLowerCase(), val);
+        continue;
+      }
+      if (name === "defaultValue" || name === "defaultvalue" || (name === "value" && (tag === "input" || tag === "textarea"))) { el.value = val == null ? "" : String(val); continue; }
+      if (name === "className") name = "class";
+      if (name === "htmlFor") name = "for";
+      if (val === false || val == null) continue;
+      if (name === "href" && typeof val === "string") val = (window.DC_LINKS && window.DC_LINKS[val]) || val;
+      el.setAttribute(name, val === true ? "" : String(val));
+    }
+    renderChildren(node, scope, el);
+    parent.appendChild(el);
+  }
+
+  function snapshot() {
+    var all = root.querySelectorAll("*"), scroll = [], fields = {};
+    for (var i = 0; i < all.length; i++) if (all[i].scrollTop) scroll.push([i, all[i].scrollTop]);
+    root.querySelectorAll("input[id],textarea[id]").forEach(function (f) { fields[f.id] = f.value; });
+    return { scroll: scroll, fields: fields };
+  }
+  function restore(snap) {
+    var all = root.querySelectorAll("*");
+    snap.scroll.forEach(function (p) { if (all[p[0]]) all[p[0]].scrollTop = p[1]; });
+    Object.keys(snap.fields).forEach(function (id) { var f = document.getElementById(id); if (f && !f.disabled) f.value = snap.fields[id]; });
+  }
+
+  function render() {
+    pending = false;
+    var snap = root.firstChild ? snapshot() : null;
+    var vals = comp.renderVals() || {};
+    var frag = document.createDocumentFragment();
+    renderChildren(tree, [vals], frag);
+    root.replaceChildren(frag);
+    if (snap) restore(snap);
+  }
+  function schedule() { if (!pending) { pending = true; Promise.resolve().then(render); } }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    root = document.getElementById("app");
+    var src = document.getElementById("tpl").textContent.replace(VOID, "<$1$2/>")
+      .replace(/\s(disabled|checked|selected|readonly|required|hidden)(?=[\s\/>])/g, ' $1="$1"');
+    var doc = new DOMParser().parseFromString("<root>" + src + "</root>", "application/xml");
+    var err = doc.getElementsByTagName("parsererror")[0];
+    if (err) { root.textContent = "Erreur de gabarit : " + err.textContent; return; }
+    tree = doc.documentElement;
+    comp = new window.Component({});
+    render();
+  });
+})();
+</script>
+<script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tab: "courses", dispo: true, idx: 0, phase: "offre", photo: false, failOpen: false, last: "",
+      hist: [
+        { id: "1043", produit: "Montre connectée", quand: "Hier 17:52", dest: "Ibrahim Houmadi", ok: true },
+        { id: "1037", produit: "Écouteurs sans fil", quand: "Hier 11:10", dest: "Client · Mirontsi", ok: true },
+        { id: "1033", produit: "Lampe solaire", quand: "3 nov. 16:40", dest: "Client · Ouani", ok: false }
+      ],
+      done: 18, cash: 0
+    };
+  }
+  courses() {
+    return [
+      { id: "1050", produit: "Montre connectée", prix: 18000, mode: "ecom", site: "Mutsamudu – Boutique Dig'eCom", dest: "Anrifa Soilihi", adresse: "Mutsamudu, Habomo", tel: "+269 347 02 11", frais: 1000 },
+      { id: "1051", produit: "Écouteurs sans fil", prix: 12500, mode: "client", site: "Mutsamudu – Boutique Dig'eCom", dest: "Said Abdallah", adresse: "Mirontsi, près de la mosquée", tel: "+269 339 25 18", frais: 1500 }
+    ];
+  }
+  num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  kmf(n) { return this.num(n) + " KMF"; }
+  renderVals() {
+    const s = this.state;
+    const list = this.courses();
+    const raw = list[s.idx];
+    const tabDefs = [["courses", "Courses"], ["hist", "Historique"], ["gains", "Gains"]];
+    const tabs = tabDefs.map(([k, label]) => ({ label, active: s.tab === k, idle: s.tab !== k, go: () => this.setState({ tab: k }) }));
+
+    const c = raw ? Object.assign({}, raw, {
+      fraisTxt: this.kmf(raw.frais), prixTxt: this.num(raw.prix),
+      destLabel: raw.mode === "client" ? "Livrer au client" : "Livrer à l’e-commerçant",
+      remiseLabel: raw.mode === "client" ? "Je suis chez le client" : "J’ai remis le produit"
+    }) : { id: "", produit: "", site: "", dest: "", adresse: "", tel: "", fraisTxt: "", prixTxt: "", destLabel: "", remiseLabel: "" };
+
+    const active = !!raw && s.dispo && ["recup", "route", "preuve", "attenteEcom"].indexOf(s.phase) >= 0;
+    const ph = {
+      offre: !!raw && s.dispo && s.phase === "offre",
+      active,
+      recup: active && s.phase === "recup",
+      route: active && s.phase === "route" && !s.failOpen,
+      preuve: active && s.phase === "preuve",
+      attenteEcom: active && s.phase === "attenteEcom",
+      vide: !raw && s.dispo
+    };
+    const order = ["recup", "route", raw && raw.mode === "client" ? "preuve" : "attenteEcom"];
+    const cur = order.indexOf(s.phase);
+    const stepLabels = ["Récupérer au site", raw && raw.mode === "client" ? "Aller chez le client" : "Aller chez l’e-commerçant", raw && raw.mode === "client" ? "Encaisser et prouver" : "Remise confirmée"];
+    const steps = stepLabels.map((label, i) => ({ label, done: i < cur, now: i === cur, todo: i > cur }));
+
+    const close = (ok, extraCash) => {
+      const h = { id: raw.id, produit: raw.produit, quand: "Aujourd’hui", dest: raw.mode === "client" ? "Client · " + raw.dest : raw.dest, ok };
+      this.setState({
+        hist: [h].concat(s.hist), idx: s.idx + 1, phase: "offre", photo: false, failOpen: false,
+        done: s.done + (ok ? 1 : 0), cash: s.cash + (extraCash || 0),
+        last: ok ? "Livraison #" + raw.id + " terminée. Merci !" : "Échec enregistré pour #" + raw.id + ". Rapporte le produit au site."
+      });
+    };
+    const motifs = ["Client injoignable", "Adresse introuvable", "Client a refusé le produit"].map((label) => ({ label, pick: () => close(false, 0) }));
+    const hist = s.hist.map((h) => Object.assign({}, h, { ko: !h.ok }));
+
+    return {
+      tabs, c, ph, steps, motifs, hist,
+      is: { courses: s.tab === "courses", hist: s.tab === "hist", gains: s.tab === "gains" },
+      dispo: s.dispo, indispo: !s.dispo,
+      toggle: () => this.setState({ dispo: !s.dispo }),
+      acceptCourse: () => this.setState({ phase: "recup", last: "" }),
+      decline: () => this.setState({ idx: s.idx + 1, phase: "offre", last: "" }),
+      picked: () => this.setState({ phase: "route" }),
+      arrive: () => this.setState({ phase: raw && raw.mode === "client" ? "preuve" : "attenteEcom" }),
+      openFail: () => this.setState({ failOpen: true }),
+      failOpen: active && s.failOpen,
+      photo: () => this.setState({ photo: true }),
+      photoOk: s.photo, photoNo: !s.photo,
+      finish: () => close(true, raw && raw.mode === "client" ? raw.prix : 0),
+      lastMsg: !!s.last && s.tab === "courses", lastText: s.last,
+      gains: { frais: this.kmf(s.done * 1000), courses: s.done, cash: this.kmf(s.cash) }
+    };
+  }
+}
+
+window.Component = Component;
+</script>
+</body>
+</html>

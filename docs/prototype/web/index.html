@@ -1,0 +1,1818 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dig'eCom – Back-office complet</title>
+<link rel="icon" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F5FC}
+a{color:#0B2FE0}a:hover{color:#071C99}
+button,input,select{font-family:inherit}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/plain" id="tpl">
+<div style="font-family: 'Poppins', system-ui, sans-serif; color: #0F1535; background: #F3F5FC; min-height: 100vh">
+
+
+<sc-if value="{{notLogged}}" hint-placeholder-val="{{false}}">
+  <div style="min-height: 100vh; background: #0B2FE0; color: #FFFFFF; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 20px; box-sizing: border-box">
+    <div aria-hidden="true" style="position: absolute; top: -120px; right: -120px; width: 360px; height: 360px; border-radius: 999px; background: #FFA500"></div>
+    <div aria-hidden="true" style="position: absolute; bottom: -160px; left: -100px; width: 420px; height: 420px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.5)"></div>
+    <div style="position: relative; width: 100%; max-width: 1040px; display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+        <img src="logo.jpg" alt="Logo Dig'eCom Agency" style="width: 76px; height: 76px; border-radius: 999px; object-fit: cover; border: 3px solid #FFFFFF">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px">Dig'eCom – Back-office</h1>
+          <span style="font-size: 15px; color: #DCE3FF">Choisis un profil pour voir l'application avec ses droits d'accès.</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+        <sc-for list="{{roleCards}}" as="rc" hint-placeholder-count="8">
+          <button type="button" onClick="{{rc.login}}" style="text-align: left; background: #FFFFFF; color: #0F1535; border: 0; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; min-height: 132px">
+            <span style="font-size: 16px; font-weight: 800; color: #0B2FE0">{{rc.nom}}</span>
+            <span style="font-size: 14px; font-weight: 600">{{rc.personne}}</span>
+            <span style="font-size: 12px; color: #4A5275">{{rc.desc}}</span>
+            <span style="margin-top: auto; align-self: flex-start; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100; padding: 3px 10px; border-radius: 999px">{{rc.scope}} · {{rc.nbMods}} modules</span>
+          </button>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; color: #DCE3FF">Prototype : les e-commerçants et les livreurs utilisent l'application mobile. Toutes les données sont fictives.</span>
+    </div>
+  </div>
+</sc-if>
+
+
+<sc-if value="{{logged}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh">
+
+  <aside style="flex: 1 1 250px; max-width: 100%; background: #0B2FE0; color: #FFFFFF; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 0 8px">
+      <img src="logo.jpg" alt="Logo Dig'eCom Agency" style="width: 50px; height: 50px; border-radius: 14px; object-fit: cover; border: 2px solid #FFFFFF">
+      <div style="display: flex; flex-direction: column">
+        <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.3px">Dig'eCom</span>
+        <span style="font-size: 12px; color: #DCE3FF">Back-office</span>
+      </div>
+    </div>
+    <nav aria-label="Menu principal" style="display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+        <sc-if value="{{n.active}}" hint-placeholder-val="{{false}}">
+          <button type="button" onClick="{{n.go}}" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; min-height: 44px; padding: 10px 14px; border: 0; border-radius: 12px; background: #FFA500; color: #0A1450; font-size: 14px; font-weight: 700; cursor: pointer"><span>{{n.label}}</span><sc-if value="{{n.ro}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; background: #0A1450; color: #FFFFFF; padding: 2px 6px; border-radius: 6px">LECTURE</span></sc-if></button>
+        </sc-if>
+        <sc-if value="{{n.idle}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{n.go}}" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; min-height: 44px; padding: 10px 14px; border: 0; border-radius: 12px; background: transparent; color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer"><span>{{n.label}}</span><sc-if value="{{n.ro}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; background: #0A26B8; color: #DCE3FF; padding: 2px 6px; border-radius: 6px">LECTURE</span></sc-if></button>
+        </sc-if>
+      </sc-for>
+    </nav>
+    <div style="margin-top: auto; background: #0A26B8; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; color: #DCE3FF">Connecté en tant que</span>
+      <span style="font-size: 14px; font-weight: 700">{{me.personne}}</span>
+      <span style="font-size: 12px; color: #DCE3FF">{{me.nom}} · {{me.scope}}</span>
+      <button type="button" onClick="{{logout}}" style="margin-top: 6px; min-height: 40px; border: 1px solid #DCE3FF; border-radius: 10px; background: transparent; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">Changer de profil</button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+          <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px">{{pageTitle}}</h1>
+          <sc-if value="{{readOnly}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; font-weight: 700; background: #E6EBFF; color: #0A23B8; padding: 4px 10px; border-radius: 999px">Lecture seule pour ton profil</span></sc-if>
+        </div>
+        <span style="font-size: 14px; color: #4A5275">{{pageSub}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <sc-if value="{{canFilter}}" hint-placeholder-val="{{true}}">
+          <div role="group" aria-label="Filtrer par île" style="display: flex; flex-wrap: wrap; gap: 4px; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 999px; padding: 4px">
+            <sc-for list="{{iles}}" as="i" hint-placeholder-count="4">
+              <sc-if value="{{i.active}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{i.go}}" style="min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">{{i.label}}</button></sc-if>
+              <sc-if value="{{i.idle}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{i.go}}" style="min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; background: transparent; color: #0F1535; font-size: 13px; font-weight: 500; cursor: pointer">{{i.label}}</button></sc-if>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{scopeLocked}}" hint-placeholder-val="{{false}}">
+          <span style="font-size: 13px; font-weight: 600; background: #FFFFFF; border: 1px solid #E1E5F2; padding: 10px 16px; border-radius: 999px">Périmètre : {{scopeLabel}}</span>
+        </sc-if>
+      </div>
+    </header>
+
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+      <div role="status" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #DDF5E5; color: #14532D; border-radius: 14px; padding: 12px 16px; font-size: 14px; font-weight: 600"><span>{{toast}}</span><button type="button" onClick="{{clearToast}}" aria-label="Fermer le message" style="min-width: 36px; min-height: 36px; border: 0; background: transparent; color: #14532D; font-size: 18px; cursor: pointer">×</button></div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.dash}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px">
+          <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+            <sc-if value="{{k.blue}}" hint-placeholder-val="{{false}}">
+              <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #DCE3FF">{{k.label}}</span><span style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px">{{k.value}}</span><span style="font-size: 12px; color: #DCE3FF">{{k.sub}}</span></div>
+            </sc-if>
+            <sc-if value="{{k.white}}" hint-placeholder-val="{{true}}">
+              <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #4A5275">{{k.label}}</span><span style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px">{{k.value}}</span><span style="font-size: 12px; color: #4A5275">{{k.sub}}</span></div>
+            </sc-if>
+            <sc-if value="{{k.orange}}" hint-placeholder-val="{{false}}">
+              <div style="background: #FFA500; color: #0A1450; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; font-weight: 500">{{k.label}}</span><span style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px">{{k.value}}</span><span style="font-size: 12px; font-weight: 500">{{k.sub}}</span></div>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <sc-if value="{{showRecent}}" hint-placeholder-val="{{true}}">
+            <section style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 700">{{recentTitle}}</h2>
+                <button type="button" onClick="{{goCmd}}" style="min-height: 40px; padding: 8px 14px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">Voir les commandes</button>
+              </div>
+              <div style="overflow-x: auto">
+                <table style="width: 100%; border-collapse: collapse">
+                  <thead><tr>
+                    <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">N°</th>
+                    <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Vendeur</th>
+                    <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit</th>
+                    <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Île</th>
+                    <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                  </tr></thead>
+                  <tbody>
+                    <sc-for list="{{recent}}" as="r" hint-placeholder-count="5">
+                      <tr>
+                        <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">#{{r.id}}</td>
+                        <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.ecom}}</td>
+                        <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.produit}}</td>
+                        <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.ileNom}}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                          <sc-if value="{{r.tB}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{r.status}}</span></sc-if>
+                          <sc-if value="{{r.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{r.status}}</span></sc-if>
+                          <sc-if value="{{r.tG}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{r.status}}</span></sc-if>
+                          <sc-if value="{{r.tR}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B">{{r.status}}</span></sc-if>
+                        </td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </sc-if>
+
+          <div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+            <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700">À traiter</h2>
+              <sc-for list="{{todo}}" as="t" hint-placeholder-count="4">
+                <sc-if value="{{t.alert}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; background: #FDE2E2; border-radius: 12px"><span style="font-size: 14px; color: #7F1D1D">{{t.label}}</span><span style="font-size: 18px; font-weight: 800; color: #991B1B">{{t.n}}</span></div>
+                </sc-if>
+                <sc-if value="{{t.normal}}" hint-placeholder-val="{{true}}">
+                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; background: #F3F5FC; border-radius: 12px"><span style="font-size: 14px">{{t.label}}</span><span style="font-size: 18px; font-weight: 800; color: #0B2FE0">{{t.n}}</span></div>
+                </sc-if>
+              </sc-for>
+            </section>
+
+            <sc-if value="{{showCalc}}" hint-placeholder-val="{{false}}">
+              <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 700">Calcul d'une vente de référence</h2>
+                <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Prix de vente final</span><strong>12 500 KMF</strong></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Coût d'approvisionnement</span><span>750 KMF</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Part e-commerçant</span><span>7 500 KMF</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Part commerciale Dig'eCom</span><span>5 000 KMF</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Taxe Dig'eCom</span><span>− 500 KMF</span></div>
+                <div style="height: 1px; background: #E1E5F2"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 15px"><span style="font-weight: 600">Marge Dig'eCom</span><strong style="color: #0B2FE0">3 750 KMF</strong></div>
+                <div style="display: flex; justify-content: space-between; font-size: 15px"><span style="font-weight: 600">Net e-commerçant</span><strong style="color: #0B2FE0">7 000 KMF</strong></div>
+              </section>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.cmd}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section style="flex: 2 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700">{{cmdTitle}}</h2>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">N°</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Date</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Vendeur</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Mode de remise</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Île</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prix (KMF)</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{orders}}" as="r" hint-placeholder-count="8">
+                  <tr>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{r.selected}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{r.pick}}" style="min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">#{{r.id}}</button></sc-if>
+                      <sc-if value="{{r.notSelected}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{r.pick}}" style="min-height: 36px; padding: 6px 10px; border: 1px solid #C9D2F5; border-radius: 8px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 700; cursor: pointer">#{{r.id}}</button></sc-if>
+                    </td>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.date}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.ecom}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.produit}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.modeNom}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.ileNom}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{r.prixTxt}}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{r.tB}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{r.status}}</span></sc-if>
+                      <sc-if value="{{r.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{r.status}}</span></sc-if>
+                      <sc-if value="{{r.tG}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{r.status}}</span></sc-if>
+                      <sc-if value="{{r.tR}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B">{{r.status}}</span></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+          <section style="flex: 1 1 320px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 12px; font-weight: 600; color: #0B2FE0">COMMANDE #{{sel.id}}</span>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 700">{{sel.produit}}</h2>
+              <span style="font-size: 14px; color: #4A5275">{{sel.prixTxt}} KMF · {{sel.modeNom}} · {{sel.ileNom}}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; font-size: 13px">
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">E-commerçant</span><strong>{{sel.ecom}}</strong></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">Leader</span><strong>{{sel.leader}}</strong></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">Client</span><strong>{{sel.client}}</strong></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">Téléphone</span><strong>{{sel.tel}}</strong></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">Livreur</span><strong>{{sel.livreurTxt}}</strong></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #4A5275">Statut</span><strong>{{sel.status}}</strong></div>
+            </div>
+            <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+              <sc-for list="{{timeline}}" as="s" hint-placeholder-count="6">
+                <li style="display: flex; gap: 12px; align-items: flex-start; padding-bottom: 12px">
+                  <sc-if value="{{s.done}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">✓</span></sc-if>
+                  <sc-if value="{{s.todo}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="flex: 0 0 auto; width: 22px; height: 22px; border-radius: 999px; border: 2px solid #C9D2F5; box-sizing: border-box"></span></sc-if>
+                  <span style="font-size: 14px; padding-top: 1px">{{s.label}}</span>
+                </li>
+              </sc-for>
+            </ol>
+            <sc-if value="{{sel.canNext}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{advance}}" style="min-height: 48px; padding: 12px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer">{{sel.nextLabel}}</button>
+            </sc-if>
+            <sc-if value="{{sel.canRefuse}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{refuse}}" style="min-height: 48px; padding: 12px 16px; border: 1px solid #991B1B; border-radius: 12px; background: #FFFFFF; color: #991B1B; font-size: 15px; font-weight: 600; cursor: pointer">Client a refusé le produit</button>
+            </sc-if>
+            <sc-if value="{{sel.canReturn}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{restock}}" style="min-height: 48px; padding: 12px 16px; border: 0; border-radius: 12px; background: #FFA500; color: #0A1450; font-size: 15px; font-weight: 700; cursor: pointer">Contrôler et remettre en stock</button>
+            </sc-if>
+            <sc-if value="{{sel.lockedMsg}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 13px; color: #0A23B8; background: #E6EBFF; border-radius: 12px; padding: 12px">Ton profil peut consulter cette commande mais pas la faire avancer.</span>
+            </sc-if>
+          </section>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.livr}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; align-items: start">
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 700">En attente d'un livreur</h2><span style="font-size: 13px; font-weight: 700; color: #7A4100; background: #FFF0D1; padding: 2px 10px; border-radius: 999px">{{col.attenteN}}</span></div>
+            <sc-for list="{{col.attente}}" as="c" hint-placeholder-count="2">
+              <div style="border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <strong style="font-size: 14px">#{{c.id}} · {{c.produit}}</strong>
+                <span style="font-size: 12px; color: #4A5275">{{c.modeNom}} · {{c.ileNom}}</span>
+                <span style="font-size: 12px; color: #4A5275">Livreurs de l'île notifiés · aucune acceptation</span>
+                <sc-if value="{{canAssign}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{c.assign}}" style="min-height: 40px; padding: 8px 12px; border: 0; border-radius: 10px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">Affecter manuellement</button></sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{col.attenteVide}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #4A5275">Aucune livraison en attente.</span></sc-if>
+          </section>
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 700">En cours</h2><span style="font-size: 13px; font-weight: 700; color: #0A23B8; background: #E6EBFF; padding: 2px 10px; border-radius: 999px">{{col.coursN}}</span></div>
+            <sc-for list="{{col.cours}}" as="c" hint-placeholder-count="1">
+              <div style="border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <strong style="font-size: 14px">#{{c.id}} · {{c.produit}}</strong>
+                <span style="font-size: 12px; color: #4A5275">{{c.modeNom}} · {{c.ileNom}}</span>
+                <span style="font-size: 12px; font-weight: 600; color: #0B2FE0">Livreur : {{c.livreur}}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{col.coursVide}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #4A5275">Aucune course en cours.</span></sc-if>
+          </section>
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 700">Prêtes au retrait</h2><span style="font-size: 13px; font-weight: 700; color: #0A23B8; background: #E6EBFF; padding: 2px 10px; border-radius: 999px">{{col.retraitN}}</span></div>
+            <sc-for list="{{col.retrait}}" as="c" hint-placeholder-count="1">
+              <div style="border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <strong style="font-size: 14px">#{{c.id}} · {{c.produit}}</strong>
+                <span style="font-size: 12px; color: #4A5275">{{c.ecom}} vient au site · {{c.ileNom}}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{col.retraitVide}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #4A5275">Aucun retrait prévu.</span></sc-if>
+          </section>
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 700">Refus et échecs</h2><span style="font-size: 13px; font-weight: 700; color: #991B1B; background: #FDE2E2; padding: 2px 10px; border-radius: 999px">{{col.incN}}</span></div>
+            <sc-for list="{{col.inc}}" as="c" hint-placeholder-count="2">
+              <div style="border: 1px solid #F5C2C2; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <strong style="font-size: 14px">#{{c.id}} · {{c.produit}}</strong>
+                <span style="font-size: 12px; font-weight: 600; color: #991B1B">{{c.status}}</span>
+                <span style="font-size: 12px; color: #4A5275">{{c.ecom}} · {{c.ileNom}}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{col.incVide}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #4A5275">Aucun incident.</span></sc-if>
+          </section>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700">Livreurs</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+            <sc-for list="{{livreurs}}" as="l" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #E1E5F2; border-radius: 14px">
+                <div style="display: flex; flex-direction: column"><strong style="font-size: 14px">{{l.nom}}</strong><span style="font-size: 12px; color: #4A5275">{{l.ileNom}} · {{l.courses}} courses ce cycle</span></div>
+                <sc-if value="{{l.libre}}" hint-placeholder-val="{{true}}"><span style="font-size: 12px; font-weight: 600; color: #14532D; background: #DDF5E5; padding: 4px 10px; border-radius: 999px">Disponible</span></sc-if>
+                <sc-if value="{{l.occupe}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; font-weight: 600; color: #0A23B8; background: #E6EBFF; padding: 4px 10px; border-radius: 999px">En course</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Une nouvelle livraison n'est proposée qu'aux livreurs disponibles de la même île que le site.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.stock}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Valeur du stock (coût rendu)</span><span style="font-size: 26px; font-weight: 800">{{stockKpi.valeur}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Unités disponibles</span><span style="font-size: 26px; font-weight: 800">{{stockKpi.unites}}</span></div>
+          <div style="background: #FFF0D1; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #7A4100">Alertes stock faible ou rupture</span><span style="font-size: 26px; font-weight: 800; color: #7A4100">{{stockKpi.alertes}}</span></div>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Stock par site</h2>
+            <sc-if value="{{canStock}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button type="button" onClick="{{act.inventaire}}" style="min-height: 44px; padding: 10px 16px; border: 1px solid #0B2FE0; border-radius: 12px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer">Inventaire</button>
+                <button type="button" onClick="{{act.transfert}}" style="min-height: 44px; padding: 10px 16px; border: 1px solid #0B2FE0; border-radius: 12px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer">Transfert entre sites</button>
+                <button type="button" onClick="{{act.entree}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Entrée de marchandises</button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">SKU</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Site</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Disponible</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Réservé</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Attribué leaders</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Coût rendu (KMF)</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prix final (KMF)</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Alerte</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{stock}}" as="p" hint-placeholder-count="7">
+                  <tr>
+                    <td style="padding: 12px; font-size: 12px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.sku}}</td>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.nom}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.site}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; font-weight: 700; border-bottom: 1px solid #EEF1F8">{{p.dispo}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{p.res}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{p.attr}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.coutTxt}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.prixTxt}}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{p.tG}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{p.alerte}}</span></sc-if>
+                      <sc-if value="{{p.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{p.alerte}}</span></sc-if>
+                      <sc-if value="{{p.tR}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B">{{p.alerte}}</span></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Une vente est bloquée automatiquement quand le stock disponible de l'île est insuffisant.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.achats}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700">Lots achetés sur Alibaba</h2>
+              <span style="font-size: 13px; color: #4A5275">Chaque lot garde son coût réel : achat + expédition + douane et frais, divisé par la quantité.</span>
+            </div>
+            <sc-if value="{{canAchats}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{act.lot}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Nouvelle commande fournisseur</button></sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Lot</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Fournisseur</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Qté</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Achat (KMF)</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Expédition</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Douane et frais</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Coût unitaire</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Destination</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Action</span></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{lots}}" as="l" hint-placeholder-count="4">
+                  <tr>
+                    <td style="padding: 12px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.id}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.fournisseur}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.produit}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{l.q}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.achatTxt}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.expTxt}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.douaneTxt}}</td>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.unitTxt}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{l.ileNom}}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{l.tB}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{l.statut}}</span></sc-if>
+                      <sc-if value="{{l.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{l.statut}}</span></sc-if>
+                      <sc-if value="{{l.tG}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{l.statut}}</span></sc-if>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{l.canNext}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{l.next}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">{{l.nextLabel}}</button></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Statuts : en préparation → passée → en transport → arrivée aux Comores → en dédouanement → réceptionnée → clôturée. À la réception, le lot entre dans le stock du site.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.campagnes}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+          <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #DCE3FF">Budget publicitaire</span><span style="font-size: 24px; font-weight: 800">{{campKpi.budget}}</span><span style="font-size: 12px; color: #DCE3FF">{{campKpi.actives}} campagnes actives</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Contacts reçus</span><span style="font-size: 24px; font-weight: 800">{{campKpi.contacts}}</span><span style="font-size: 12px; color: #4A5275">Taux de confirmation {{campKpi.taux}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Ventes validées</span><span style="font-size: 24px; font-weight: 800">{{campKpi.ventes}}</span><span style="font-size: 12px; color: #4A5275">Client a pris le produit</span></div>
+          <div style="background: #FFA500; color: #0A1450; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 500">Coût publicitaire par vente</span><span style="font-size: 24px; font-weight: 800">{{campKpi.cpv}}</span><span style="font-size: 12px; font-weight: 500">Budget ÷ ventes validées</span></div>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Campagnes publicitaires</h2>
+            <sc-if value="{{canNewCamp}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{newCamp}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Nouvelle campagne</button></sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Campagne</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Leader Junior</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Canal</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Période</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Budget (KMF)</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Contacts</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Confirmées</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Vendues</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Coût / vente</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Action</span></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{camps}}" as="k" hint-placeholder-count="3">
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap"><strong style="font-size: 14px">{{k.nom}}</strong><br><span style="font-size: 12px; color: #4A5275">{{k.id}} · {{k.produit}}</span></td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{k.leader}}<br><span style="color: #4A5275">{{k.ileNom}}</span></td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{k.canal}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{k.debut}} – {{k.fin}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{k.budgetTxt}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{k.contacts}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{k.conf}}</td>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8">{{k.vendues}}</td>
+                    <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{k.cpvTxt}}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{k.actif}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">Active</span></sc-if>
+                      <sc-if value="{{k.pause}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #EEF1F8; color: #4A5275">Terminée ou en pause</span></sc-if>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{k.canEdit}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{k.toggle}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">{{k.toggleLabel}}</button></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Le budget de chaque campagne est enregistré comme dépense du Leader Junior. Les contacts reçus deviennent des prospects répartis entre ses téléconseillers.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.prospects}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+          <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #DCE3FF">À appeler</span><span style="font-size: 26px; font-weight: 800">{{prospKpi.aAppeler}}</span><span style="font-size: 12px; color: #DCE3FF">{{prospKpi.rappels}} à rappeler (injoignables)</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Commandes confirmées</span><span style="font-size: 26px; font-weight: 800">{{prospKpi.conf}}</span><span style="font-size: 12px; color: #4A5275">En préparation ou en livraison</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">{{prospKpi.ventesLabel}}</span><span style="font-size: 26px; font-weight: 800">{{prospKpi.ventes}}</span><span style="font-size: 12px; color: #4A5275">Client a pris le produit</span></div>
+          <div style="background: #FFA500; color: #0A1450; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 500">{{prospKpi.primeLabel}}</span><span style="font-size: 26px; font-weight: 800">{{prospKpi.primes}}</span><span style="font-size: 12px; font-weight: 500">De 2 000 à 3 500 KMF par produit vendu</span></div>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">{{prospTitle}}</h2>
+            <sc-if value="{{canImport}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{importProsp}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">Importer des contacts</button></sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Reçu à</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prospect</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Téléphone</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit et campagne</th>
+                <sc-if value="{{showTciCol}}" hint-placeholder-val="{{false}}"><th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Téléconseiller</th></sc-if>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Actions</span></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{prospects}}" as="p" hint-placeholder-count="5">
+                  <tr>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.heure}}</td>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.nom}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.tel}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.produit}}<br><span style="color: #4A5275">{{p.camp}} · prime {{p.primeTxt}}</span></td>
+                    <sc-if value="{{showTciCol}}" hint-placeholder-val="{{false}}"><td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.tci}}</td></sc-if>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{p.tB}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{p.statut}}</span></sc-if>
+                      <sc-if value="{{p.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{p.statut}}</span></sc-if>
+                      <sc-if value="{{p.tG}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{p.statut}}</span></sc-if>
+                      <sc-if value="{{p.tN}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #EEF1F8; color: #4A5275">{{p.statut}}</span></sc-if>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{p.canAct}}" hint-placeholder-val="{{false}}">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end">
+                          <button type="button" onClick="{{p.confirm}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">Commande confirmée</button>
+                          <button type="button" onClick="{{p.injoignable}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #C9D2F5; border-radius: 10px; background: #FFFFFF; color: #0F1535; font-size: 13px; font-weight: 600; cursor: pointer">Injoignable</button>
+                          <button type="button" onClick="{{p.refus}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #F3F5FC; color: #4A5275; font-size: 13px; font-weight: 600; cursor: pointer">Pas intéressé</button>
+                        </div>
+                      </sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Une commande confirmée part en préparation au site de l'île, puis suit le circuit habituel de livraison. La prime n'est comptée que si le client prend le produit.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.ventes}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div role="group" aria-label="Choisir la semaine" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{weeks}}" as="w" hint-placeholder-count="2">
+            <sc-if value="{{w.active}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{w.go}}" style="min-height: 40px; padding: 8px 14px; border: 0; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">{{w.label}}</button></sc-if>
+            <sc-if value="{{w.idle}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{w.go}}" style="min-height: 40px; padding: 8px 14px; border: 1px solid #C9D2F5; border-radius: 999px; background: #FFFFFF; color: #0F1535; font-size: 13px; font-weight: 500; cursor: pointer">{{w.label}}</button></sc-if>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Montant vendu</span><span style="font-size: 26px; font-weight: 800">{{vg.ca}}</span><span style="font-size: 12px; color: #4A5275">{{vg.n}} produits vendus et clôturés</span></div>
+          <div style="background: #FFA500; color: #0A1450; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 500">{{vg.gainLabel}}</span><span style="font-size: 26px; font-weight: 800">{{vg.gains}}</span><span style="font-size: 12px; font-weight: 500">Calculé avec la prime de chaque produit</span></div>
+          <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #DCE3FF">{{vg.totalLabel}}</span><span style="font-size: 26px; font-weight: 800">{{vg.total}}</span><span style="font-size: 12px; color: #DCE3FF">Depuis le début</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Livrées, à clôturer</span><span style="font-size: 26px; font-weight: 800; color: #0B2FE0">{{vg.aClore}}</span><span style="font-size: 12px; color: #4A5275">Indique si le client a pris le produit</span></div>
+        </div>
+
+        <sc-if value="{{showVgTeam}}" hint-placeholder-val="{{false}}">
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Par téléconseiller</h2>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead><tr>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Téléconseiller</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Leader Junior</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produits vendus</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Montant vendu (KMF)</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Gains (KMF)</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">À clôturer</th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{vgTeam}}" as="t" hint-placeholder-count="3">
+                    <tr>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{t.nom}}</td>
+                      <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{t.leader}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{t.n}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{t.caTxt}}</td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{t.gainsTxt}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{t.aClore}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </sc-if>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <section style="flex: 2 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">{{vgTitle}}</h2>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead><tr>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Date</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Commande</th>
+                  <sc-if value="{{showVgTeam}}" hint-placeholder-val="{{false}}"><th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Téléconseiller</th></sc-if>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prix (KMF)</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prime (KMF)</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Clôture</span></th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{vRows}}" as="v" hint-placeholder-count="6">
+                    <tr>
+                      <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{v.date}}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap"><strong style="font-size: 14px">#{{v.id}} · {{v.produit}}</strong><br><span style="font-size: 12px; color: #4A5275">Client : {{v.client}}</span></td>
+                      <sc-if value="{{showVgTeam}}" hint-placeholder-val="{{false}}"><td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{v.tci}}</td></sc-if>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{v.prixTxt}}</td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{v.primeTxt}}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{v.tB}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{v.statut}}</span></sc-if>
+                        <sc-if value="{{v.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{v.statut}}</span></sc-if>
+                        <sc-if value="{{v.tG}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{v.statut}}</span></sc-if>
+                        <sc-if value="{{v.tR}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B">{{v.statut}}</span></sc-if>
+                      </td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{v.canClose}}" hint-placeholder-val="{{false}}">
+                          <div style="display: flex; gap: 6px; justify-content: flex-end">
+                            <button type="button" onClick="{{v.close}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">Vendu</button>
+                            <button type="button" onClick="{{v.refuse}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #991B1B; border-radius: 10px; background: #FFFFFF; color: #991B1B; font-size: 13px; font-weight: 600; cursor: pointer">Client a refusé</button>
+                          </div>
+                        </sc-if>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <sc-if value="{{vRowsEmpty}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #4A5275">Aucune commande cette semaine.</span></sc-if>
+          </section>
+
+          <section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Gains par produit</h2>
+            <sc-for list="{{vgProd}}" as="g" hint-placeholder-count="2">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF1F8">
+                <div style="display: flex; flex-direction: column; min-width: 0"><strong style="font-size: 14px">{{g.produit}}</strong><span style="font-size: 12px; color: #4A5275">{{g.n}} × {{g.primeTxt}} (prime fixée par {{g.leader}})</span></div>
+                <strong style="font-size: 15px; color: #0B2FE0; white-space: nowrap">{{g.gainsTxt}}</strong>
+              </div>
+            </sc-for>
+            <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 15px; font-weight: 600">Total de la semaine</span><span style="font-size: 22px; font-weight: 800; color: #0B2FE0">{{vg.gains}}</span></div>
+            <span style="font-size: 12px; color: #4A5275">La prime est enregistrée sur chaque commande au moment de la vente : si le Leader Junior la change ensuite, les ventes passées ne bougent pas.</span>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.catalogue}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="background: #E6EBFF; color: #0A23B8; border-radius: 14px; padding: 14px 16px; font-size: 14px; font-weight: 500">Chaque leader publie ses propres produits, avec son prix, sa qualité et son stock. Les e-commerçants ne voient que le catalogue de leur leader.</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <section style="flex: 2 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700">Produits publiés</h2>
+              <sc-if value="{{canPublish}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{publishProduct}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Publier un produit</button></sc-if>
+            </div>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead><tr>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Leader</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Produit</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Qualité</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Prix (KMF)</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Part vendeur (KMF)</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Stock</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Vendus</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">État</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Actions</span></th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{catalogue}}" as="c" hint-placeholder-count="7">
+                    <tr>
+                      <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap"><strong>{{c.leader}}</strong><br><span style="color: #4A5275">{{c.ileNom}} · {{c.type}}</span></td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{c.produit}}</td>
+                      <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{c.qualite}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{c.prixTxt}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{c.partTxt}}</td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8">{{c.stock}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{c.vendu}}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{c.tG}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{c.etat}}</span></sc-if>
+                        <sc-if value="{{c.tO}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{c.etat}}</span></sc-if>
+                        <sc-if value="{{c.tN}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #EEF1F8; color: #4A5275">{{c.etat}}</span></sc-if>
+                      </td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{c.canEdit}}" hint-placeholder-val="{{false}}">
+                          <div style="display: flex; gap: 6px; justify-content: flex-end">
+                            <button type="button" onClick="{{c.plus}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">Stock +1</button>
+                            <sc-if value="{{c.canPrime}}" hint-placeholder-val="{{false}}">
+                              <button type="button" onClick="{{c.primeDown}}" aria-label="Baisser la prime de 500 KMF" style="min-height: 36px; padding: 6px 10px; border: 1px solid #FFA500; border-radius: 10px; background: #FFFFFF; color: #7A4100; font-size: 13px; font-weight: 700; cursor: pointer">Prime −500</button>
+                              <button type="button" onClick="{{c.primeUp}}" aria-label="Augmenter la prime de 500 KMF" style="min-height: 36px; padding: 6px 10px; border: 0; border-radius: 10px; background: #FFA500; color: #0A1450; font-size: 13px; font-weight: 700; cursor: pointer">Prime +500</button>
+                            </sc-if>
+                            <button type="button" onClick="{{c.toggle}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #F3F5FC; color: #0F1535; font-size: 13px; font-weight: 600; cursor: pointer">{{c.toggleLabel}}</button>
+                          </div>
+                        </sc-if>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <span style="font-size: 12px; color: #4A5275">Un même produit peut être publié par plusieurs leaders, avec un prix ou une qualité différents. Chacun vend uniquement son propre stock. Part vendeur : part e-commerçant pour un Leader Senior, prime téléconseiller (2 000 à 3 500 KMF) pour un Leader Junior.</span>
+          </section>
+
+          <section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Ce que voit chaque équipe</h2>
+            <sc-if value="{{hasViewBtns}}" hint-placeholder-val="{{true}}">
+              <div role="group" aria-label="Choisir l'équipe" style="display: flex; flex-wrap: wrap; gap: 6px">
+                <sc-for list="{{viewBtns}}" as="v" hint-placeholder-count="3">
+                  <sc-if value="{{v.active}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{v.go}}" style="min-height: 40px; padding: 8px 12px; border: 0; border-radius: 999px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">{{v.label}}</button></sc-if>
+                  <sc-if value="{{v.idle}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{v.go}}" style="min-height: 40px; padding: 8px 12px; border: 1px solid #C9D2F5; border-radius: 999px; background: #FFFFFF; color: #0F1535; font-size: 13px; font-weight: 500; cursor: pointer">{{v.label}}</button></sc-if>
+                </sc-for>
+              </div>
+            </sc-if>
+            <span style="font-size: 13px; color: #4A5275">Équipe {{seenTeam}} · {{seenN}} produits visibles dans l'application</span>
+            <sc-for list="{{seen}}" as="p" hint-placeholder-count="3">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px">
+                <div style="display: flex; flex-direction: column; min-width: 0"><strong style="font-size: 14px">{{p.produit}}</strong><span style="font-size: 12px; color: #4A5275">{{p.qualite}} · {{p.prixTxt}}</span></div>
+                <sc-if value="{{p.ok}}" hint-placeholder-val="{{true}}"><span style="font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D; padding: 4px 10px; border-radius: 999px; white-space: nowrap">{{p.dispoTxt}}</span></sc-if>
+                <sc-if value="{{p.ko}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; font-weight: 600; background: #FDE2E2; color: #991B1B; padding: 4px 10px; border-radius: 999px; white-space: nowrap">{{p.dispoTxt}}</span></sc-if>
+              </div>
+            </sc-for>
+            <span style="font-size: 12px; color: #4A5275; background: #F3F5FC; border-radius: 12px; padding: 10px 12px">{{hiddenN}} produits publiés par d'autres leaders sont masqués pour cette équipe.</span>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.reseau}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <sc-if value="{{canAddSeller}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end">
+            <button type="button" onClick="{{act.leader}}" style="min-height: 44px; padding: 10px 16px; border: 1px solid #0B2FE0; border-radius: 12px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer">+ Nouveau leader</button>
+            <button type="button" onClick="{{act.seller}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Nouvel e-commerçant</button>
+          </div>
+        </sc-if>
+        <sc-for list="{{teams}}" as="tm" hint-placeholder-count="2">
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <span style="width: 44px; height: 44px; border-radius: 999px; background: #FFA500; color: #0A1450; font-weight: 800; display: flex; align-items: center; justify-content: center">{{tm.init}}</span>
+                <div style="display: flex; flex-direction: column"><strong style="font-size: 16px">Leader {{tm.nom}}</strong><span style="font-size: 12px; color: #4A5275">{{tm.ileNom}} · {{tm.nb}} e-commerçants · {{tm.ventes}} ventes ce cycle</span></div>
+              </div>
+              <span style="font-size: 13px; font-weight: 700; color: #0B2FE0">CA équipe : {{tm.caTxt}}</span>
+            </div>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead><tr>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">E-commerçant</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Quantités attribuées</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Vendues</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Restantes</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Actions</span></th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{tm.membres}}" as="m" hint-placeholder-count="3">
+                    <tr>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{m.nom}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{m.attr}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{m.ventes}}</td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8">{{m.reste}}</td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end">
+                          <sc-if value="{{canAttrib}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{m.plus}}" style="min-height: 36px; padding: 6px 12px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">Attribuer +5</button></sc-if>
+                          <sc-if value="{{canAddSeller}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{act.reaffect}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #F3F5FC; color: #0F1535; font-size: 13px; font-weight: 600; cursor: pointer">Réaffecter</button></sc-if>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </sc-for>
+        <span style="font-size: 12px; color: #4A5275">Les leaders n'ont pas de stock physique : les quantités attribuées sont réservées dans le stock du site de l'île. Chaque réaffectation est historisée.</span>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.regl}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 14px; padding: 12px 16px; font-size: 13px">
+          <strong>Circuit :</strong>
+          <span style="padding: 3px 10px; border-radius: 999px; background: #FFF0D1; color: #7A4100; font-weight: 600">À vérifier</span><span aria-hidden="true">→</span>
+          <span>Comptable vérifie</span><span aria-hidden="true">→</span>
+          <span>Responsable financier valide</span><span aria-hidden="true">→</span>
+          <span>Caissier paie et joint la preuve</span><span aria-hidden="true">→</span>
+          <span style="padding: 3px 10px; border-radius: 999px; background: #DDF5E5; color: #14532D; font-weight: 600">Payé</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <section style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700">Cycle du 22 octobre au 4 novembre 2026</h2>
+              <span style="font-size: 13px; color: #4A5275">Net par vente validée × nombre de ventes − 2 semaines d'abonnement (20 000 KMF)</span>
+            </div>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse">
+                <thead><tr>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">E-commerçant</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Île</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Ventes</th>
+                  <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Net à payer (KMF)</th>
+                  <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{pays}}" as="p" hint-placeholder-count="5">
+                    <tr>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{p.selected}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{p.pick}}" style="min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer">{{p.nom}}</button></sc-if>
+                        <sc-if value="{{p.notSelected}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{p.pick}}" style="min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline">{{p.nom}}</button></sc-if>
+                      </td>
+                      <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.ileNom}}</td>
+                      <td style="padding: 12px; font-size: 14px; text-align: right; border-bottom: 1px solid #EEF1F8">{{p.ventes}}</td>
+                      <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{p.netTxt}}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{p.tO}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">{{p.statut}}</span></sc-if>
+                        <sc-if value="{{p.tB}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E6EBFF; color: #0A23B8">{{p.statut}}</span></sc-if>
+                        <sc-if value="{{p.tG}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">{{p.statut}}</span></sc-if>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <sc-if value="{{hasRel}}" hint-placeholder-val="{{true}}">
+            <section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+              <span style="font-size: 12px; font-weight: 600; color: #0B2FE0">RELEVÉ INDIVIDUEL</span>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 700">{{rel.nom}}</h2>
+              <span style="font-size: 13px; color: #4A5275">{{rel.ventes}} ventes livrées, acceptées et encaissées</span>
+              <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Commissions brutes</span><span>{{rel.brut}}</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Taxes e-commerçant</span><span>− {{rel.taxes}}</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Abonnement (2 semaines)</span><span>− 20 000 KMF</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5275"><span>Autres retenues</span><span>0 KMF</span></div>
+              <div style="height: 1px; background: #E1E5F2"></div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 15px; font-weight: 600">Net à payer</span><span style="font-size: 24px; font-weight: 800; color: #0B2FE0">{{rel.net}}</span></div>
+              <sc-if value="{{rel.canVerify}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{rel.verify}}" style="min-height: 48px; padding: 12px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer">Marquer comme vérifié</button></sc-if>
+              <sc-if value="{{rel.canValidate}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{rel.validate}}" style="min-height: 48px; padding: 12px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer">Valider le règlement</button></sc-if>
+              <sc-if value="{{rel.canPay}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{rel.pay}}" style="min-height: 48px; padding: 12px 16px; border: 0; border-radius: 12px; background: #FFA500; color: #0A1450; font-size: 15px; font-weight: 700; cursor: pointer">Enregistrer le paiement et la preuve</button></sc-if>
+              <sc-if value="{{rel.isPaid}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; font-weight: 600; color: #14532D; background: #DDF5E5; padding: 12px; border-radius: 12px; text-align: center">Règlement payé et archivé</span></sc-if>
+              <sc-if value="{{rel.waiting}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #0A23B8; background: #E6EBFF; padding: 12px; border-radius: 12px">{{rel.waitMsg}}</span></sc-if>
+            </section>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.caisse}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+          <sc-for list="{{caisses}}" as="cs" hint-placeholder-count="3">
+            <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 13px; color: #4A5275">Caisse {{cs.site}}</span>
+              <span style="font-size: 26px; font-weight: 800">{{cs.soldeTxt}}</span>
+              <span style="font-size: 12px; color: #4A5275">Ouverture {{cs.ouvTxt}} · {{cs.etat}}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{showBank}}" hint-placeholder-val="{{false}}">
+            <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #DCE3FF">Solde bancaire</span><span style="font-size: 26px; font-weight: 800">2 450 000 KMF</span><span style="font-size: 12px; color: #DCE3FF">Relevé du 4 novembre</span></div>
+          </sc-if>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Mouvements du jour</h2>
+            <sc-if value="{{canCash}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button type="button" onClick="{{cashIn}}" style="min-height: 44px; padding: 10px 16px; border: 1px solid #0B2FE0; border-radius: 12px; background: #FFFFFF; color: #0B2FE0; font-size: 14px; font-weight: 600; cursor: pointer">+ Encaissement</button>
+                <button type="button" onClick="{{cashClose}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #FFA500; color: #0A1450; font-size: 14px; font-weight: 700; cursor: pointer">Clôturer la caisse du jour</button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Heure</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Libellé</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Catégorie</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Site</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Responsable</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Montant (KMF)</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{mouvs}}" as="mv" hint-placeholder-count="6">
+                  <tr>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mv.h}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mv.lib}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mv.cat}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mv.site}}</td>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mv.par}}</td>
+                    <td style="padding: 12px; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{mv.isIn}}" hint-placeholder-val="{{true}}"><span style="font-size: 14px; font-weight: 700; color: #14532D">+ {{mv.mTxt}}</span></sc-if>
+                      <sc-if value="{{mv.isOut}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; font-weight: 700; color: #991B1B">− {{mv.mTxt}}</span></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Chaque opération garde sa date, son montant, sa catégorie, son responsable et sa pièce justificative. À la clôture, le montant compté est comparé au théorique.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.depenses}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Marge après coût et taxes</span><span style="font-size: 24px; font-weight: 800">{{res.marge}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #4A5275">Charges validées</span><span style="font-size: 24px; font-weight: 800; color: #991B1B">− {{res.charges}}</span></div>
+          <div style="background: #0B2FE0; color: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #DCE3FF">Résultat net du cycle</span><span style="font-size: 24px; font-weight: 800">{{res.net}}</span></div>
+          <div style="background: #FFF0D1; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: #7A4100">En attente de validation</span><span style="font-size: 24px; font-weight: 800; color: #7A4100">{{res.attente}}</span></div>
+        </div>
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Dépenses opérationnelles</h2>
+            <sc-if value="{{canExpAdd}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{addExp}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Saisir une dépense</button></sc-if>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Date</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Catégorie</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Libellé</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Île</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Saisie par</th>
+                <th style="text-align: right; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Montant (KMF)</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{exps}}" as="e" hint-placeholder-count="5">
+                  <tr>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.date}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.cat}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.lib}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.ileNom}}</td>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.par}}</td>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 700; text-align: right; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{e.mTxt}}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                      <sc-if value="{{e.ok}}" hint-placeholder-val="{{true}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">Validée</span></sc-if>
+                      <sc-if value="{{e.pendRo}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #FFF0D1; color: #7A4100">À valider</span></sc-if>
+                      <sc-if value="{{e.pendCan}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{e.validate}}" style="min-height: 36px; padding: 6px 12px; border: 0; border-radius: 10px; background: #FFA500; color: #0A1450; font-size: 13px; font-weight: 700; cursor: pointer">Valider</button></sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Résultat net = marge après coût et taxes − charges opérationnelles validées. Une dépense validée ne se modifie plus, elle se corrige par une écriture justifiée.</span>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.rapports}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <sc-if value="{{showIleChart}}" hint-placeholder-val="{{true}}">
+          <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Chiffre d'affaires du cycle par île</h2>
+            <sc-for list="{{ileBars}}" as="b" hint-placeholder-count="3">
+              <div style="display: grid; grid-template-columns: 140px minmax(0, 1fr) 130px; gap: 12px; align-items: center">
+                <span style="font-size: 14px; font-weight: 600">{{b.nom}}</span>
+                <div style="height: 18px; background: #F3F5FC; border-radius: 999px; overflow: hidden">
+                  <sc-if value="{{b.w100}}" hint-placeholder-val="{{false}}"><div style="height: 18px; width: 100%; background: #0B2FE0; border-radius: 999px"></div></sc-if>
+                  <sc-if value="{{b.w55}}" hint-placeholder-val="{{false}}"><div style="height: 18px; width: 55%; background: #0B2FE0; border-radius: 999px"></div></sc-if>
+                  <sc-if value="{{b.w27}}" hint-placeholder-val="{{false}}"><div style="height: 18px; width: 27%; background: #0B2FE0; border-radius: 999px"></div></sc-if>
+                </div>
+                <span style="font-size: 14px; font-weight: 700; text-align: right">{{b.caTxt}}</span>
+              </div>
+            </sc-for>
+          </section>
+        </sc-if>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+          <sc-for list="{{reports}}" as="rp" hint-placeholder-count="8">
+            <div style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+              <strong style="font-size: 15px">{{rp.nom}}</strong>
+              <span style="font-size: 12px; color: #4A5275">{{rp.desc}}</span>
+              <div style="display: flex; gap: 8px; margin-top: auto">
+                <button type="button" onClick="{{rp.xls}}" style="flex: 1 1 0; min-height: 40px; border: 1px solid #0B2FE0; border-radius: 10px; background: #FFFFFF; color: #0B2FE0; font-size: 13px; font-weight: 600; cursor: pointer">Excel</button>
+                <button type="button" onClick="{{rp.pdf}}" style="flex: 1 1 0; min-height: 40px; border: 0; border-radius: 10px; background: #0B2FE0; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">PDF</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.users}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 24px">
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700">Matrice des droits d'accès</h2>
+              <span style="font-size: 13px; color: #4A5275">Ce que chaque rôle voit et peut faire, module par module.</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px">
+              <span style="padding: 4px 10px; border-radius: 999px; font-weight: 600; background: #DDF5E5; color: #14532D">Complet = consulter et agir</span>
+              <span style="padding: 4px 10px; border-radius: 999px; font-weight: 600; background: #E6EBFF; color: #0A23B8">Lecture = consulter</span>
+            </div>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Module</th>
+                <sc-for list="{{matrixHead}}" as="mh" hint-placeholder-count="8">
+                  <th style="text-align: center; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 8px; border-bottom: 1px solid #E1E5F2; white-space: nowrap">{{mh.court}}</th>
+                </sc-for>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{matrix}}" as="mr" hint-placeholder-count="12">
+                  <tr>
+                    <td style="padding: 10px 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{mr.mod}}</td>
+                    <sc-for list="{{mr.cells}}" as="ce" hint-placeholder-count="8">
+                      <td style="padding: 8px; text-align: center; border-bottom: 1px solid #EEF1F8; white-space: nowrap">
+                        <sc-if value="{{ce.w}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #DDF5E5; color: #14532D">Complet</span></sc-if>
+                        <sc-if value="{{ce.r}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #E6EBFF; color: #0A23B8">Lecture</span></sc-if>
+                        <sc-if value="{{ce.n}}" hint-placeholder-val="{{true}}"><span style="font-size: 13px; color: #4A5275">—</span></sc-if>
+                      </td>
+                    </sc-for>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size: 12px; color: #4A5275">Les rôles de terrain (caissier, stock, logistique, leader) ne voient que leur île. Le leader ne voit que son équipe. E-commerçants et livreurs utilisent l'application mobile.</span>
+        </section>
+
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Comptes</h2>
+            <button type="button" onClick="{{act.compte}}" style="min-height: 44px; padding: 10px 16px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer">+ Nouveau compte</button>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse">
+              <thead><tr>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Nom</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Rôle</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Périmètre</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Dernière connexion</th>
+                <th style="text-align: left; font-size: 12px; font-weight: 600; color: #4A5275; padding: 10px 12px; border-bottom: 1px solid #E1E5F2">Statut</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{users}}" as="u" hint-placeholder-count="10">
+                  <tr>
+                    <td style="padding: 12px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{u.nom}}</td>
+                    <td style="padding: 12px; font-size: 14px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{u.role}}</td>
+                    <td style="padding: 12px; font-size: 13px; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{u.scope}}</td>
+                    <td style="padding: 12px; font-size: 13px; color: #4A5275; border-bottom: 1px solid #EEF1F8; white-space: nowrap">{{u.last}}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #EEF1F8"><span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #DDF5E5; color: #14532D">Actif</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700">Journal d'activité</h2>
+          <sc-for list="{{journal}}" as="j" hint-placeholder-count="5">
+            <div style="display: flex; gap: 12px; align-items: baseline; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #EEF1F8">
+              <span style="flex: 0 0 auto; width: 96px; font-size: 12px; color: #4A5275">{{j.h}}</span>
+              <span><strong>{{j.qui}}</strong> {{j.quoi}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+
+    
+    <sc-if value="{{is.params}}" hint-placeholder-val="{{false}}">
+      <section style="background: #FFFFFF; border: 1px solid #E1E5F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 20px; max-width: 880px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700">Règles de calcul</h2>
+          <span style="font-size: 13px; color: #4A5275">Chaque changement prend effet à une date choisie et ne modifie jamais les ventes passées.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+          <sc-for list="{{params}}" as="pa" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="{{pa.id}}" style="font-size: 13px; font-weight: 600; color: #4A5275">{{pa.label}}</label>
+              <sc-if value="{{canParams}}" hint-placeholder-val="{{true}}"><input id="{{pa.id}}" type="text" defaultValue="{{pa.v}}" style="height: 48px; padding: 0 14px; border: 1.5px solid #C9D2F5; border-radius: 12px; font-size: 15px; color: #0F1535; box-sizing: border-box"></sc-if>
+              <sc-if value="{{paramsRo}}" hint-placeholder-val="{{false}}"><input id="{{pa.id}}" type="text" defaultValue="{{pa.v}}" disabled style="height: 48px; padding: 0 14px; border: 1.5px solid #E1E5F2; border-radius: 12px; font-size: 15px; color: #4A5275; background: #F3F5FC; box-sizing: border-box"></sc-if>
+              <span style="font-size: 12px; color: #4A5275">{{pa.aide}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{canParams}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{act.params}}" style="align-self: flex-start; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 12px; background: #0B2FE0; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer">Enregistrer à partir du prochain cycle</button>
+        </sc-if>
+      </section>
+    </sc-if>
+
+  </main>
+</div>
+</sc-if>
+</div>
+</script>
+<script>window.DC_LINKS = {"Mobile-Connexion.dc.html": "index.html", "Mobile-Ecommercant.dc.html": "ecommercant.html", "Mobile-Livreur.dc.html": "livreur.html"};</script>
+<script>/* Mini moteur de rendu autonome pour les prototypes Dig'eCom.
+   Lit le gabarit (<template id="tpl">), la classe Component et affiche l'écran.
+   Gère {{chemin}}, <sc-if>, <sc-for>, onClick et la conservation des champs. */
+(function () {
+  "use strict";
+
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; this.state = {}; }
+    setState(patch) {
+      Object.assign(this.state, typeof patch === "function" ? patch(this.state) : patch);
+      schedule();
+    }
+    forceUpdate() { schedule(); }
+  };
+
+  var VOID = /<(input|img|br|hr|meta|link|source)\b([^>]*?)\s*\/?>/gi;
+  var HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+  var WHOLE = /^\{\{\s*([^}]+?)\s*\}\}$/;
+  var tree, comp, root, pending = false;
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === "true") return true;
+    if (path === "false") return false;
+    if (path === "null") return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+    if (/^(["']).*\1$/.test(path)) return path.slice(1, -1);
+    var parts = path.split("."), v;
+    for (var i = scope.length - 1; i >= 0; i--) {
+      if (scope[i] && Object.prototype.hasOwnProperty.call(scope[i], parts[0])) { v = scope[i][parts[0]]; break; }
+    }
+    for (var j = 1; j < parts.length && v != null; j++) v = v[parts[j]];
+    return v;
+  }
+
+  function interp(str, scope) {
+    return str.replace(HOLE, function (_, p) { var v = lookup(p, scope); return v == null ? "" : String(v); });
+  }
+
+  function renderChildren(node, scope, parent) {
+    for (var c = node.firstChild; c; c = c.nextSibling) renderNode(c, scope, parent);
+  }
+
+  function renderNode(node, scope, parent) {
+    if (node.nodeType === 3) { parent.appendChild(document.createTextNode(interp(node.nodeValue, scope))); return; }
+    if (node.nodeType !== 1) return;
+    var tag = node.localName;
+    if (tag === "sc-if") {
+      var m = (node.getAttribute("value") || "").match(WHOLE);
+      if (m ? lookup(m[1], scope) : false) renderChildren(node, scope, parent);
+      return;
+    }
+    if (tag === "sc-for") {
+      var lm = (node.getAttribute("list") || "").match(WHOLE);
+      var list = lm ? lookup(lm[1], scope) : [];
+      var as = node.getAttribute("as") || "item";
+      (list || []).forEach(function (item, i) {
+        var frame = { $index: i }; frame[as] = item;
+        renderChildren(node, scope.concat([frame]), parent);
+      });
+      return;
+    }
+    var el = document.createElement(tag);
+    for (var a = 0; a < node.attributes.length; a++) {
+      var name = node.attributes[a].name, raw = node.attributes[a].value;
+      if (name.indexOf("hint-") === 0) continue;
+      var wm = raw.match(WHOLE);
+      var val = wm ? lookup(wm[1], scope) : (raw.indexOf("{{") >= 0 ? interp(raw, scope) : raw);
+      if (/^on[A-Z]/.test(name) || /^on[a-z]+$/.test(name) && typeof val === "function") {
+        if (typeof val === "function") el.addEventListener(name.slice(2).toLowerCase(), val);
+        continue;
+      }
+      if (name === "defaultValue" || name === "defaultvalue" || (name === "value" && (tag === "input" || tag === "textarea"))) { el.value = val == null ? "" : String(val); continue; }
+      if (name === "className") name = "class";
+      if (name === "htmlFor") name = "for";
+      if (val === false || val == null) continue;
+      if (name === "href" && typeof val === "string") val = (window.DC_LINKS && window.DC_LINKS[val]) || val;
+      el.setAttribute(name, val === true ? "" : String(val));
+    }
+    renderChildren(node, scope, el);
+    parent.appendChild(el);
+  }
+
+  function snapshot() {
+    var all = root.querySelectorAll("*"), scroll = [], fields = {};
+    for (var i = 0; i < all.length; i++) if (all[i].scrollTop) scroll.push([i, all[i].scrollTop]);
+    root.querySelectorAll("input[id],textarea[id]").forEach(function (f) { fields[f.id] = f.value; });
+    return { scroll: scroll, fields: fields };
+  }
+  function restore(snap) {
+    var all = root.querySelectorAll("*");
+    snap.scroll.forEach(function (p) { if (all[p[0]]) all[p[0]].scrollTop = p[1]; });
+    Object.keys(snap.fields).forEach(function (id) { var f = document.getElementById(id); if (f && !f.disabled) f.value = snap.fields[id]; });
+  }
+
+  function render() {
+    pending = false;
+    var snap = root.firstChild ? snapshot() : null;
+    var vals = comp.renderVals() || {};
+    var frag = document.createDocumentFragment();
+    renderChildren(tree, [vals], frag);
+    root.replaceChildren(frag);
+    if (snap) restore(snap);
+  }
+  function schedule() { if (!pending) { pending = true; Promise.resolve().then(render); } }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    root = document.getElementById("app");
+    var src = document.getElementById("tpl").textContent.replace(VOID, "<$1$2/>")
+      .replace(/\s(disabled|checked|selected|readonly|required|hidden)(?=[\s\/>])/g, ' $1="$1"');
+    var doc = new DOMParser().parseFromString("<root>" + src + "</root>", "application/xml");
+    var err = doc.getElementsByTagName("parsererror")[0];
+    if (err) { root.textContent = "Erreur de gabarit : " + err.textContent; return; }
+    tree = doc.documentElement;
+    comp = new window.Component({});
+    render();
+  });
+})();
+</script>
+<script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      role: "", page: "dash", ile: "all", sel: "1046", selPay: "", toast: "",
+      orders: this.seedOrders(),
+      pay: { fatima: "verif", mouhidine: "verifie", anrifa: "valide", zainaba: "valide", ibrahim: "paye" },
+      lots: [
+        { id: "LOT-014", fournisseur: "Shenzhen Audio Co.", produit: "Écouteurs sans fil", q: 500, achat: 125000, exp: 250000, douane: 0, ile: "GC", st: 6 },
+        { id: "LOT-015", fournisseur: "Guangzhou Smart Watch", produit: "Montre connectée", q: 200, achat: 240000, exp: 150000, douane: 30000, ile: "AN", st: 4 },
+        { id: "LOT-016", fournisseur: "Yiwu Solar Light", produit: "Lampe solaire", q: 300, achat: 120000, exp: 120000, douane: 30000, ile: "MO", st: 2 },
+        { id: "LOT-017", fournisseur: "Ningbo Home Fan", produit: "Ventilateur rechargeable", q: 150, achat: 180000, exp: 75000, douane: 15000, ile: "GC", st: 1 }
+      ],
+      attr: { fatima: 20, mouhidine: 15, hassane: 10, nadia: 10, anrifa: 25, ibrahim: 20, soilha: 12, zainaba: 10, rachida: 10 },
+      exps: [
+        { id: 1, date: "31/10", cat: "Salaires", lib: "Salaires équipe d'octobre", ile: "GC", par: "Hadidja Ahmed", m: 450000, ok: true },
+        { id: 2, date: "01/11", cat: "Loyer", lib: "Loyer entrepôt Moroni", ile: "GC", par: "Hadidja Ahmed", m: 150000, ok: true },
+        { id: 3, date: "03/11", cat: "Publicité", lib: "Campagne Facebook novembre", ile: "GC", par: "Abdallah Saïd", m: 60000, ok: false },
+        { id: 4, date: "04/11", cat: "Livraison", lib: "Carburant livreurs Anjouan", ile: "AN", par: "Hadidja Ahmed", m: 25000, ok: false },
+        { id: 5, date: "04/11", cat: "Frais bancaires", lib: "Frais de tenue de compte", ile: "GC", par: "Hadidja Ahmed", m: 4500, ok: true },
+        { id: 6, date: "05/11", cat: "Loyer", lib: "Loyer boutique Fomboni", ile: "MO", par: "Hadidja Ahmed", m: 45000, ok: true }
+      ],
+      cashExtra: [], closed: {}, viewTeam: "",
+      cat: [
+        { id: "c1", leader: "Ali Mohamed", ile: "GC", produit: "Écouteurs sans fil", qualite: "Standard", prix: 12500, part: 7500, stock: 3, vendu: 10, pub: true },
+        { id: "c2", leader: "Ali Mohamed", ile: "GC", produit: "Sac à main", qualite: "Cuir synthétique", prix: 14000, part: 8400, stock: 12, vendu: 4, pub: true },
+        { id: "c3", leader: "Ali Mohamed", ile: "GC", produit: "Ventilateur rechargeable", qualite: "Standard", prix: 15000, part: 9000, stock: 0, vendu: 7, pub: true },
+        { id: "c4", leader: "Nassur Ahmed", ile: "AN", produit: "Écouteurs sans fil", qualite: "Premium", prix: 15000, part: 9000, stock: 5, vendu: 6, pub: true },
+        { id: "c5", leader: "Nassur Ahmed", ile: "AN", produit: "Montre connectée", qualite: "Standard", prix: 18000, part: 10800, stock: 9, vendu: 12, pub: true },
+        { id: "c6", leader: "Moinaecha Ali", ile: "MO", produit: "Lampe solaire", qualite: "Standard", prix: 9500, part: 5700, stock: 14, vendu: 3, pub: true },
+        { id: "c7", leader: "Moinaecha Ali", ile: "MO", produit: "Écouteurs sans fil", qualite: "Standard", prix: 12500, part: 7500, stock: 2, vendu: 1, pub: false },
+        { id: "c8", leader: "Rachad Ibrahim", ile: "GC", produit: "Montre connectée Sport", qualite: "Sport", prix: 17000, part: 3000, stock: 18, vendu: 12, pub: true },
+        { id: "c9", leader: "Rachad Ibrahim", ile: "GC", produit: "Blender portable", qualite: "Standard", prix: 13500, part: 2500, stock: 6, vendu: 7, pub: true },
+        { id: "c10", leader: "Kamaria Said", ile: "AN", produit: "Lisseur à cheveux", qualite: "Standard", prix: 11000, part: 2000, stock: 10, vendu: 8, pub: true }
+      ],
+      camps: [
+        { id: "CP-07", leader: "Rachad Ibrahim", ile: "GC", nom: "Montre Sport – Novembre", produit: "Montre connectée Sport", canal: "Facebook", budget: 75000, debut: "01/11", fin: "15/11", contacts: 64, conf: 15, vendues: 12, actif: true },
+        { id: "CP-06", leader: "Rachad Ibrahim", ile: "GC", nom: "Blender – Octobre", produit: "Blender portable", canal: "TikTok", budget: 40000, debut: "20/10", fin: "31/10", contacts: 38, conf: 9, vendues: 7, actif: false },
+        { id: "CP-05", leader: "Kamaria Said", ile: "AN", nom: "Lisseur – Novembre", produit: "Lisseur à cheveux", canal: "Facebook", budget: 50000, debut: "28/10", fin: "10/11", contacts: 41, conf: 11, vendues: 8, actif: true }
+      ],
+      prosp: [
+        { id: "p1", nom: "Mariam Abdou", tel: "+269 331 20 45", camp: "CP-07", tci: "Anlia Hassani", st: "new", heure: "07/11 17:40" },
+        { id: "p2", nom: "Youssouf Mmadi", tel: "+269 342 88 10", camp: "CP-07", tci: "Anlia Hassani", st: "new", heure: "07/11 17:22" },
+        { id: "p3", nom: "Zalifa Ahmed", tel: "+269 337 61 92", camp: "CP-07", tci: "Anlia Hassani", st: "inj", heure: "07/11 16:05" },
+        { id: "p4", nom: "Hamidou Said", tel: "+269 345 03 77", camp: "CP-06", tci: "Anlia Hassani", st: "conf", heure: "07/11 15:30" },
+        { id: "p5", nom: "Nourou Moussa", tel: "+269 330 14 58", camp: "CP-07", tci: "Faïza Mohamed", st: "new", heure: "07/11 17:50" },
+        { id: "p6", nom: "Echati Ali", tel: "+269 348 29 66", camp: "CP-07", tci: "Anlia Hassani", st: "non", heure: "07/11 14:12" },
+        { id: "p7", nom: "Soifiat Hamza", tel: "+269 339 72 04", camp: "CP-05", tci: "Bacar Toybou", st: "new", heure: "07/11 17:05" }
+      ],
+      nextOrder: 1049, vWeek: "w45"
+    };
+  }
+  seedOrders() {
+    return [
+      { id: "1048", date: "05/11 18:42", ecom: "Fatima Said", leader: "Ali Mohamed", produit: "Écouteurs sans fil", prix: 12500, client: "Hadja Mmadi", tel: "+269 332 14 87", mode: "client", ile: "GC", step: 0, fail: "", livreur: "" },
+      { id: "1040", date: "05/11 17:30", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Montre connectée Sport", prix: 17000, client: "Hamidou Said", tel: "+269 345 03 77", mode: "client", ile: "GC", step: 3, fail: "", livreur: "Youssouf Ali", prime: 3000 },
+      { id: "1039", date: "06/11 16:20", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Montre connectée Sport", prix: 17000, client: "Moina Ali", tel: "+269 332 70 41", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Karim Bacar", prime: 3000 },
+      { id: "1038", date: "06/11 11:05", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Blender portable", prix: 13500, client: "Saïd Youssouf", tel: "+269 343 18 92", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Youssouf Ali", prime: 2500 },
+      { id: "1037", date: "05/11 15:40", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Montre connectée Sport", prix: 17000, client: "Fatouma Hamada", tel: "+269 336 52 07", mode: "client", ile: "GC", step: 4, fail: "", livreur: "Karim Bacar", prime: 3000 },
+      { id: "1035", date: "04/11 10:10", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Montre connectée Sport", prix: 17000, client: "Ali Saïd", tel: "+269 331 47 85", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Youssouf Ali", prime: 3000 },
+      { id: "1034", date: "03/11 14:30", ecom: "Faïza Mohamed (TCI)", leader: "Rachad Ibrahim", produit: "Blender portable", prix: 13500, client: "Mze Abdou", tel: "+269 340 25 61", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Karim Bacar", prime: 2500 },
+      { id: "1033", date: "04/11 09:15", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Blender portable", prix: 13500, client: "Naïma Ahmed", tel: "+269 347 66 30", mode: "client", ile: "GC", step: 4, fail: "Refusée par le client", livreur: "Youssouf Ali", prime: 2500 },
+      { id: "1032", date: "05/11 10:00", ecom: "Bacar Toybou (TCI)", leader: "Kamaria Said", produit: "Lisseur à cheveux", prix: 11000, client: "Amina Djae", tel: "+269 339 11 48", mode: "client", ile: "AN", step: 5, fail: "", livreur: "Djamal Said", prime: 2000 },
+      { id: "1031", date: "30/10 17:00", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Montre connectée Sport", prix: 17000, client: "Daoud Ali", tel: "+269 334 80 12", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Karim Bacar", prime: 3000 },
+      { id: "1030", date: "29/10 12:00", ecom: "Anlia Hassani (TCI)", leader: "Rachad Ibrahim", produit: "Blender portable", prix: 13500, client: "Hadidja Said", tel: "+269 342 37 59", mode: "client", ile: "GC", step: 5, fail: "", livreur: "Youssouf Ali", prime: 2500 },
+      { id: "1047", date: "05/11 17:15", ecom: "Anrifa Soilihi", leader: "Nassur Ahmed", produit: "Montre connectée", prix: 18000, client: "Said Abdallah", tel: "+269 347 02 11", mode: "retrait", ile: "AN", step: 2, fail: "", livreur: "" },
+      { id: "1046", date: "05/11 16:03", ecom: "Mouhidine Youssouf", leader: "Ali Mohamed", produit: "Ventilateur rechargeable", prix: 15000, client: "Nadjma Hassani", tel: "+269 321 55 60", mode: "ecom", ile: "GC", step: 3, fail: "", livreur: "Karim Bacar" },
+      { id: "1045", date: "05/11 15:20", ecom: "Zainaba Ibrahim", leader: "Moinaecha Ali", produit: "Lampe solaire", prix: 9500, client: "Ahmed Toiwilou", tel: "+269 338 90 12", mode: "client", ile: "MO", step: 2, fail: "", livreur: "" },
+      { id: "1044", date: "05/11 11:48", ecom: "Fatima Said", leader: "Ali Mohamed", produit: "Sac à main", prix: 14000, client: "Rahma Youssouf", tel: "+269 344 71 29", mode: "ecom", ile: "GC", step: 4, fail: "", livreur: "Karim Bacar" },
+      { id: "1043", date: "04/11 17:30", ecom: "Ibrahim Houmadi", leader: "Nassur Ahmed", produit: "Montre connectée", prix: 18000, client: "Faouzia Ali", tel: "+269 329 18 40", mode: "ecom", ile: "AN", step: 5, fail: "", livreur: "Djamal Said" },
+      { id: "1042", date: "04/11 14:05", ecom: "Zainaba Ibrahim", leader: "Moinaecha Ali", produit: "Écouteurs sans fil", prix: 12500, client: "Housna Madi", tel: "+269 336 47 03", mode: "retrait", ile: "MO", step: 4, fail: "Refusée par le client", livreur: "" },
+      { id: "1041", date: "04/11 10:22", ecom: "Hassane Daoud", leader: "Ali Mohamed", produit: "Lampe solaire", prix: 9500, client: "Kamal Abdou", tel: "+269 340 66 15", mode: "client", ile: "GC", step: 3, fail: "Livraison échouée", livreur: "Karim Bacar" }
+    ];
+  }
+  cfg() {
+    const MODS = [["dash", "Tableau de bord"], ["cmd", "Commandes"], ["livr", "Livraisons"], ["stock", "Stock"], ["achats", "Achats Chine"], ["reseau", "Réseau commercial"], ["catalogue", "Catalogues leaders"], ["campagnes", "Campagnes"], ["prospects", "Prospects"], ["ventes", "Ventes téléconseillers"], ["regl", "Règlements"], ["caisse", "Caisse"], ["depenses", "Dépenses"], ["rapports", "Rapports"], ["users", "Utilisateurs et droits"], ["params", "Paramètres"]];
+    const ROLES = [
+      { k: "admin", nom: "Administrateur général", court: "Admin", personne: "Direction Dig'eCom", ile: "all", desc: "Accès complet à toute la plateforme" },
+      { k: "finance", nom: "Responsable financier", court: "Finance", personne: "Soifia Mohamed", ile: "all", desc: "Valide les règlements et les dépenses" },
+      { k: "comptable", nom: "Comptable", court: "Comptable", personne: "Abdallah Saïd", ile: "all", desc: "Contrôle, vérifie les relevés, rapports" },
+      { k: "asscompta", nom: "Assistant comptable", court: "Ass. compta", personne: "Hadidja Ahmed", ile: "all", desc: "Saisit dépenses, recettes et paiements" },
+      { k: "caissier", nom: "Caissier", court: "Caissier", personne: "Mariama Combo", ile: "MO", desc: "Encaisse, paie les règlements validés" },
+      { k: "stock", nom: "Gestionnaire de stock", court: "Stock", personne: "Nourdine Assoumani", ile: "AN", desc: "Stock, inventaires et arrivages" },
+      { k: "logistique", nom: "Assistant logistique", court: "Logistique", personne: "Toiwilou Hamada", ile: "GC", desc: "Prépare les commandes, gère les livraisons" },
+      { k: "leader", nom: "Leader Senior", court: "Leader S.", personne: "Ali Mohamed", ile: "GC", desc: "Fournit ses produits à ses e-commerçants" },
+      { k: "leaderj", nom: "Leader Junior", court: "Leader J.", personne: "Rachad Ibrahim", ile: "GC", desc: "Lance les campagnes, ses téléconseillers vendent" },
+      { k: "tci", nom: "Téléconseiller", court: "TCI", personne: "Anlia Hassani", ile: "GC", desc: "Appelle les prospects et confirme les ventes" }
+    ];
+    const ALLW = {}; MODS.forEach(([m]) => { ALLW[m] = "w"; });
+    const PERM = {
+      admin: ALLW,
+      finance: { dash: "r", cmd: "r", livr: "r", stock: "r", achats: "r", reseau: "r", catalogue: "r", campagnes: "r", ventes: "r", regl: "w", caisse: "r", depenses: "w", rapports: "w", params: "r" },
+      comptable: { dash: "r", cmd: "r", stock: "r", achats: "r", catalogue: "r", campagnes: "r", ventes: "r", regl: "w", caisse: "r", depenses: "w", rapports: "w" },
+      asscompta: { dash: "r", regl: "r", caisse: "w", depenses: "w" },
+      caissier: { dash: "r", regl: "w", caisse: "w" },
+      stock: { dash: "r", cmd: "r", livr: "r", stock: "w", achats: "w", catalogue: "r" },
+      logistique: { dash: "r", cmd: "w", livr: "w", stock: "r", catalogue: "r" },
+      leader: { dash: "r", cmd: "r", catalogue: "w", reseau: "w", rapports: "r" },
+      leaderj: { dash: "r", cmd: "r", catalogue: "w", campagnes: "w", prospects: "r", ventes: "r", rapports: "r" },
+      tci: { dash: "r", prospects: "w", ventes: "w" }
+    };
+    return { MODS, ROLES, PERM };
+  }
+  num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  kmf(n) { return (n < 0 ? "− " : "") + this.num(Math.abs(n)) + " KMF"; }
+  status(o) {
+    if (o.fail) return o.fail;
+    if (o.step === 0) return "Nouvelle";
+    if (o.step === 1) return "En préparation";
+    if (o.step === 2) return o.mode === "retrait" ? "Prête au retrait" : "En attente d’un livreur";
+    if (o.step === 3) return "En livraison";
+    if (o.step === 4) return "Remise faite";
+    return "Vendue";
+  }
+  tone(o) {
+    if (o.fail) return o.fail === "Retournée au stock" ? "O" : "R";
+    return ["B", "O", "O", "B", "G", "G"][o.step];
+  }
+  decorate(o) {
+    const ILES = { GC: "Grande Comore", AN: "Anjouan", MO: "Mohéli" };
+    const MODES = { client: "Livraison au client", ecom: "Livraison e-commerçant", retrait: "Retrait au site" };
+    const t = this.tone(o);
+    return Object.assign({}, o, {
+      status: this.status(o), ileNom: ILES[o.ile], modeNom: MODES[o.mode], prixTxt: this.num(o.prix),
+      tB: t === "B", tO: t === "O", tG: t === "G", tR: t === "R",
+      livreurTxt: o.livreur || (o.mode === "retrait" ? "Retrait par l’e-commerçant" : "Pas encore affecté")
+    });
+  }
+  update(id, fn) {
+    this.setState({ orders: this.state.orders.map((o) => (o.id === id ? fn(Object.assign({}, o)) : o)) });
+  }
+  next(o) {
+    const LIV = { GC: "Youssouf Ali", AN: "Djamal Said", MO: "Fahardine Ali" };
+    if (o.step === 2 && o.mode === "retrait") { o.step = 4; return o; }
+    if (o.step === 2) o.livreur = LIV[o.ile];
+    o.step = Math.min(5, o.step + 1);
+    return o;
+  }
+  renderVals() {
+    const s = this.state;
+    const { MODS, ROLES, PERM } = this.cfg();
+    const ILES = { GC: "Grande Comore", AN: "Anjouan", MO: "Mohéli" };
+    const say = (t) => this.setState({ toast: t });
+
+    const roleCards = ROLES.map((r) => ({
+      nom: r.nom, personne: r.personne, desc: r.desc,
+      scope: r.k === "leader" || r.k === "leaderj" ? "Son équipe" : r.k === "tci" ? "Ses prospects" : r.ile === "all" ? "Toutes les îles" : ILES[r.ile],
+      nbMods: Object.keys(PERM[r.k]).length,
+      login: () => this.setState({ role: r.k, page: "dash", ile: r.ile === "all" ? "all" : r.ile, toast: "", selPay: "", vWeek: "w45" })
+    }));
+    const empty = { notLogged: true, logged: false, roleCards };
+    if (!s.role) return Object.assign(this.blank(), empty);
+
+    const R = ROLES.find((r) => r.k === s.role);
+    const P = PERM[s.role];
+    const can = (m) => P[m] === "w";
+    const page = P[s.page] ? s.page : "dash";
+    const locked = R.ile !== "all";
+    const ile = locked ? R.ile : s.ile;
+    const inIle = (x) => ile === "all" || x.ile === ile;
+    const isLeader = s.role === "leader" || s.role === "leaderj";
+    const isJunior = s.role === "leaderj", isTci = s.role === "tci";
+    const MYLEADER = isTci ? "Rachad Ibrahim" : R.personne;
+    const inScope = (o) => inIle(o) && (!isLeader || o.leader === R.personne);
+    const isAdmin = s.role === "admin";
+
+    const navLabel = (k, l) => (k === "catalogue" && isLeader ? "Mon catalogue" : k === "ventes" && isTci ? "Mes ventes et gains" : k === "ventes" && isJunior ? "Ventes de l’équipe" : l);
+    const nav = MODS.filter(([k]) => P[k]).map(([k, label]) => ({
+      label: navLabel(k, label), active: page === k, idle: page !== k, ro: P[k] === "r",
+      go: () => this.setState({ page: k, toast: "" })
+    }));
+    const iles = [["all", "Toutes les îles"], ["GC", "Grande Comore"], ["AN", "Anjouan"], ["MO", "Mohéli"]].map(([k, label]) => ({ label, active: ile === k, idle: ile !== k, go: () => this.setState({ ile: k }) }));
+    const SUB = {
+      dash: "Vue d’ensemble adaptée à ton rôle", cmd: "Suivi de chaque vente, de l’enregistrement au client",
+      livr: "Courses notifiées aux livreurs de chaque île", stock: "Quantités par site et par île",
+      achats: "Commandes fournisseurs et coût réel des lots", reseau: "Leaders, e-commerçants et quantités attribuées",
+      catalogue: "Produits publiés par chaque leader, visibles seulement par son équipe",
+      campagnes: "Campagnes publicitaires des Leaders Junior",
+      prospects: "Contacts reçus par les campagnes, à appeler par les téléconseillers",
+      ventes: "Ventes clôturées et gains calculés automatiquement avec la prime de chaque produit",
+      regl: "Relevés des e-commerçants tous les 14 jours", caisse: "Entrées et sorties d’argent par site",
+      depenses: "Charges opérationnelles et résultat net", rapports: "Rapports exportables en Excel et PDF",
+      users: "Comptes, rôles, droits et journal", params: "Taxes, parts, abonnements et délais"
+    };
+
+    // ---------- commandes ----------
+    const all = s.orders.map((o) => this.decorate(o));
+    const orders = all.filter(inScope).map((o) => Object.assign({}, o, { selected: o.id === s.sel, notSelected: o.id !== s.sel, pick: () => this.setState({ sel: o.id }) }));
+    const waiting = orders.filter((o) => o.step === 2 && o.mode !== "retrait" && !o.fail);
+    const so = orders.find((o) => o.id === s.sel) || orders[0];
+    const NEXT = ["Confirmer et préparer", "Marquer prête", "", "Confirmer la remise", "Client a pris le produit"];
+    let sel = { id: "", produit: "", prixTxt: "", modeNom: "", ileNom: "", ecom: "", leader: "", client: "", tel: "", livreurTxt: "", status: "", canNext: false, canRefuse: false, canReturn: false, nextLabel: "", lockedMsg: false };
+    let timeline = [];
+    if (so) {
+      const w = can("cmd");
+      sel = Object.assign({}, so, {
+        canNext: w && !so.fail && so.step < 5,
+        nextLabel: so.step === 2 ? (so.mode === "retrait" ? "Confirmer le retrait au site" : "Affecter un livreur de l’île") : NEXT[so.step],
+        canRefuse: w && !so.fail && so.step === 4,
+        canReturn: w && !!so.fail && so.fail !== "Retournée au stock",
+        lockedMsg: !w
+      });
+      const labels = ["Vente enregistrée", "Préparation au site", "Prête", so.mode === "retrait" ? "Retrait par l’e-commerçant" : "Livreur en route", "Remise confirmée", "Client a pris le produit"];
+      timeline = labels.map((label, i) => { const d = i <= so.step && !(so.fail && i === 5); return { label, done: d, todo: !d }; });
+      if (so.fail) timeline.push({ label: so.fail, done: true, todo: false });
+    }
+    const selId = so ? so.id : "";
+
+    // ---------- livraisons ----------
+    const mk = (list) => list.map((o) => Object.assign({}, o, { assign: () => this.update(o.id, (x) => this.next(x)) }));
+    const cAtt = mk(waiting), cCours = orders.filter((o) => o.step === 3 && !o.fail), cRet = orders.filter((o) => o.step === 2 && o.mode === "retrait" && !o.fail), cInc = orders.filter((o) => !!o.fail);
+    const col = {
+      attente: cAtt, attenteN: cAtt.length, attenteVide: !cAtt.length, cours: cCours, coursN: cCours.length, coursVide: !cCours.length,
+      retrait: cRet, retraitN: cRet.length, retraitVide: !cRet.length, inc: cInc, incN: cInc.length, incVide: !cInc.length
+    };
+    const busy = all.filter((o) => o.step === 3 && !o.fail).map((o) => o.livreur);
+    const livreurs = [{ nom: "Karim Bacar", ile: "GC", courses: 21 }, { nom: "Youssouf Ali", ile: "GC", courses: 17 }, { nom: "Djamal Said", ile: "AN", courses: 19 }, { nom: "Fahardine Ali", ile: "MO", courses: 9 }]
+      .filter(inIle).map((l) => Object.assign({}, l, { ileNom: ILES[l.ile], occupe: busy.indexOf(l.nom) >= 0, libre: busy.indexOf(l.nom) < 0 }));
+
+    // ---------- stock ----------
+    const prods = [
+      { sku: "DG-EC-001", nom: "Écouteurs sans fil", ile: "GC", site: "Moroni – Entrepôt central", dispo: 84, res: 6, attr: 40, cout: 750, prix: 12500 },
+      { sku: "DG-SA-014", nom: "Sac à main", ile: "GC", site: "Moroni – Entrepôt central", dispo: 23, res: 2, attr: 12, cout: 1300, prix: 14000 },
+      { sku: "DG-VE-008", nom: "Ventilateur rechargeable", ile: "GC", site: "Moroni – Entrepôt central", dispo: 8, res: 3, attr: 5, cout: 1800, prix: 15000 },
+      { sku: "DG-MO-021", nom: "Montre connectée", ile: "AN", site: "Mutsamudu – Boutique", dispo: 31, res: 4, attr: 18, cout: 2100, prix: 18000 },
+      { sku: "DG-EC-001", nom: "Écouteurs sans fil", ile: "AN", site: "Mutsamudu – Boutique", dispo: 5, res: 1, attr: 4, cout: 750, prix: 12500 },
+      { sku: "DG-LS-005", nom: "Lampe solaire", ile: "MO", site: "Fomboni – Boutique", dispo: 17, res: 2, attr: 10, cout: 900, prix: 9500 },
+      { sku: "DG-EC-001", nom: "Écouteurs sans fil", ile: "MO", site: "Fomboni – Boutique", dispo: 0, res: 0, attr: 0, cout: 750, prix: 12500 }
+    ].filter(inIle);
+    const stock = prods.map((p) => { const a = p.dispo === 0 ? "Rupture" : p.dispo < 10 ? "Stock faible" : "OK"; return Object.assign({}, p, { alerte: a, coutTxt: this.num(p.cout), prixTxt: this.num(p.prix), tG: a === "OK", tO: a === "Stock faible", tR: a === "Rupture" }); });
+    const stockKpi = { valeur: this.kmf(prods.reduce((a, p) => a + p.dispo * p.cout, 0)), unites: this.num(prods.reduce((a, p) => a + p.dispo, 0)), alertes: stock.filter((p) => p.alerte !== "OK").length };
+
+    // ---------- achats ----------
+    const LST = ["En préparation", "Commande passée", "En cours de transport", "Arrivée aux Comores", "En dédouanement", "Réceptionnée", "Clôturée"];
+    const LNEXT = ["Passer la commande", "Marquer expédiée", "Marquer arrivée", "Lancer le dédouanement", "Réceptionner en stock", "Clôturer le lot"];
+    const lots = s.lots.filter(inIle).map((l) => {
+      const total = l.achat + l.exp + l.douane;
+      return Object.assign({}, l, {
+        ileNom: ILES[l.ile], achatTxt: this.num(l.achat), expTxt: this.num(l.exp), douaneTxt: this.num(l.douane), unitTxt: this.num(Math.round(total / l.q)),
+        statut: LST[l.st], tB: l.st < 5, tO: false, tG: l.st >= 5,
+        canNext: can("achats") && l.st < 6, nextLabel: LNEXT[l.st] || "",
+        next: () => {
+          this.setState({ lots: s.lots.map((x) => (x.id === l.id ? Object.assign({}, x, { st: x.st + 1 }) : x)), toast: l.st === 4 ? l.q + " unités du " + l.id + " entrées dans le stock de " + ILES[l.ile] + "." : "" });
+        }
+      });
+    });
+
+    // ---------- réseau ----------
+    const TEAMS = [
+      { nom: "Ali Mohamed", ile: "GC", membres: [["fatima", "Fatima Said", 10], ["mouhidine", "Mouhidine Youssouf", 7], ["hassane", "Hassane Daoud", 5], ["nadia", "Nadia Mze", 4]] },
+      { nom: "Nassur Ahmed", ile: "AN", membres: [["anrifa", "Anrifa Soilihi", 12], ["ibrahim", "Ibrahim Houmadi", 9], ["soilha", "Soilha Bacar", 6]] },
+      { nom: "Moinaecha Ali", ile: "MO", membres: [["zainaba", "Zainaba Ibrahim", 3], ["rachida", "Rachida Oumar", 4]] }
+    ];
+    const teams = TEAMS.filter((t) => inIle(t) && (!isLeader || t.nom === R.personne)).map((t) => {
+      const ventes = t.membres.reduce((a, m) => a + m[2], 0);
+      return {
+        nom: t.nom, init: t.nom.split(" ").map((x) => x[0]).join(""), ileNom: ILES[t.ile], nb: t.membres.length, ventes, caTxt: this.kmf(ventes * 12500),
+        membres: t.membres.map(([k, nom, v]) => ({ nom, ventes: v, attr: s.attr[k], reste: s.attr[k] - v, plus: () => this.setState({ attr: Object.assign({}, s.attr, { [k]: s.attr[k] + 5 }), toast: "5 unités de plus attribuées à " + nom + "." }) }))
+      };
+    });
+
+    // ---------- catalogues des leaders ----------
+    const LISLE = { "Ali Mohamed": "GC", "Nassur Ahmed": "AN", "Moinaecha Ali": "MO", "Rachad Ibrahim": "GC", "Kamaria Said": "AN" };
+    const JUNIORS = ["Rachad Ibrahim", "Kamaria Said"];
+    const setCat = (id, patch, t) => this.setState({ cat: s.cat.map((x) => (x.id === id ? Object.assign({}, x, patch) : x)), toast: t || "" });
+    const catEdit = can("catalogue");
+    const catalogue = s.cat.filter((c) => inIle(c) && (!isLeader || c.leader === R.personne)).map((c) => ({
+      leader: c.leader, type: JUNIORS.indexOf(c.leader) >= 0 ? "Junior" : "Senior", produit: c.produit, qualite: c.qualite, ileNom: ILES[c.ile],
+      prixTxt: this.num(c.prix), partTxt: this.num(c.part), stock: c.stock, vendu: c.vendu,
+      etat: !c.pub ? "Retiré" : c.stock === 0 ? "Rupture" : "Publié",
+      tG: c.pub && c.stock > 0, tO: c.pub && c.stock === 0, tN: !c.pub,
+      canEdit: catEdit, toggleLabel: c.pub ? "Retirer" : "Publier",
+      canPrime: catEdit && JUNIORS.indexOf(c.leader) >= 0,
+      primeDown: () => setCat(c.id, { part: Math.max(2000, c.part - 500) }, "Prime de « " + c.produit + " » : " + this.kmf(Math.max(2000, c.part - 500)) + " par vente, pour les prochaines ventes."),
+      primeUp: () => setCat(c.id, { part: Math.min(3500, c.part + 500) }, "Prime de « " + c.produit + " » : " + this.kmf(Math.min(3500, c.part + 500)) + " par vente, pour les prochaines ventes."),
+      plus: () => setCat(c.id, { stock: c.stock + 1 }, "Stock de « " + c.produit + " » chez " + c.leader + " : " + (c.stock + 1) + "."),
+      toggle: () => setCat(c.id, { pub: !c.pub }, "« " + c.produit + " » " + (c.pub ? "retiré du" : "publié dans le") + " catalogue de " + c.leader + ".")
+    }));
+    const teamsAvail = isLeader ? [R.personne] : Object.keys(LISLE).filter((l) => ile === "all" || LISLE[l] === ile);
+    const viewTeam = teamsAvail.indexOf(s.viewTeam) >= 0 ? s.viewTeam : teamsAvail[0];
+    const viewBtns = teamsAvail.map((l) => ({ label: "Équipe " + l, active: l === viewTeam, idle: l !== viewTeam, go: () => this.setState({ viewTeam: l }) }));
+    const seen = s.cat.filter((c) => c.leader === viewTeam && c.pub).map((c) => ({ produit: c.produit, qualite: c.qualite, prixTxt: this.kmf(c.prix), dispoTxt: c.stock === 0 ? "Rupture : vente bloquée" : c.stock + " en stock", ok: c.stock > 0, ko: c.stock === 0 }));
+    const hiddenN = s.cat.filter((c) => c.leader !== viewTeam && c.pub).length;
+    const publishProduct = () => this.setState({ cat: s.cat.concat([{ id: "c" + (s.cat.length + 1), leader: R.personne, ile: R.ile, produit: isJunior ? "Parfum Oud 50 ml" : "Enceinte Bluetooth", qualite: isJunior ? "Premium" : "Standard", prix: isJunior ? 15000 : 16000, part: isJunior ? 2500 : 9600, stock: isJunior ? 20 : 6, vendu: 0, pub: true }]), toast: isJunior ? "« Parfum Oud 50 ml » publié avec une prime de 2 500 KMF par vente pour tes téléconseillers." : "« Enceinte Bluetooth » publiée : seule l’équipe de " + R.personne + " la voit." });
+
+    // ---------- campagnes ----------
+    const campRows = s.camps.filter((k) => inIle(k) && (!isLeader || k.leader === R.personne));
+    const camps = campRows.map((k) => Object.assign({}, k, {
+      ileNom: ILES[k.ile], budgetTxt: this.num(k.budget), cpvTxt: k.vendues ? this.kmf(Math.round(k.budget / k.vendues)) : "—",
+      pause: !k.actif, canEdit: can("campagnes"), toggleLabel: k.actif ? "Mettre en pause" : "Relancer",
+      toggle: () => this.setState({ camps: s.camps.map((x) => (x.id === k.id ? Object.assign({}, x, { actif: !x.actif }) : x)), toast: "Campagne « " + k.nom + " » " + (k.actif ? "mise en pause." : "relancée.") })
+    }));
+    const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
+    const cB = sum(campRows, (k) => k.budget), cC = sum(campRows, (k) => k.contacts), cF = sum(campRows, (k) => k.conf), cV = sum(campRows, (k) => k.vendues);
+    const campKpi = { budget: this.kmf(cB), actives: campRows.filter((k) => k.actif).length, contacts: cC, taux: cC ? Math.round(cF * 100 / cC) + " %" : "—", ventes: cV, cpv: cV ? this.kmf(Math.round(cB / cV)) : "—" };
+    const newCamp = () => this.setState({ camps: [{ id: "CP-" + String(8 + s.camps.length - 3).padStart(2, "0"), leader: R.personne, ile: R.ile, nom: "Blender – Novembre", produit: "Blender portable", canal: "Facebook", budget: 30000, debut: "07/11", fin: "21/11", contacts: 0, conf: 0, vendues: 0, actif: true }].concat(s.camps), toast: "Campagne « Blender – Novembre » créée : les contacts reçus pourront être importés comme prospects." });
+
+    // ---------- prospects ----------
+    const campOf = (id) => s.camps.find((k) => k.id === id) || {};
+    const catOf = (leader, produit) => s.cat.find((c) => c.leader === leader && c.produit === produit) || { prix: 0, part: 2000 };
+    const PST = { new: ["À appeler", "B"], inj: ["Injoignable – à rappeler", "O"], conf: ["Commande confirmée", "G"], non: ["Pas intéressé", "N"] };
+    const prospRows = s.prosp.filter((p) => { const k = campOf(p.camp); return inIle(k) && (!isTci || p.tci === R.personne) && (!isJunior || k.leader === R.personne); });
+    const prospects = prospRows.map((p) => {
+      const k = campOf(p.camp), c = catOf(k.leader, k.produit), st = PST[p.st];
+      const setP = (v, t) => this.setState({ prosp: s.prosp.map((x) => (x.id === p.id ? Object.assign({}, x, { st: v }) : x)), toast: t });
+      return Object.assign({}, p, {
+        produit: k.produit, primeTxt: this.kmf(c.part), statut: st[0], tB: st[1] === "B", tO: st[1] === "O", tG: st[1] === "G", tN: st[1] === "N",
+        canAct: can("prospects") && (p.st === "new" || p.st === "inj"),
+        confirm: () => {
+          const id = String(s.nextOrder);
+          this.setState({
+            prosp: s.prosp.map((x) => (x.id === p.id ? Object.assign({}, x, { st: "conf" }) : x)), nextOrder: s.nextOrder + 1,
+            orders: [{ id, date: "07/11 18:00", ecom: p.tci + " (TCI)", leader: k.leader, produit: k.produit, prix: c.prix, client: p.nom, tel: p.tel, mode: "client", ile: k.ile, step: 0, fail: "", livreur: "", prime: c.part }].concat(s.orders),
+            toast: "Commande #" + id + " créée pour " + p.nom + " : elle part en préparation au site de " + ILES[k.ile] + "."
+          });
+        },
+        injoignable: () => setP("inj", p.nom + " est noté injoignable : à rappeler."),
+        refus: () => setP("non", p.nom + " n’est pas intéressé.")
+      });
+    });
+    // ---------- ventes et gains des téléconseillers ----------
+    const isTciOrder = (o) => / \(TCI\)$/.test(o.ecom);
+    const tciName = (o) => o.ecom.replace(" (TCI)", "");
+    const weekOf = (o) => (o.date.slice(3, 5) === "11" && Number(o.date.slice(0, 2)) >= 2 ? "w45" : "w44");
+    const BASE = { "Anlia Hassani": 54000, "Faïza Mohamed": 31000, "Bacar Toybou": 18000 };
+    const vAll = s.orders.filter((o) => isTciOrder(o) && inIle(o) && (!isTci || tciName(o) === R.personne) && (!isJunior || o.leader === R.personne));
+    const isSold = (o) => o.step === 5 && !o.fail;
+    const vgFor = (wk) => {
+      const rows = vAll.filter((o) => weekOf(o) === wk), sold = rows.filter(isSold);
+      const names = isTci ? [R.personne] : Object.keys(BASE).filter((n) => vAll.some((o) => tciName(o) === n));
+      const gainsNum = sum(sold, (o) => o.prime);
+      return {
+        rows, sold, n: sold.length, gainsNum, ca: this.kmf(sum(sold, (o) => o.prix)), gains: this.kmf(gainsNum),
+        total: this.kmf(sum(names, (n) => BASE[n]) + sum(vAll.filter(isSold), (o) => o.prime)),
+        aClore: rows.filter((o) => o.step === 4 && !o.fail).length,
+        gainLabel: isTci ? "Mes gains de la semaine" : "Primes de la semaine", totalLabel: isTci ? "Mes gains globaux" : "Primes globales"
+      };
+    };
+    const vgNow = vgFor("w45"), vg = vgFor(s.vWeek);
+    const weeks = [["w45", "Cette semaine (2 – 8 nov.)"], ["w44", "Semaine dernière (26 oct. – 1er nov.)"]].map(([k, label]) => ({ label, active: s.vWeek === k, idle: s.vWeek !== k, go: () => this.setState({ vWeek: k }) }));
+    const VST = (o) => (o.fail ? [o.fail, "R"] : o.step === 5 ? ["Vendue", "G"] : o.step === 4 ? ["Livrée – à clôturer", "O"] : o.step === 3 ? ["En livraison", "B"] : ["En préparation", "B"]);
+    const vRows = vg.rows.map((o) => {
+      const st = VST(o);
+      return Object.assign({}, o, {
+        tci: tciName(o), prixTxt: this.num(o.prix), primeTxt: this.num(o.prime), statut: st[0], tB: st[1] === "B", tO: st[1] === "O", tG: st[1] === "G", tR: st[1] === "R",
+        canClose: can("ventes") && o.step === 4 && !o.fail,
+        close: () => { this.update(o.id, (x) => { x.step = 5; return x; }); this.setState({ toast: "Vente #" + o.id + " clôturée : + " + this.kmf(o.prime) + " ajoutés aux gains de " + tciName(o) + "." }); },
+        refuse: () => { this.update(o.id, (x) => { x.fail = "Refusée par le client"; return x; }); this.setState({ toast: "Refus enregistré pour #" + o.id + " : pas de prime, le produit retourne au site." }); }
+      });
+    });
+    const byProd = {};
+    vg.sold.forEach((o) => { const k = o.produit + "|" + o.prime; byProd[k] = byProd[k] || { produit: o.produit, leader: o.leader, prime: o.prime, n: 0 }; byProd[k].n += 1; });
+    const vgProd = Object.keys(byProd).map((k) => { const g = byProd[k]; return { produit: g.produit, leader: g.leader, n: g.n, primeTxt: this.kmf(g.prime), gainsTxt: this.kmf(g.n * g.prime) }; });
+    const byTci = {};
+    vg.rows.forEach((o) => { const n = tciName(o); byTci[n] = byTci[n] || { nom: n, leader: o.leader, n: 0, ca: 0, gains: 0, aClore: 0 }; if (isSold(o)) { byTci[n].n += 1; byTci[n].ca += o.prix; byTci[n].gains += o.prime; } if (o.step === 4 && !o.fail) byTci[n].aClore += 1; });
+    const vgTeam = Object.keys(byTci).map((k) => Object.assign({}, byTci[k], { caTxt: this.num(byTci[k].ca), gainsTxt: this.num(byTci[k].gains) }));
+    const tciVentes = vgNow.n;
+    const tciPrimes = vgNow.gainsNum;
+    const prospKpi = {
+      aAppeler: prospRows.filter((p) => p.st === "new").length, rappels: prospRows.filter((p) => p.st === "inj").length,
+      conf: prospRows.filter((p) => p.st === "conf").length,
+      ventesLabel: isTci ? "Mes ventes de la semaine" : "Ventes de l’équipe cette semaine", ventes: tciVentes,
+      primeLabel: isTci ? "Mes gains de la semaine" : "Primes de la semaine", primes: this.kmf(tciPrimes)
+    };
+    const importProsp = () => this.setState({ prosp: s.prosp.concat([
+      { id: "p" + (s.prosp.length + 1), nom: "Ahmed Bourhane", tel: "+269 334 55 21", camp: "CP-07", tci: "Faïza Mohamed", st: "new", heure: "07/11 18:05" },
+      { id: "p" + (s.prosp.length + 2), nom: "Sitti Abdallah", tel: "+269 341 90 08", camp: "CP-07", tci: "Anlia Hassani", st: "new", heure: "07/11 18:05" }
+    ]), toast: "2 contacts importés et répartis entre les téléconseillers." });
+
+    // ---------- règlements ----------
+    const payDefs = [
+      { k: "fatima", nom: "Fatima Said", ile: "GC", ventes: 10 }, { k: "mouhidine", nom: "Mouhidine Youssouf", ile: "GC", ventes: 7 },
+      { k: "anrifa", nom: "Anrifa Soilihi", ile: "AN", ventes: 12 }, { k: "zainaba", nom: "Zainaba Ibrahim", ile: "MO", ventes: 3 },
+      { k: "ibrahim", nom: "Ibrahim Houmadi", ile: "AN", ventes: 9 }
+    ].filter(inIle);
+    const STAT = { verif: "À vérifier", verifie: "Vérifié", valide: "Validé", paye: "Payé" };
+    const curPay = payDefs.find((p) => p.k === s.selPay) || payDefs[0];
+    const pays = payDefs.map((p) => {
+      const st = s.pay[p.k];
+      return Object.assign({}, p, { ileNom: ILES[p.ile], netTxt: this.num(p.ventes * 7000 - 20000), statut: STAT[st], tO: st === "verif", tB: st === "verifie" || st === "valide", tG: st === "paye", selected: curPay && curPay.k === p.k, notSelected: !(curPay && curPay.k === p.k), pick: () => this.setState({ selPay: p.k }) });
+    });
+    let rel = { nom: "", ventes: 0, brut: "", taxes: "", net: "", canVerify: false, canValidate: false, canPay: false, isPaid: false, waiting: false, waitMsg: "" };
+    if (curPay) {
+      const st = s.pay[curPay.k];
+      const setP = (v, t) => this.setState({ pay: Object.assign({}, s.pay, { [curPay.k]: v }), toast: t });
+      const cv = st === "verif" && (s.role === "comptable" || isAdmin);
+      const cva = st === "verifie" && (s.role === "finance" || isAdmin);
+      const cp = st === "valide" && (s.role === "caissier" || isAdmin);
+      const WAIT = { verif: "En attente de vérification par le comptable.", verifie: "En attente de validation par le responsable financier.", valide: "Validé : en attente du paiement par le caissier." };
+      rel = {
+        nom: curPay.nom, ventes: curPay.ventes, brut: this.kmf(curPay.ventes * 7500), taxes: this.kmf(curPay.ventes * 500), net: this.kmf(curPay.ventes * 7000 - 20000),
+        canVerify: cv, canValidate: cva, canPay: cp, isPaid: st === "paye", waiting: !cv && !cva && !cp && st !== "paye", waitMsg: WAIT[st] || "",
+        verify: () => setP("verifie", "Relevé de " + curPay.nom + " vérifié."),
+        validate: () => setP("valide", "Règlement de " + curPay.nom + " validé."),
+        pay: () => setP("paye", "Paiement de " + curPay.nom + " enregistré avec sa preuve.")
+      };
+    }
+
+    // ---------- caisse ----------
+    const SITES = [{ ile: "GC", site: "Moroni", ouv: 372500 }, { ile: "AN", site: "Mutsamudu", ouv: 245000 }, { ile: "MO", site: "Fomboni", ouv: 88000 }];
+    const baseMv = [
+      { h: "08:15", lib: "Remise des encaissements – Karim Bacar", cat: "Ventes livrées", ile: "GC", par: "Caisse Moroni", m: 27500, in: true },
+      { h: "09:40", lib: "Vente #1036 encaissée par le livreur", cat: "Ventes livrées", ile: "GC", par: "Caisse Moroni", m: 12500, in: true },
+      { h: "10:05", lib: "Carburant livreurs", cat: "Dépense", ile: "AN", par: "Hadidja Ahmed", m: 25000, in: false },
+      { h: "11:20", lib: "Vente #1043 encaissée – Djamal Said", cat: "Ventes livrées", ile: "AN", par: "Caisse Mutsamudu", m: 18000, in: true },
+      { h: "14:30", lib: "Vente au comptoir", cat: "Ventes comptoir", ile: "MO", par: "Mariama Combo", m: 9500, in: true },
+      { h: "16:10", lib: "Règlement Zainaba Ibrahim", cat: "Règlement e-commerçant", ile: "MO", par: "Mariama Combo", m: 1000, in: false }
+    ];
+    const mvAll = baseMv.concat(s.cashExtra);
+    const mouvs = mvAll.filter(inIle).map((m) => Object.assign({}, m, { site: SITES.find((x) => x.ile === m.ile).site, mTxt: this.num(m.m), isIn: m.in, isOut: !m.in }));
+    const caisses = SITES.filter(inIle).map((c) => {
+      const solde = c.ouv + mvAll.filter((m) => m.ile === c.ile).reduce((a, m) => a + (m.in ? m.m : -m.m), 0);
+      return { site: c.site, soldeTxt: this.kmf(solde), ouvTxt: this.kmf(c.ouv), etat: s.closed[c.ile] ? "Clôturée, écart 0 KMF" : "Ouverte" };
+    });
+    const cashIle = ile === "all" ? "GC" : ile;
+    const cashIn = () => this.setState({ cashExtra: s.cashExtra.concat([{ h: "17:45", lib: "Encaissement vente comptoir", cat: "Ventes comptoir", ile: cashIle, par: R.personne, m: 12500, in: true }]), toast: "Encaissement de 12 500 KMF enregistré." });
+    const cashClose = () => this.setState({ closed: Object.assign({}, s.closed, { [cashIle]: true }), toast: "Caisse clôturée : le montant compté correspond au théorique." });
+
+    // ---------- dépenses ----------
+    const canExpVal = s.role === "finance" || isAdmin;
+    const expList = s.exps.filter(inIle);
+    const exps = expList.map((e) => Object.assign({}, e, {
+      ileNom: ILES[e.ile], mTxt: this.num(e.m), pendCan: !e.ok && canExpVal, pendRo: !e.ok && !canExpVal,
+      validate: () => this.setState({ exps: s.exps.map((x) => (x.id === e.id ? Object.assign({}, x, { ok: true }) : x)), toast: "Dépense « " + e.lib + " » validée." })
+    }));
+    const K = { all: { v: 389, dus: 1870000, refus: "6,4 %" }, GC: { v: 214, dus: 1030000, refus: "6,1 %" }, AN: { v: 118, dus: 560000, refus: "7,6 %" }, MO: { v: 57, dus: 280000, refus: "4,9 %" } }[ile];
+    const charges = expList.filter((e) => e.ok).reduce((a, e) => a + e.m, 0);
+    const res = { marge: this.kmf(K.v * 3750), charges: this.kmf(charges), net: this.kmf(K.v * 3750 - charges), attente: expList.filter((e) => !e.ok).length };
+    const addExp = () => this.setState({ exps: s.exps.concat([{ id: Date.now(), date: "05/11", cat: "Communication", lib: "Recharge crédit téléphone équipe", ile: cashIle, par: R.personne, m: 15000, ok: false }]), toast: "Dépense saisie : elle attend la validation du responsable financier." });
+
+    // ---------- tableau de bord ----------
+    const kv = (label, value, sub, c) => ({ label, value: String(value), sub, blue: c === "b", white: c === "w", orange: c === "o" });
+    let kpis, todo;
+    const leaderTeam = teams[0];
+    if (["admin", "finance", "comptable", "asscompta"].indexOf(s.role) >= 0) {
+      kpis = [kv("Chiffre d’affaires du cycle", this.kmf(K.v * 12500), K.v + " ventes validées", "b"), kv("Marge Dig’eCom après coût et taxe", this.kmf(K.v * 3750), "3 750 KMF par produit de référence", "w"), kv("Dû aux e-commerçants", this.kmf(K.dus), "Après abonnements", "w"), kv("Taux de refus client", K.refus, waiting.length + " livraisons sans livreur", "o")];
+      todo = [
+        { label: "Relevés à vérifier", n: payDefs.filter((p) => s.pay[p.k] === "verif").length },
+        { label: "Règlements à valider", n: payDefs.filter((p) => s.pay[p.k] === "verifie").length },
+        { label: "Dépenses à valider", n: res.attente },
+        { label: "Refus et échecs", n: orders.filter((o) => o.fail && o.fail !== "Retournée au stock").length, alert: true }
+      ];
+    } else if (s.role === "caissier") {
+      const c = caisses[0];
+      kpis = [kv("Solde caisse " + c.site, c.soldeTxt, c.etat, "b"), kv("Encaissé aujourd’hui", this.kmf(mvAll.filter((m) => m.ile === ile && m.in).reduce((a, m) => a + m.m, 0)), "Ventes livrées et comptoir", "w"), kv("Règlements à payer", payDefs.filter((p) => s.pay[p.k] === "valide").length, "Validés par la finance", "o")];
+      todo = [{ label: "Règlements validés à payer", n: payDefs.filter((p) => s.pay[p.k] === "valide").length }, { label: "Caisse à clôturer ce soir", n: s.closed[ile] ? 0 : 1 }];
+    } else if (s.role === "stock") {
+      kpis = [kv("Valeur du stock " + ILES[ile], stockKpi.valeur, "Au coût rendu", "b"), kv("Unités disponibles", stockKpi.unites, prods.length + " références", "w"), kv("Alertes", stockKpi.alertes, "Stock faible ou rupture", "o"), kv("Lots en route", lots.filter((l) => l.st < 5).length, "Vers " + ILES[ile], "w")];
+      todo = [{ label: "Lots à réceptionner", n: lots.filter((l) => l.st === 4).length }, { label: "Retours à contrôler", n: orders.filter((o) => o.fail && o.fail !== "Retournée au stock").length, alert: true }, { label: "Produits en alerte", n: stockKpi.alertes }];
+    } else if (s.role === "logistique") {
+      kpis = [kv("Nouvelles commandes", orders.filter((o) => o.step === 0 && !o.fail).length, "À confirmer et préparer", "b"), kv("Sans livreur", waiting.length, "Notifiées, pas encore acceptées", "o"), kv("En livraison", cCours.length, "Courses en cours", "w"), kv("Incidents", cInc.length, "Refus et échecs", "w")];
+      todo = [{ label: "Commandes à préparer", n: orders.filter((o) => o.step <= 1 && !o.fail).length }, { label: "À affecter manuellement", n: waiting.length }, { label: "Prêtes au retrait", n: cRet.length }, { label: "Refus et échecs", n: cInc.length, alert: true }];
+    } else if (isJunior) {
+      kpis = [kv("Budget publicitaire", campKpi.budget, campKpi.actives + " campagnes actives", "b"), kv("Contacts reçus", campKpi.contacts, "Taux de confirmation " + campKpi.taux, "w"), kv("Ventes validées", campKpi.ventes, "Client a pris le produit", "w"), kv("Coût par vente", campKpi.cpv, "Budget ÷ ventes", "o")];
+      todo = [{ label: "Prospects à appeler par l’équipe", n: prospKpi.aAppeler }, { label: "À rappeler (injoignables)", n: prospKpi.rappels }, { label: "Commandes de l’équipe en cours", n: orders.filter((o) => !o.fail && o.step < 5).length }, { label: "Refus clients", n: orders.filter((o) => !!o.fail).length, alert: true }];
+    } else if (isTci) {
+      kpis = [kv("Prospects à appeler", prospKpi.aAppeler, prospKpi.rappels + " à rappeler", "b"), kv("Vendu cette semaine", vgNow.ca, vgNow.n + " produits vendus", "w"), kv("Mes gains de la semaine", vgNow.gains, "Primes des ventes clôturées", "o"), kv("Mes gains globaux", vgNow.total, "Depuis le début", "w")];
+      todo = [{ label: "Prospects à appeler", n: prospKpi.aAppeler }, { label: "À rappeler", n: prospKpi.rappels }, { label: "Ventes livrées à clôturer", n: vgNow.aClore }];
+    } else {
+      const reste = leaderTeam ? leaderTeam.membres.reduce((a, m) => a + m.reste, 0) : 0;
+      kpis = [kv("Ventes de l’équipe", leaderTeam ? leaderTeam.ventes : 0, "Cycle en cours", "b"), kv("CA généré par l’équipe", leaderTeam ? leaderTeam.caTxt : "", "Prix de vente final", "w"), kv("E-commerçants actifs", leaderTeam ? leaderTeam.nb : 0, "Équipe " + R.personne, "w"), kv("Quantités restantes", reste, "Attribuées non vendues", "o")];
+      todo = [{ label: "Commandes de l’équipe en cours", n: orders.filter((o) => !o.fail && o.step < 5).length }, { label: "Refus dans l’équipe", n: orders.filter((o) => !!o.fail).length, alert: true }];
+    }
+    todo = todo.map((t) => ({ label: t.label, n: t.n, alert: !!t.alert, normal: !t.alert }));
+
+    // ---------- rapports ----------
+    const RAP = isLeader
+      ? [["Mon équipe", "Ventes, CA et quantités de l’équipe"], ["Par e-commerçant", "Classement et ventes de chaque membre"]]
+      : [["Rapport journalier", "Ventes, encaissements et livraisons du jour"], ["Rapport hebdomadaire", "Synthèse de la semaine"], ["Rapport mensuel", "Résultat du mois"], ["Par produit", "Ventes et marge de chaque produit"], ["Par lot", "Coût réel et rotation de chaque lot"], ["Par e-commerçant", "Ventes, commissions, règlements"], ["Par leader", "Performance de chaque équipe"], ["Dépenses", "Charges par catégorie et par île"], ["Marges", "Marge brute et après taxe"], ["Règlements", "Relevés et paiements"], ["Stocks", "Valeur et mouvements"]];
+    const reports = RAP.map(([nom, desc]) => ({ nom, desc, xls: () => say("Export Excel « " + nom + " » prêt au téléchargement."), pdf: () => say("Export PDF « " + nom + " » prêt au téléchargement.") }));
+    const KV = { GC: 214, AN: 118, MO: 57 };
+    const ileBars = [["GC", "w100"], ["AN", "w55"], ["MO", "w27"]].map(([k, w]) => ({ nom: ILES[k], caTxt: this.kmf(KV[k] * 12500), w100: w === "w100", w55: w === "w55", w27: w === "w27" }));
+
+    // ---------- utilisateurs ----------
+    const matrixHead = ROLES.map((r) => ({ court: r.court }));
+    const matrix = MODS.map(([k, mod]) => ({ mod, cells: ROLES.map((r) => { const v = PERM[r.k][k]; return { w: v === "w", r: v === "r", n: !v }; }) }));
+    const users = [
+      { nom: "Direction Dig'eCom", role: "Administrateur général", scope: "Toutes les îles", last: "Aujourd’hui 21:58" },
+      { nom: "Soifia Mohamed", role: "Responsable financier", scope: "Toutes les îles", last: "Aujourd’hui 17:12" },
+      { nom: "Abdallah Saïd", role: "Comptable", scope: "Toutes les îles", last: "Aujourd’hui 16:40" },
+      { nom: "Hadidja Ahmed", role: "Assistant comptable", scope: "Toutes les îles", last: "Aujourd’hui 15:05" },
+      { nom: "Mariama Combo", role: "Caissier", scope: "Mohéli – Fomboni", last: "Aujourd’hui 16:10" },
+      { nom: "Nourdine Assoumani", role: "Gestionnaire de stock", scope: "Anjouan – Mutsamudu", last: "Aujourd’hui 12:30" },
+      { nom: "Toiwilou Hamada", role: "Assistant logistique", scope: "Grande Comore – Moroni", last: "Aujourd’hui 18:44" },
+      { nom: "Ali Mohamed", role: "Leader Senior", scope: "Grande Comore · 4 e-commerçants", last: "Hier 20:15" },
+      { nom: "Rachad Ibrahim", role: "Leader Junior", scope: "Grande Comore · 2 téléconseillers", last: "Aujourd’hui 17:45" },
+      { nom: "Anlia Hassani", role: "Téléconseiller", scope: "Grande Comore · équipe Rachad Ibrahim", last: "Aujourd’hui 17:58" },
+      { nom: "Fatima Said", role: "E-commerçant (mobile)", scope: "Grande Comore · équipe Ali Mohamed", last: "Aujourd’hui 18:42" },
+      { nom: "Djamal Said", role: "Livreur (mobile)", scope: "Anjouan", last: "Aujourd’hui 17:52" }
+    ];
+    const journal = [
+      { h: "05/11 18:44", qui: "Toiwilou Hamada", quoi: "a confirmé la commande #1048" },
+      { h: "05/11 17:12", qui: "Soifia Mohamed", quoi: "a validé le règlement d’Anrifa Soilihi" },
+      { h: "05/11 16:40", qui: "Abdallah Saïd", quoi: "a vérifié le relevé de Mouhidine Youssouf" },
+      { h: "05/11 12:30", qui: "Nourdine Assoumani", quoi: "a lancé le dédouanement du LOT-015" },
+      { h: "04/11 20:15", qui: "Ali Mohamed", quoi: "a attribué 5 écouteurs à Fatima Said" }
+    ];
+
+    // ---------- paramètres ----------
+    const params = [
+      { id: "p-taxe-d", label: "Taxe Dig’eCom par vente", v: "500 KMF", aide: "Montant fixe ou pourcentage" },
+      { id: "p-taxe-e", label: "Taxe e-commerçant par vente", v: "500 KMF", aide: "Déduite de la part brute" },
+      { id: "p-part", label: "Part e-commerçant", v: "Montant fixe par produit", aide: "Ou pourcentage du prix de vente" },
+      { id: "p-abo", label: "Abonnement e-commerçant", v: "10 000 KMF / semaine", aide: "Déduit à chaque règlement" },
+      { id: "p-cycle", label: "Cycle de règlement", v: "14 jours", aide: "Prochain : 18 novembre 2026" },
+      { id: "p-delai", label: "Délai avant alerte « sans livreur »", v: "10 minutes", aide: "L’assistant logistique est alerté" }
+    ];
+
+    const act = {
+      inventaire: () => say("Inventaire lancé : saisis les quantités comptées par produit."),
+      transfert: () => say("Transfert créé : sortie du site de départ, entrée à l’arrivée."),
+      entree: () => say("Entrée de marchandises : choisis le lot réceptionné."),
+      lot: () => say("Nouvelle commande fournisseur créée en préparation."),
+      leader: () => say("Formulaire « Nouveau leader » ouvert."),
+      seller: () => say("Formulaire « Nouvel e-commerçant » ouvert."),
+      reaffect: () => say("Réaffectation : choisis le nouveau leader. Le changement sera historisé."),
+      compte: () => say("Formulaire « Nouveau compte » ouvert : nom, rôle, île."),
+      params: () => say("Paramètres enregistrés, effectifs au prochain cycle.")
+    };
+
+    return Object.assign(this.blank(), {
+      notLogged: false, logged: true, roleCards,
+      me: { personne: R.personne, nom: R.nom, scope: isLeader ? "Son équipe" : isTci ? "Ses prospects" : locked ? ILES[R.ile] : "Toutes les îles" },
+      logout: () => this.setState({ role: "", toast: "" }),
+      nav, iles, canFilter: !locked, scopeLocked: locked, scopeLabel: isLeader ? ILES[R.ile] + " · équipe " + R.personne : isTci ? ILES[R.ile] + " · équipe " + MYLEADER : ILES[ile],
+      pageTitle: navLabel(page, MODS.find(([k]) => k === page)[1]), pageSub: SUB[page], readOnly: P[page] === "r" && page !== "dash",
+      hasToast: !!s.toast, toast: s.toast, clearToast: () => this.setState({ toast: "" }),
+      is: { dash: page === "dash", cmd: page === "cmd", livr: page === "livr", stock: page === "stock", achats: page === "achats", reseau: page === "reseau", catalogue: page === "catalogue", campagnes: page === "campagnes", prospects: page === "prospects", ventes: page === "ventes", regl: page === "regl", caisse: page === "caisse", depenses: page === "depenses", rapports: page === "rapports", users: page === "users", params: page === "params" },
+      kpis, todo, showRecent: !!P.cmd, recentTitle: isLeader ? "Commandes de mon équipe" : "Commandes récentes", recent: orders.slice(0, 5),
+      goCmd: () => this.setState({ page: "cmd" }), showCalc: ["admin", "finance", "comptable"].indexOf(s.role) >= 0,
+      orders: orders.map((o) => Object.assign({}, o, { selected: o.id === selId, notSelected: o.id !== selId })),
+      cmdTitle: isLeader ? "Commandes de l’équipe " + R.personne : "Toutes les commandes",
+      hasSel: !!so, sel, timeline,
+      advance: () => this.update(selId, (x) => this.next(x)),
+      refuse: () => this.update(selId, (x) => { x.fail = "Refusée par le client"; return x; }),
+      restock: () => this.update(selId, (x) => { x.fail = "Retournée au stock"; return x; }),
+      col, livreurs, canAssign: can("livr"),
+      stock, stockKpi, canStock: can("stock"),
+      lots, canAchats: can("achats"),
+      teams, canAttrib: can("reseau"), canAddSeller: isAdmin,
+      catalogue, canPublish: isLeader, publishProduct,
+      camps, campKpi, canNewCamp: isJunior, newCamp, prospects, prospKpi, showTciCol: !isTci, canImport: isJunior, importProsp,
+      weeks, vg, vgTeam, showVgTeam: !isTci, vRows, vRowsEmpty: vRows.length === 0, vgProd, vgTitle: isTci ? "Mes commandes de la semaine" : "Commandes des téléconseillers", prospTitle: isTci ? "Mes prospects" : "Prospects des téléconseillers", viewBtns, hasViewBtns: teamsAvail.length > 1, seen, seenN: seen.length, seenTeam: viewTeam, hiddenN,
+      pays, rel, hasRel: !!curPay,
+      caisses, mouvs, canCash: can("caisse"), cashIn, cashClose, showBank: ["admin", "finance", "comptable"].indexOf(s.role) >= 0,
+      exps, res, canExpAdd: can("depenses"), addExp,
+      reports, ileBars, showIleChart: !isLeader && !locked,
+      matrixHead, matrix, users, journal,
+      params, canParams: can("params"), paramsRo: !can("params"),
+      act
+    });
+  }
+  blank() {
+    const f = () => {};
+    return {
+      notLogged: true, logged: false, roleCards: [], me: { personne: "", nom: "", scope: "" }, logout: f, nav: [], iles: [], canFilter: false, scopeLocked: false, scopeLabel: "",
+      pageTitle: "", pageSub: "", readOnly: false, hasToast: false, toast: "", clearToast: f, is: {}, kpis: [], todo: [], showRecent: false, recentTitle: "", recent: [], goCmd: f, showCalc: false,
+      orders: [], cmdTitle: "", hasSel: false, sel: {}, timeline: [], advance: f, refuse: f, restock: f, col: { attente: [], cours: [], retrait: [], inc: [] }, livreurs: [], canAssign: false,
+      stock: [], stockKpi: {}, canStock: false, lots: [], canAchats: false, teams: [], catalogue: [], canPublish: false, publishProduct: f, viewBtns: [], hasViewBtns: false, seen: [], seenN: 0, seenTeam: "", hiddenN: 0, canAttrib: false, camps: [], campKpi: {}, canNewCamp: false, newCamp: f, prospects: [], prospKpi: {}, showTciCol: false, canImport: false, importProsp: f, prospTitle: "", weeks: [], vg: {}, vgTeam: [], showVgTeam: false, vRows: [], vRowsEmpty: true, vgProd: [], vgTitle: "", canAddSeller: false, pays: [], rel: {}, hasRel: false,
+      caisses: [], mouvs: [], canCash: false, cashIn: f, cashClose: f, showBank: false, exps: [], res: {}, canExpAdd: false, addExp: f,
+      reports: [], ileBars: [], showIleChart: false, matrixHead: [], matrix: [], users: [], journal: [], params: [], canParams: false, paramsRo: true, act: {}
+    };
+  }
+}
+
+window.Component = Component;
+</script>
+</body>
+</html>
