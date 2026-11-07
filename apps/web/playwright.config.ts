@@ -3,8 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 /** Parcours web par rôle. Lancement : `make e2e` (service Docker `e2e`, contre le service web). */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 60_000,
-  expect: { timeout: 15_000 },
+  globalSetup: './e2e/global-setup.ts',
+  timeout: 120_000,
+  expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

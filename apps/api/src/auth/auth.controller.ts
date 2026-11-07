@@ -1,13 +1,20 @@
 import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { loginSchema, type LoginInput, type LoginResponse, type MeResponse } from '@digecom/shared';
+import {
+  changePasswordSchema,
+  loginSchema,
+  type ChangePasswordInput,
+  type LoginInput,
+  type LoginResponse,
+  type MeResponse,
+} from '@digecom/shared';
 import type { CookieOptions, Request, Response } from 'express';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { AuthService, type ClientInfo, type IssuedSession } from './auth.service';
-import type { AuthUser } from './auth.types';
-import { AnyAuthenticated, CurrentUser, Public } from './decorators';
+import type { AuthenticatedRequest, AuthUser } from './auth.types';
+import { AllowPendingPasswordChange, AnyAuthenticated, CurrentUser, Public } from './decorators';
 
 export const REFRESH_COOKIE = 'dc_rt';
 
@@ -94,10 +101,28 @@ export class AuthController {
   }
 
   @AnyAuthenticated()
+  @AllowPendingPasswordChange()
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Profil, rôle, île et modules autorisés' })
   me(@CurrentUser() user: AuthUser): Promise<MeResponse> {
     return this.auth.me(user.id);
+  }
+
+  @AnyAuthenticated()
+  @AllowPendingPasswordChange()
+  @Post('change-password')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Changer mon mot de passe (révoque mes autres sessions)' })
+  changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<MeResponse> {
+    // Journalisé par AuthService (sans le corps de la requête).
+    req.audit = { skip: true };
+    const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE];
+    return this.auth.changePassword(user.id, body, raw, clientInfo(req));
   }
 }

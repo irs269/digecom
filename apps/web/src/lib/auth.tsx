@@ -22,6 +22,8 @@ interface AuthContextValue {
   login: (phone: string, password: string) => Promise<MeResponse>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
+  /** Met à jour le profil après une action (ex. changement de mot de passe). */
+  setUser: (user: MeResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -97,7 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState({ status: 'authenticated', user });
   }, []);
 
-  const value = useMemo(() => ({ state, login, logout, reload }), [state, login, logout, reload]);
+  const setUser = useCallback((user: MeResponse) => {
+    setState({ status: 'authenticated', user });
+  }, []);
+
+  const value = useMemo(
+    () => ({ state, login, logout, reload, setUser }),
+    [state, login, logout, reload, setUser],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

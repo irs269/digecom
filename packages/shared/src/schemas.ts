@@ -17,6 +17,12 @@ export const phoneSchema = z
   })
   .pipe(z.string().regex(/^\+269\d{7}$/, 'Numéro de téléphone invalide (format +269 XXX XX XX)'));
 
+/** Affichage d'un téléphone normalisé : `+2693300003` → `+269 330 00 03`. */
+export function formatPhone(phone: string): string {
+  const m = /^\+269(\d{3})(\d{2})(\d{2})$/.exec(phone);
+  return m ? `+269 ${m[1]} ${m[2]} ${m[3]}` : phone;
+}
+
 export const loginSchema = z.object({
   phone: phoneSchema,
   password: z.string().min(1, 'Mot de passe requis').max(200),
@@ -32,6 +38,7 @@ export const paginationSchema = z.object({
 });
 export type PaginationInput = z.infer<typeof paginationSchema>;
 
+/** Ordre d'affichage des îles : Grande Comore, Anjouan, Mohéli. */
 export const ISLAND_CODES = ['GC', 'AN', 'MO'] as const;
 export type IslandCode = (typeof ISLAND_CODES)[number];
 export const ISLAND_LABELS: Record<IslandCode, string> = {

@@ -146,16 +146,14 @@ describe('Auth (e2e)', () => {
 
     it('module interdit → 403', async () => {
       const token = (await login(ctx.app, CASHIER)).body.accessToken as string;
-      const res = await http().get('/audit-logs').set('Authorization', `Bearer ${token}`);
+      const res = await http().get('/audit').set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('FORBIDDEN');
     });
 
     it('module autorisé → 200', async () => {
       const token = (await login(ctx.app, ADMIN)).body.accessToken as string;
-      const res = await http()
-        .get('/audit-logs?pageSize=5')
-        .set('Authorization', `Bearer ${token}`);
+      const res = await http().get('/audit?pageSize=5').set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(200);
       expect(res.body.items.length).toBeLessThanOrEqual(5);
     });

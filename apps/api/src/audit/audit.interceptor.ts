@@ -34,7 +34,7 @@ export class AuditInterceptor implements NestInterceptor {
           this.audit
             .record({
               actorId: user.id,
-              action: `${req.method} ${route}`,
+              action: auditCtx?.action ?? `${req.method} ${route}`,
               entity,
               entityId: auditCtx?.entityId ?? (req.params.id as string | undefined) ?? resultId,
               before: auditCtx?.before,

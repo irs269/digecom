@@ -29,7 +29,8 @@ seed: ## Données de démonstration (mêmes noms que le prototype)
 test: ## Tests shared (Vitest) + API (unitaires et e2e)
 	$(API_EXEC) pnpm test
 
-e2e: ## Parcours web Playwright
+e2e: ## Parcours web Playwright (remet à zéro les compteurs d'essais de connexion)
+	$(COMPOSE) exec -T redis sh -c "redis-cli --scan --pattern 'login:attempts:*' | xargs -r redis-cli del > /dev/null"
 	$(COMPOSE) --profile e2e run --rm e2e
 
 lint: ## ESLint + Prettier --check + tsc --noEmit

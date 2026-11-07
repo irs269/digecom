@@ -13,6 +13,9 @@ x-node-volumes: &node-volumes
   - nm_shared:/app/packages/shared/node_modules
   - nm_config:/app/packages/config/node_modules
   - pnpm_store:/pnpm/store
+  # Sorties de compilation dans des volumes : le conteneur (uid 1000) n'a pas forcément le
+  # droit d'écrire dans le dépôt monté (CI Linux, autre uid).
+  - api_dist:/app/apps/api/dist
 
 x-node-env: &node-env
   npm_config_store_dir: /pnpm/store
@@ -109,12 +112,13 @@ services:
       - nm_config:/app/packages/config/node_modules
       - pnpm_store:/pnpm/store
       - web_next:/app/apps/web/.next
+      - api_dist:/app/apps/api/dist
     # Les volumes nommés sont créés par root : on les rend à l'utilisateur `node` (uid 1000).
     command:
       [
         'sh',
         '-c',
-        'sh docker/deps.sh && chown -R 1000:1000 /app/node_modules /app/apps/api/node_modules /app/apps/web/node_modules /app/packages/shared/node_modules /app/packages/config/node_modules /app/apps/web/.next /pnpm/store',
+        'sh docker/deps.sh && chown -R 1000:1000 /app/node_modules /app/apps/api/node_modules /app/apps/web/node_modules /app/packages/shared/node_modules /app/packages/config/node_modules /app/apps/web/.next /app/apps/api/dist /pnpm/store',
       ]
     restart: 'no'
 
@@ -183,16 +187,56 @@ services:
       - pnpm_store:/pnpm/store
       - web_next:/app/apps/web/.next
 
-  # Tests Playwright (make e2e) : navigateur headless contre le service web.
+  # Web en build de production pour les tests Playwright (rapide et fiable, contrairement au
+  # mode dev qui compile chaque page à la première visite). Réutilise les dépendances installées.
+  web-e2e:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: dev
+    profiles: ['e2e']
+    # Service de test uniquement : root pour écrire dans son volume .next dédié.
+    user: root
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_API_URL: /api
+      API_INTERNAL_URL: http://api:4000
+    volumes:
+      - .:/app
+      - nm_root:/app/node_modules
+      - nm_api:/app/apps/api/node_modules
+      - nm_web:/app/apps/web/node_modules
+      - nm_shared:/app/packages/shared/node_modules
+      - nm_config:/app/packages/config/node_modules
+      - pnpm_store:/pnpm/store
+      - web_next_e2e:/app/apps/web/.next
+    command:
+      [
+        'sh',
+        '-c',
+        'pnpm --filter web build && pnpm --filter web exec next start -H 0.0.0.0 -p 3000',
+      ]
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/connexion > /dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
+
+  # Tests Playwright (make e2e) : navigateur headless contre le web en build de production.
   e2e:
     image: mcr.microsoft.com/playwright:v1.52.0-noble
     profiles: ['e2e']
     working_dir: /app
     depends_on:
-      web:
-        condition: service_started
+      web-e2e:
+        condition: service_healthy
     environment:
-      E2E_BASE_URL: http://web:3000
+      E2E_BASE_URL: http://web-e2e:3000
       SEED_DEFAULT_PASSWORD: ${SEED_DEFAULT_PASSWORD}
       CI: 'true'
     volumes: *node-volumes
@@ -209,3 +253,5 @@ volumes:
   nm_config:
   pnpm_store:
   web_next:
+  api_dist:
+  web_next_e2e:

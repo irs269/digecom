@@ -4,6 +4,7 @@ import {
   allowedModules,
   ROLE_LABELS,
   ROLE_SCOPE,
+  type ChangePasswordInput,
   type LoginInput,
   type LoginResponse,
   type MeResponse,
@@ -39,7 +40,16 @@ export const ARGON2_OPTIONS: argon2.Options & { raw?: false } = {
 
 export const hashPassword = (password: string) => argon2.hash(password, ARGON2_OPTIONS);
 
-const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
+/** Mot de passe temporaire lisible (sans caractères ambigus), avec lettres et chiffres. */
+export function generateTemporaryPassword(): string {
+  const letters = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const pick = (set: string, n: number) =>
+    Array.from(randomBytes(n), (b) => set[b % set.length]).join('');
+  return `${pick(letters, 4)}-${pick(digits, 4)}-${pick(letters, 4)}`;
+}
+
+export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
 const invalidCredentials = () =>
   new AppException(
@@ -190,6 +200,44 @@ export class AuthService {
       entityId: stored.userId,
       ...client,
     });
+  }
+
+  /** Changement de mot de passe par l'utilisateur : les autres sessions sont révoquées. */
+  async changePassword(
+    userId: string,
+    input: ChangePasswordInput,
+    currentRefreshToken: string | undefined,
+    client: ClientInfo,
+  ): Promise<MeResponse> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!(await argon2.verify(user.passwordHash, input.currentPassword))) {
+      throw new AppException(
+        'VALIDATION_ERROR',
+        'Mot de passe actuel incorrect',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        [{ path: 'currentPassword', message: 'Mot de passe actuel incorrect' }],
+      );
+    }
+    const keep = currentRefreshToken ? sha256(currentRefreshToken) : undefined;
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash: await hashPassword(input.newPassword), mustChangePassword: false },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null, ...(keep ? { tokenHash: { not: keep } } : {}) },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await this.audit.record({
+      actorId: userId,
+      action: 'PASSWORD_CHANGE',
+      entity: 'User',
+      entityId: userId,
+      after: { forced: user.mustChangePassword },
+      ...client,
+    });
+    return this.me(userId);
   }
 
   async me(userId: string): Promise<MeResponse> {

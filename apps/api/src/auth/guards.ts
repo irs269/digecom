@@ -5,7 +5,12 @@ import { hasPermission, type Permission } from '@digecom/shared';
 import { AppException } from '../common/app-exception';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AccessTokenPayload, MaybeAuthenticatedRequest } from './auth.types';
-import { ANY_AUTHENTICATED, IS_PUBLIC, REQUIRED_PERMISSIONS } from './decorators';
+import {
+  ALLOW_PENDING_PASSWORD,
+  ANY_AUTHENTICATED,
+  IS_PUBLIC,
+  REQUIRED_PERMISSIONS,
+} from './decorators';
 
 function meta<T>(reflector: Reflector, key: string, ctx: ExecutionContext): T | undefined {
   return reflector.getAllAndOverride<T>(key, [ctx.getHandler(), ctx.getClass()]);
@@ -45,6 +50,7 @@ export class JwtAuthGuard implements CanActivate {
         siteId: true,
         leaderId: true,
         isActive: true,
+        mustChangePassword: true,
       },
     });
     if (!user || !user.isActive) {
@@ -56,6 +62,7 @@ export class JwtAuthGuard implements CanActivate {
       islandId: user.islandId,
       siteId: user.siteId,
       leaderId: user.leaderId,
+      mustChangePassword: user.mustChangePassword,
     };
     return true;
   }
@@ -75,6 +82,16 @@ export class PermissionsGuard implements CanActivate {
     const req = ctx.switchToHttp().getRequest<MaybeAuthenticatedRequest>();
     if (!req.user) {
       throw new AppException('UNAUTHORIZED', 'Authentification requise', HttpStatus.UNAUTHORIZED);
+    }
+    if (
+      req.user.mustChangePassword &&
+      !meta<boolean>(this.reflector, ALLOW_PENDING_PASSWORD, ctx)
+    ) {
+      throw new AppException(
+        'PASSWORD_CHANGE_REQUIRED',
+        'Change ton mot de passe temporaire avant de continuer',
+        HttpStatus.FORBIDDEN,
+      );
     }
     if (meta<boolean>(this.reflector, ANY_AUTHENTICATED, ctx)) return true;
 

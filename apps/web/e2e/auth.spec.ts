@@ -45,7 +45,7 @@ test('connexion caissier : 3 entrées, périmètre Mohéli, module interdit → 
 
 test('mauvais mot de passe : message d’erreur', async ({ page }) => {
   await signIn(page, ADMIN.phone, 'mauvais-mot-de-passe');
-  await expect(page.getByRole('alert')).toContainText('incorrect');
+  await expect(page.getByText('Téléphone ou mot de passe incorrect')).toBeVisible();
   await expect(page).toHaveURL(/\/connexion/);
 });
 

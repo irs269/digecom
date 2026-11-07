@@ -5,6 +5,8 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
+  // ESLint et tsc tournent dans `make lint` ; inutile de les relancer pendant `next build`.
+  eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@digecom/shared'],
   // Le navigateur appelle /api/... ; Next.js relaie vers le conteneur api (même origine → cookie
   // httpOnly du refresh token envoyé sans CORS).

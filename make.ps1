@@ -25,7 +25,11 @@ switch ($Target) {
   'migrate' { Invoke-Step 'docker compose exec api pnpm --filter api migrate' }
   'seed'    { Invoke-Step 'docker compose exec api pnpm --filter api seed' }
   'test'    { Invoke-Step 'docker compose exec api pnpm test' }
-  'e2e'     { Invoke-Step 'docker compose --profile e2e run --rm e2e' }
+  'e2e' {
+    # Remet a zero les compteurs d'essais de connexion (limite 5 / 15 min par IP + telephone).
+    docker compose exec -T redis sh -c "redis-cli --scan --pattern 'login:attempts:*' | xargs -r redis-cli del > /dev/null"
+    Invoke-Step 'docker compose --profile e2e run --rm e2e'
+  }
   'lint'    { Invoke-Step 'docker compose exec api pnpm lint' }
   'psql'    { Invoke-Step "docker compose exec postgres sh -c 'psql -U `"`$POSTGRES_USER`" `"`$POSTGRES_DB`"'" }
   'build' {

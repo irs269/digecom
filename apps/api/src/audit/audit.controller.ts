@@ -1,43 +1,68 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { paginationSchema, type PaginationInput } from '@digecom/shared';
-import { z } from 'zod';
+import {
+  auditQuerySchema,
+  endOfBusinessDay,
+  startOfBusinessDay,
+  type AuditEntryView,
+  type AuditQuery,
+  type Paginated,
+} from '@digecom/shared';
+import type { Prisma } from '@prisma/client';
 import { RequirePermission } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { PrismaService } from '../prisma/prisma.service';
 
-const auditQuerySchema = paginationSchema.extend({
-  entity: z.string().optional(),
-  actorId: z.string().optional(),
-  action: z.string().optional(),
-});
-type AuditQuery = PaginationInput & z.infer<typeof auditQuerySchema>;
-
 @ApiTags('audit')
 @ApiBearerAuth()
-@Controller('audit-logs')
+@Controller()
 export class AuditController {
   constructor(private readonly prisma: PrismaService) {}
 
-  @Get()
+  @Get('audit')
   @RequirePermission('users:read')
-  @ApiOperation({ summary: "Journal d'audit paginé (administrateur)" })
-  async list(@Query(new ZodValidationPipe(auditQuerySchema)) q: AuditQuery) {
-    const where = {
-      entity: q.entity,
+  @ApiOperation({ summary: "Journal d'activité (lecture seule, administrateur)" })
+  async list(
+    @Query(new ZodValidationPipe(auditQuerySchema)) q: AuditQuery,
+  ): Promise<Paginated<AuditEntryView>> {
+    const where: Prisma.AuditLogWhereInput = {
       actorId: q.actorId,
-      action: q.action ? { contains: q.action } : undefined,
+      entity: q.entity,
+      entityId: q.entityId,
+      action: q.action ? { contains: q.action, mode: 'insensitive' } : undefined,
+      at:
+        q.from || q.to
+          ? {
+              gte: q.from ? startOfBusinessDay(q.from) : undefined,
+              lte: q.to ? endOfBusinessDay(q.to) : undefined,
+            }
+          : undefined,
     };
-    const [items, total] = await this.prisma.$transaction([
+    const [rows, total] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({
         where,
-        orderBy: { at: 'desc' },
+        orderBy: [{ at: 'desc' }, { id: 'desc' }],
         skip: (q.page - 1) * q.pageSize,
         take: q.pageSize,
         include: { actor: { select: { id: true, fullName: true, role: true } } },
       }),
       this.prisma.auditLog.count({ where }),
     ]);
-    return { items, total, page: q.page, pageSize: q.pageSize };
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        at: r.at.toISOString(),
+        action: r.action,
+        entity: r.entity,
+        entityId: r.entityId,
+        before: r.before,
+        after: r.after,
+        ip: r.ip,
+        actor: r.actor,
+      })),
+      total,
+      page: q.page,
+      pageSize: q.pageSize,
+    };
   }
 }

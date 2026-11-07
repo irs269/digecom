@@ -7,6 +7,7 @@ export interface AuthUser {
   islandId: string | null;
   siteId: string | null;
   leaderId: string | null;
+  mustChangePassword: boolean;
 }
 
 export interface AccessTokenPayload {
@@ -16,6 +17,8 @@ export interface AccessTokenPayload {
 
 /** Contexte rempli par un handler pour enrichir l'entrée d'audit (avant / après). */
 export interface AuditContext {
+  /** Nom métier de l'action (ex. USER_CREATE). Par défaut : `METHODE /route`. */
+  action?: string;
   entity?: string;
   entityId?: string;
   before?: unknown;

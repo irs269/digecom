@@ -10,11 +10,14 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   const { state } = useAuth();
   const router = useRouter();
 
+  const mustChange = state.status === 'authenticated' && state.user.mustChangePassword;
   useEffect(() => {
     if (state.status === 'anonymous') router.replace('/connexion');
-  }, [state.status, router]);
+    // Mot de passe temporaire : rien d'autre n'est accessible (l'API le refuse aussi).
+    else if (mustChange) router.replace('/mot-de-passe');
+  }, [state.status, mustChange, router]);
 
-  if (state.status !== 'authenticated') {
+  if (state.status !== 'authenticated' || mustChange) {
     return (
       <div className="flex min-h-screen items-center justify-center" role="status">
         <span className="text-sm font-medium text-ink-muted">Chargement…</span>

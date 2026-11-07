@@ -89,6 +89,12 @@ function Sidebar({ user, onLogout }: { user: MeResponse; onLogout: () => void })
             {user.island ? ` · ${user.island.name}` : ''}
           </span>
         </div>
+        <Link
+          href="/mot-de-passe"
+          className="flex min-h-touch items-center text-sm font-semibold text-white underline-offset-2 hover:text-white hover:underline"
+        >
+          Changer mon mot de passe
+        </Link>
         <Button variant="accent" size="sm" onClick={onLogout}>
           Se déconnecter
         </Button>

@@ -30,3 +30,7 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T4 | Seuils de stock non précisés | `stock.lowThresholdDefault` = 3, `stock.unsoldDaysAlert` = 30 jours (paramètres modifiables). |
 | T5 | Date de départ des cycles de règlement | `settlement.anchorDate` = lundi 2026-01-05 (paramètre modifiable). |
 | T6 | E-commerçants et livreurs sur le web | Ils peuvent s'authentifier (même API que le futur mobile) mais n'ont aucun module du back-office : le web affiche « Ce profil utilise l'application mobile ». |
+| T7 | Réaffectation vers un leader d'une autre île | Le vendeur passe sur l'île du nouveau leader et perd son site ; l'écran le signale avant validation. |
+| T8 | Part e-commerçant par défaut (SPEC §6.16) | Paramètre `catalog.defaultSellerShare` = 60 % du prix (7 500 / 12 500 dans l'exemple 4.1), proposé à la création d'un produit. |
+| T9 | Politique de mot de passe | 10 caractères minimum, au moins une lettre et un chiffre ; mot de passe temporaire à changer à la première connexion. |
+| T10 | Qui gère les sites | L'administrateur, via la permission `users:write` (module Utilisateurs et droits). |

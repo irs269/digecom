@@ -92,24 +92,48 @@ model User {
   auditLogs     AuditLog[]
   settings      Setting[]
 
+  teamHistory       TeamAssignmentHistory[] @relation("AssignmentUser")
+  leftTeams         TeamAssignmentHistory[] @relation("AssignmentFromLeader")
+  joinedTeams       TeamAssignmentHistory[] @relation("AssignmentToLeader")
+  assignmentsMadeBy TeamAssignmentHistory[] @relation("AssignmentBy")
+
   @@index([role])
   @@index([islandId])
   @@index([leaderId])
 }
 
+/// Historique des rattachements d'un vendeur (SELLER, TELECONSULTANT) à un leader.
+model TeamAssignmentHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  fromLeaderId String?
+  toLeaderId   String
+  reason       String
+  byId         String
+  at           DateTime @default(now())
+
+  user       User  @relation("AssignmentUser", fields: [userId], references: [id])
+  fromLeader User? @relation("AssignmentFromLeader", fields: [fromLeaderId], references: [id])
+  toLeader   User  @relation("AssignmentToLeader", fields: [toLeaderId], references: [id])
+  by         User  @relation("AssignmentBy", fields: [byId], references: [id])
+
+  @@index([userId, at])
+  @@index([toLeaderId])
+}
+
 model RefreshToken {
-  id        String    @id @default(cuid())
-  userId    String
+  id           String    @id @default(cuid())
+  userId       String
   /// SHA-256 du jeton (le jeton brut n'est jamais stocké)
-  tokenHash String    @unique
-  expiresAt DateTime
-  revokedAt DateTime?
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
   /// Jeton qui a remplacé celui-ci lors d'une rotation
   replacedById String?
-  userAgent String?
-  ip        String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
