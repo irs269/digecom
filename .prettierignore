@@ -1,0 +1,9 @@
+docs/
+pnpm-lock.yaml
+**/dist
+**/.next
+**/migrations/**/*.sql
+playwright-report/
+test-results/
+CLAUDE.md
+README-KIT.md

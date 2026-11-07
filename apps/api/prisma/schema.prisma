@@ -1,0 +1,154 @@
+// Schéma Prisma – Dig'eCom. Guide : docs/DATA-MODEL.md
+// Montants en Int (KMF). Identifiants cuid(). Dates en UTC.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FINANCE_MANAGER
+  ACCOUNTANT
+  ACCOUNTANT_ASSISTANT
+  CASHIER
+  STOCK_MANAGER
+  LOGISTICS_ASSISTANT
+  LEADER_SENIOR
+  LEADER_JUNIOR
+  TELECONSULTANT
+  SELLER
+  COURIER
+}
+
+enum IslandCode {
+  GC
+  AN
+  MO
+}
+
+enum SiteType {
+  SHOP
+  WAREHOUSE
+}
+
+model Island {
+  id        String     @id @default(cuid())
+  code      IslandCode @unique
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  sites Site[]
+  users User[]
+}
+
+model Site {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  type      SiteType
+  islandId  String
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  island Island @relation(fields: [islandId], references: [id])
+  users  User[]
+
+  @@index([islandId])
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  fullName           String
+  phone              String    @unique
+  email              String?   @unique
+  passwordHash       String
+  role               Role
+  islandId           String?
+  siteId             String?
+  /// Leader de rattachement (SELLER, TELECONSULTANT)
+  leaderId           String?
+  isActive           Boolean   @default(true)
+  /// Disponibilité (COURIER)
+  isAvailable        Boolean   @default(false)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  failedLogins       Int       @default(0)
+  lockedUntil        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  island        Island?        @relation(fields: [islandId], references: [id])
+  site          Site?          @relation(fields: [siteId], references: [id])
+  leader        User?          @relation("LeaderTeam", fields: [leaderId], references: [id])
+  team          User[]         @relation("LeaderTeam")
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  settings      Setting[]
+
+  @@index([role])
+  @@index([islandId])
+  @@index([leaderId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  /// SHA-256 du jeton (le jeton brut n'est jamais stocké)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  /// Jeton qui a remplacé celui-ci lors d'une rotation
+  replacedById String?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Journal append-only : UPDATE et DELETE sont bloqués par un trigger (migration init).
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  requestId String?
+  at        DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([at])
+}
+
+/// Paramètre versionné : la valeur lue est la plus récente avec effectiveFrom <= date.
+model Setting {
+  id            String   @id @default(cuid())
+  key           String
+  value         Json
+  effectiveFrom DateTime @default(now())
+  byId          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  by User? @relation(fields: [byId], references: [id])
+
+  @@unique([key, effectiveFrom])
+  @@index([key, effectiveFrom])
+}

@@ -19,3 +19,14 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | 13 | Les leaders touchent-ils une commission sur leur équipe ? | Non calculé (paramètre prévu). |
 | 14 | Moyens de paiement ? | Espèces, Huri Money, MVola, virement : simple liste paramétrable, pas d'intégration. |
 | 15 | Arrivée automatique des prospects (Facebook Lead Ads, WhatsApp) ? | Hors première version : import CSV/Excel et saisie manuelle. |
+
+## Hypothèses techniques ajoutées en phase 0 (2026-11-07)
+
+| # | Sujet | Hypothèse appliquée |
+| --- | --- | --- |
+| T1 | Format des téléphones | Stockés normalisés `+269XXXXXXX` (7 chiffres) ; la saisie accepte espaces, `00269` ou numéro sans indicatif. |
+| T2 | Cookie `Secure` en développement | Désactivable par `COOKIE_SECURE=false` uniquement en dev (http://localhost) ; toujours `true` en production et dans les tests. |
+| T3 | Limitation de débit de la connexion | 5 essais (réussis ou non) / 15 min par couple IP + téléphone, compteurs Redis ; verrouillage du compte 15 min après 5 échecs consécutifs, quelle que soit l'IP. Paramétrable (`LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MINUTES`, `LOCKOUT_MINUTES`). |
+| T4 | Seuils de stock non précisés | `stock.lowThresholdDefault` = 3, `stock.unsoldDaysAlert` = 30 jours (paramètres modifiables). |
+| T5 | Date de départ des cycles de règlement | `settlement.anchorDate` = lundi 2026-01-05 (paramètre modifiable). |
+| T6 | E-commerçants et livreurs sur le web | Ils peuvent s'authentifier (même API que le futur mobile) mais n'ont aucun module du back-office : le web affiche « Ce profil utilise l'application mobile ». |
