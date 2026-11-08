@@ -7,6 +7,7 @@ import type { IslandCode, Prisma, PrismaClient, Role, SiteType } from '@prisma/c
 import { SETTING_KEYS, SETTINGS } from '@digecom/shared';
 import * as argon2 from 'argon2';
 import { seedCatalog } from './seed-catalog';
+import { seedFinance } from './seed-finance';
 
 const ISLANDS: { code: IslandCode; name: string }[] = [
   { code: 'GC', name: 'Grande Comore' },
@@ -147,6 +148,13 @@ export const SEED_USERS: SeedUser[] = [
     island: 'GC',
     isAvailable: true,
   },
+  {
+    fullName: 'Halima Abdou',
+    phone: '+2693300025',
+    role: 'CASHIER',
+    island: 'GC',
+    site: 'Moroni – Entrepôt central',
+  },
 ];
 
 /** Paramètres par défaut : valeurs du registre partagé (packages/shared/src/settings.ts). */
@@ -244,6 +252,7 @@ export async function seedDatabase(
   }
 
   const catalog = adminId ? await seedCatalog(prisma, adminId) : 'catalogues ignorés';
+  const finance = adminId ? await seedFinance(prisma, adminId) : 'finance ignorée';
 
-  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres, ${catalog}.`;
+  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres, ${catalog}, ${finance}.`;
 }

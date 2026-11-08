@@ -8,7 +8,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 1 | Organisation, utilisateurs, droits, paramètres | Terminée | 2026-11-08 | Voir détail ci-dessous |
 | 2 | Catalogues leaders, stock, achats Chine | Terminée | 2026-11-09 | Voir détail ci-dessous |
 | 3 | Commandes, livraisons par île, notifications | Terminée | 2026-11-10 | Voir détail ci-dessous |
-| 4 | Finance, règlements, caisse, dépenses | À faire | | |
+| 4 | Finance, règlements, caisse, dépenses | Terminée | 2026-11-11 | Voir détail ci-dessous |
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | À faire | | |
 | 6 | Tableaux de bord, réseau, rapports et exports | À faire | | |
 | 7 | Production Docker, sécurité, sauvegardes | À faire | | |
@@ -122,6 +122,33 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 3 : 23 tests (trois modes, échec, refus, annulation, casse, retour après vente, changement de mode, isolation par île, **10 acceptations simultanées → 1 seule**, alerte sans livreur avec horloge simulée, snapshots, SSE). Total e2e API : 138.
 - Playwright : 11 parcours, dont logistique GC → commande pour Fatima Said → préparée → affectée → livrée par un livreur simulé ; la caisse de Mohéli n'y a pas accès.
 
+## Phase 4 – Finance : calculs, écritures, abonnements, règlements, caisse, dépenses
+
+### Fait
+
+- **Calculs** (`packages/shared/src/finance.ts`, écrits en TDD) : `computeSale` (SPEC 4.1), `computeTciSale` (4.3, partage Leader Junior non calculé), `computeSettlement` (4.2, report des soldes négatifs), cycles de 14 jours et semaines lundi → dimanche. Arrondi documenté : pourcentages arrondis à l'unité (demi vers le haut), une fois par produit.
+- **Grand livre** (`LedgerEntry`, append-only par trigger) : écritures de vente dans la transaction du passage en `SOLD` (CA, coût FIFO figé, taxes, commission ou prime TCI, frais de course) ; un refus n'en crée aucune ; retour après vente = écritures inverses liées (`reversalOfId`) et justifiées ; paiement fournisseur à la réception du lot (une seule fois, index unique).
+- **Abonnements** : job hebdomadaire BullMQ (lundi 00:00 heure des Comores), idempotent (index unique bénéficiaire + semaine).
+- **Règlements** : job quotidien de génération du dernier cycle terminé (idempotent), relevé = commissions − taxes − abonnements − retenues + report ; circuit vérifier (comptable) → valider (responsable financier, jamais le vérificateur, administrateur compris) → payer (caissier de l'île du vendeur) avec `SETTLEMENT_PAYMENT` et sortie de caisse en espèces ; relevé PDF (pdfkit).
+- **Caisse** : une caisse par site, ouverture avec fond, encaissements (vente comptoir, remise d'un livreur avec choix des commandes, abonnement en espèces), décaissements (règlement, dépense validée), clôture avec écart calculé et alerte ; écritures `CASH_IN` / `CASH_OUT` ; solde bancaire.
+- **Dépenses** : saisie → validation par le responsable financier (jamais sa propre saisie) → écriture `EXPENSE` ; annulation d'une dépense validée par écriture inverse justifiée ; **résultat net** par période et par île.
+- **Web** : Règlements (bandeau du circuit, cycle, tableau, relevé à droite, seul le bouton de l'étape du rôle connecté, message d'attente, PDF), Caisse (cartes par site, solde bancaire, mouvements du jour, remise livreur, clôture avec écart), Dépenses (KPI marge / charges / résultat net / en attente, validation), encart « Calcul d'une vente de référence » sur le tableau de bord de la direction.
+- **Seed** : caissière de Grande Comore (Halima Abdou, +269 330 00 25) ; 10 ventes de démonstration de Fatima Said au dernier cycle terminé + 2 abonnements → relevé de **50 000 KMF** « à vérifier ».
+
+### Critères d'acceptation
+
+- [x] Test de référence (12 500 → 3 750 / 7 000), simulation 100 produits et règlement de 50 000 exacts.
+- [x] Écritures immuables (UPDATE / DELETE SQL refusés), corrections liées et justifiées.
+- [x] Circuit de règlement avec séparation des tâches (même utilisateur vérifie puis valide → 403).
+- [x] Caisse : clôture avec écart calculé et alerte.
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- Vitest `shared` : 72 (dont 11 calculs financiers).
+- e2e API phase 4 : 19 (écritures exactes d'une vente à 12 500, frais de course, refus sans écriture, retour après vente, immuabilité, paiement fournisseur unique, abonnements et relevés idempotents, circuit et séparation des tâches, caisse, dépenses, résultat net, PDF). Total e2e API : 158.
+- Playwright : 12 parcours, dont comptable → responsable financier → caissier sur le relevé de Fatima Said.
+
 ## Décisions prises
 
 - 2026-11-07 – Images MinIO Chainguard (`chainguard/minio`, `chainguard/minio-client`) épinglées par digest – les images `minio/*` ne sont plus publiées sur Docker Hub.
@@ -135,6 +162,9 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - 2026-11-09 – Coût d'un lot calculé sur la quantité **réellement reçue** (pertes en route incluses dans le coût unitaire) – coût réel, jamais compté deux fois. Voir OPEN-QUESTIONS T11.
 - 2026-11-09 – Reprise des données du prototype : le stock restant de LOT-014 est obtenu par un ajustement tracé « ventes antérieures à la plateforme ».
 - 2026-11-09 – Images MinIO signées avec `S3_PUBLIC_ENDPOINT` (adresse vue par le navigateur), opérations internes via `S3_ENDPOINT`.
+- 2026-11-11 – Paiement d'un règlement : sortie de caisse uniquement en espèces ; Huri Money, MVola et virement ne touchent pas la caisse physique.
+- 2026-11-11 – Les relevés ne concernent que les e-commerçants ; les gains des TCI (primes) sont suivis en phase 5.
+- 2026-11-11 – Résultat net : les frais de course sont comptés comme charge (catégorie livraison).
 - 2026-11-10 – Livraison échouée et refus passent immédiatement en « retour à contrôler » (deux événements dans la frise) – la marchandise revient au site dans les deux cas.
 - 2026-11-10 – Casse au retour : retour en stock puis sortie `DAMAGED` liée à la commande – mouvements traçables et lots cohérents.
 - 2026-11-10 – Simulateur : jeton d'accès 15 min « au nom de » un livreur ou un vendeur, admin uniquement, `DEV_TOOLS_ENABLED=true` et jamais en production.

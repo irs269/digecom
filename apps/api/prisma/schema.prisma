@@ -43,9 +43,12 @@ model Island {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  sites  Site[]
-  users  User[]
-  orders Order[]
+  sites         Site[]
+  users         User[]
+  orders        Order[]
+  ledgerEntries LedgerEntry[]
+  settlements   Settlement[]
+  expenses      Expense[]
 }
 
 model Site {
@@ -68,6 +71,7 @@ model Site {
   inventories    Inventory[]
   stockAlerts    StockAlert[]
   orders         Order[]
+  cashRegister   CashRegister?
 
   @@index([islandId])
 }
@@ -121,6 +125,20 @@ model User {
   deliveryOffers  DeliveryOffer[]        @relation("CourierOffers")
   handovers       HandoverConfirmation[] @relation("HandoverBy")
   notifications   Notification[]
+
+  ledgerAsBeneficiary LedgerEntry[]   @relation("LedgerBeneficiary")
+  ledgerBy            LedgerEntry[]   @relation("LedgerBy")
+  settlements         Settlement[]    @relation("SettlementSeller")
+  settlementsVerified Settlement[]    @relation("SettlementVerifiedBy")
+  settlementsApproved Settlement[]    @relation("SettlementApprovedBy")
+  settlementsPaid     Settlement[]    @relation("SettlementPaidBy")
+  cashOpened          CashSession[]   @relation("CashOpenedBy")
+  cashClosed          CashSession[]   @relation("CashClosedBy")
+  cashOperations      CashOperation[] @relation("CashOperationBy")
+  expensesCreated     Expense[]       @relation("ExpenseCreatedBy")
+  expensesApproved    Expense[]       @relation("ExpenseApprovedBy")
+  expensesAsLeader    Expense[]       @relation("ExpenseLeader")
+  bankBalances        BankBalance[]   @relation("BankBalanceBy")
 
   @@index([role])
   @@index([islandId])
@@ -514,45 +532,48 @@ enum NotificationChannel {
 }
 
 model Order {
-  id                  String       @id @default(cuid())
-  number              String       @unique
-  sellerId            String
-  sellerType          SellerType
-  leaderId            String
-  campaignId          String?
-  prospectId          String?
-  islandId            String
-  siteId              String
-  customerName        String
-  customerPhone       String
-  customerAddress     String?
-  zone                String?
-  deliveryMode        DeliveryMode
-  status              OrderStatus  @default(NEW)
-  courierId           String?
-  failReason          String?
-  refuseReason        String?
-  cancelReason        String?
-  note                String?
-  amountCollected     Int?
-  proofKey            String?
+  id                    String       @id @default(cuid())
+  number                String       @unique
+  sellerId              String
+  sellerType            SellerType
+  leaderId              String
+  campaignId            String?
+  prospectId            String?
+  islandId              String
+  siteId                String
+  customerName          String
+  customerPhone         String
+  customerAddress       String?
+  zone                  String?
+  deliveryMode          DeliveryMode
+  status                OrderStatus  @default(NEW)
+  courierId             String?
+  failReason            String?
+  refuseReason          String?
+  cancelReason          String?
+  note                  String?
+  amountCollected       Int?
+  proofKey              String?
   /// Frais de course figé à la remise (delivery.feePerRun), écriture en phase 4
-  courierFee          Int?
-  createdOnBehalfById String?
-  confirmedAt         DateTime?
-  preparingAt         DateTime?
-  readyAt             DateTime?
-  assignedAt          DateTime?
-  outForDeliveryAt    DateTime?
-  handedOverAt        DateTime?
-  soldAt              DateTime?
-  failedAt            DateTime?
-  refusedAt           DateTime?
-  returnStartedAt     DateTime?
-  returnClosedAt      DateTime?
-  cancelledAt         DateTime?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  courierFee            Int?
+  /// Argent encaissé par le livreur remis à la caisse (opération de caisse)
+  remittedAt            DateTime?
+  remittanceOperationId String?
+  createdOnBehalfById   String?
+  confirmedAt           DateTime?
+  preparingAt           DateTime?
+  readyAt               DateTime?
+  assignedAt            DateTime?
+  outForDeliveryAt      DateTime?
+  handedOverAt          DateTime?
+  soldAt                DateTime?
+  failedAt              DateTime?
+  refusedAt             DateTime?
+  returnStartedAt       DateTime?
+  returnClosedAt        DateTime?
+  cancelledAt           DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   seller          User                   @relation("OrderSeller", fields: [sellerId], references: [id])
   leader          User                   @relation("OrderLeader", fields: [leaderId], references: [id])
@@ -564,6 +585,7 @@ model Order {
   events          OrderEvent[]
   offers          DeliveryOffer[]
   confirmations   HandoverConfirmation[]
+  ledgerEntries   LedgerEntry[]
 
   @@index([status, islandId])
   @@index([sellerId])
@@ -655,4 +677,225 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 – Finance : grand livre, règlements, caisse, dépenses
+// ---------------------------------------------------------------------------
+
+enum LedgerType {
+  SALE_REVENUE
+  COGS
+  DIGECOM_TAX
+  SELLER_TAX
+  SELLER_COMMISSION
+  TCI_BONUS
+  SUBSCRIPTION
+  COURIER_FEE
+  EXPENSE
+  SUPPLIER_PAYMENT
+  SETTLEMENT_PAYMENT
+  CASH_IN
+  CASH_OUT
+  CORRECTION
+}
+
+enum SettlementStatus {
+  GENERATED
+  VERIFIED
+  APPROVED
+  PAID
+}
+
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+}
+
+enum CashDirection {
+  IN
+  OUT
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Grand livre append-only : jamais d'UPDATE ni de DELETE (trigger). Correction = écriture inverse liée.
+model LedgerEntry {
+  id              String     @id @default(cuid())
+  type            LedgerType
+  /// Montant signé (une correction porte le montant opposé de l'écriture corrigée)
+  amount          Int
+  orderId         String?
+  beneficiaryId   String?
+  islandId        String
+  leaderId        String?
+  campaignId      String?
+  purchaseOrderId String?
+  expenseId       String?
+  cashOperationId String?
+  settlementId    String?
+  /// Jour métier de rattachement (00:00 heure des Comores, en UTC)
+  periodDate      DateTime
+  reversalOfId    String?    @unique
+  justification   String?
+  byId            String?
+  createdAt       DateTime   @default(now())
+
+  order       Order?           @relation(fields: [orderId], references: [id])
+  beneficiary User?            @relation("LedgerBeneficiary", fields: [beneficiaryId], references: [id])
+  island      Island           @relation(fields: [islandId], references: [id])
+  reversalOf  LedgerEntry?     @relation("LedgerReversal", fields: [reversalOfId], references: [id])
+  reversedBy  LedgerEntry?     @relation("LedgerReversal")
+  by          User?            @relation("LedgerBy", fields: [byId], references: [id])
+  lines       SettlementLine[]
+
+  @@index([type, periodDate])
+  @@index([beneficiaryId, type])
+  @@index([orderId])
+  @@index([islandId, periodDate])
+}
+
+model Settlement {
+  id              String           @id @default(cuid())
+  number          String           @unique
+  sellerId        String
+  islandId        String
+  periodStart     DateTime
+  periodEnd       DateTime
+  salesCount      Int
+  grossCommission Int
+  taxes           Int
+  subscriptions   Int
+  otherDeductions Int              @default(0)
+  carriedOver     Int              @default(0)
+  /// Solde du cycle (peut être négatif ; reporté au cycle suivant)
+  balance         Int
+  netToPay        Int
+  status          SettlementStatus @default(GENERATED)
+  verifiedById    String?
+  verifiedAt      DateTime?
+  approvedById    String?
+  approvedAt      DateTime?
+  paidById        String?
+  paidAt          DateTime?
+  paymentMethod   String?
+  paymentRef      String?
+  proofKey        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  seller     User             @relation("SettlementSeller", fields: [sellerId], references: [id])
+  island     Island           @relation(fields: [islandId], references: [id])
+  verifiedBy User?            @relation("SettlementVerifiedBy", fields: [verifiedById], references: [id])
+  approvedBy User?            @relation("SettlementApprovedBy", fields: [approvedById], references: [id])
+  paidBy     User?            @relation("SettlementPaidBy", fields: [paidById], references: [id])
+  lines      SettlementLine[]
+
+  @@unique([sellerId, periodStart])
+  @@index([status])
+}
+
+model SettlementLine {
+  id            String @id @default(cuid())
+  settlementId  String
+  ledgerEntryId String @unique
+
+  settlement  Settlement  @relation(fields: [settlementId], references: [id])
+  ledgerEntry LedgerEntry @relation(fields: [ledgerEntryId], references: [id])
+}
+
+model CashRegister {
+  id        String   @id @default(cuid())
+  siteId    String   @unique
+  createdAt DateTime @default(now())
+
+  site     Site          @relation(fields: [siteId], references: [id])
+  sessions CashSession[]
+}
+
+model CashSession {
+  id             String            @id @default(cuid())
+  registerId     String
+  status         CashSessionStatus @default(OPEN)
+  openedById     String
+  openingAmount  Int
+  expectedAmount Int?
+  countedAmount  Int?
+  difference     Int?
+  closingNote    String?
+  closedById     String?
+  openedAt       DateTime          @default(now())
+  closedAt       DateTime?
+
+  register   CashRegister    @relation(fields: [registerId], references: [id])
+  openedBy   User            @relation("CashOpenedBy", fields: [openedById], references: [id])
+  closedBy   User?           @relation("CashClosedBy", fields: [closedById], references: [id])
+  operations CashOperation[]
+
+  @@index([registerId, status])
+}
+
+model CashOperation {
+  id           String        @id @default(cuid())
+  sessionId    String
+  direction    CashDirection
+  category     String
+  amount       Int
+  label        String?
+  orderIds     String[]      @default([])
+  courierId    String?
+  settlementId String?
+  expenseId    String?
+  sellerId     String?
+  proofKey     String?
+  byId         String
+  at           DateTime      @default(now())
+
+  session CashSession @relation(fields: [sessionId], references: [id])
+  by      User        @relation("CashOperationBy", fields: [byId], references: [id])
+
+  @@index([sessionId])
+}
+
+model Expense {
+  id           String        @id @default(cuid())
+  category     String
+  label        String
+  amount       Int
+  islandId     String
+  periodDate   DateTime
+  campaignId   String?
+  leaderId     String?
+  proofKey     String?
+  status       ExpenseStatus @default(PENDING)
+  rejectReason String?
+  createdById  String
+  approvedById String?
+  approvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  island     Island @relation(fields: [islandId], references: [id])
+  createdBy  User   @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  approvedBy User?  @relation("ExpenseApprovedBy", fields: [approvedById], references: [id])
+  leader     User?  @relation("ExpenseLeader", fields: [leaderId], references: [id])
+
+  @@index([status, periodDate])
+}
+
+model BankBalance {
+  id        String   @id @default(cuid())
+  date      DateTime
+  amount    Int
+  source    String
+  byId      String
+  createdAt DateTime @default(now())
+
+  by User @relation("BankBalanceBy", fields: [byId], references: [id])
+
+  @@index([date])
 }

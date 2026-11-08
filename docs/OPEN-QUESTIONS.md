@@ -42,3 +42,6 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T16 | Preuve de remise en livraison directe | Montant encaissé obligatoire ; photo de preuve proposée mais facultative (réseau faible). |
 | T17 | Annulation par le vendeur | Possible tant que la commande n'est pas confirmée par le site ; ensuite, le site annule (avec motif) jusqu'à « prête ». |
 | T18 | Site de préparation | Le site de l'île du vendeur qui a le stock (entrepôt en priorité) ; la logistique peut choisir un autre site de l'île. |
+| T19 | Paiement d'un règlement hors espèces | Écriture `SETTLEMENT_PAYMENT` sans opération de caisse ; seules les espèces sortent de la caisse du site. |
+| T20 | Abonnement d'un e-commerçant créé en cours de semaine | Premier abonnement prélevé le lundi suivant sa création. |
+| T21 | Séparation des tâches pour l'administrateur | L'administrateur peut faire chaque étape, mais jamais vérifier puis valider le même relevé (PERMISSIONS.md). |

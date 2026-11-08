@@ -21,6 +21,7 @@ import { notFound } from '../scope/scope.service';
 import { CounterService } from '../stock/counter.service';
 import { StockQueryService } from '../stock/stock-query.service';
 import { StockService } from '../stock/stock.service';
+import { LedgerService } from '../finance/ledger.service';
 
 const INCLUDE = {
   supplier: { select: { id: true, name: true } },
@@ -99,6 +100,7 @@ export class PurchasesService {
     private readonly stock: StockService,
     private readonly counters: CounterService,
     private readonly query: StockQueryService,
+    private readonly ledger: LedgerService,
   ) {}
 
   // --- Fournisseurs ------------------------------------------------------------------------
@@ -312,6 +314,14 @@ export class PurchasesService {
         },
         tx,
       );
+      // Paiement fournisseur enregistré une seule fois, à la réception (SPEC 4.4 §1).
+      await this.ledger.supplierPayment(tx, {
+        purchaseOrderId: id,
+        amount: input.paidAmountKmf ?? existing.purchaseAmountKmf,
+        islandId: site.islandId,
+        at: input.paidAt ? startOfBusinessDay(input.paidAt) : receivedAt,
+        byId: actor.id,
+      });
       return tx.purchaseOrder.findUniqueOrThrow({ where: { id }, include: INCLUDE });
     });
     return { before: toPurchaseView(existing), after: toPurchaseView(row) };

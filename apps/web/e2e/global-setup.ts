@@ -15,6 +15,9 @@ const PAGES = [
   '/achats',
   '/livraisons',
   '/simulateur',
+  '/reglements',
+  '/caisse',
+  '/depenses',
 ];
 
 export default async function globalSetup(): Promise<void> {

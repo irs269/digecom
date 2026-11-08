@@ -8,6 +8,7 @@ import { lotUnitCost } from '@digecom/shared';
 import type { PrismaService } from '../src/prisma/prisma.service';
 import { CounterService } from '../src/stock/counter.service';
 import { StockService } from '../src/stock/stock.service';
+import { DEMO_SALES } from './seed-finance';
 
 interface SeedProduct {
   leaderPhone: string;
@@ -356,12 +357,14 @@ export async function seedCatalog(prisma: PrismaClient, adminId: string): Promis
       const target = SEED_PRODUCTS.find(
         (p) => p.leaderPhone === l.product.leaderPhone && p.name === l.product.name,
       )!.stock;
-      if (l.quantity > target) {
+      // + ventes de démonstration du seed financier (écouteurs d'Ali Mohamed).
+      const demo = l.number === 'LOT-014' ? DEMO_SALES : 0;
+      if (l.quantity > target + demo) {
         await stock.adjust({
           productId,
           siteId,
           byId: adminId,
-          delta: target - l.quantity,
+          delta: target + demo - l.quantity,
           reason: 'Reprise de données : ventes antérieures à la plateforme',
         });
       }

@@ -1,10 +1,11 @@
 'use client';
 
-import { ISLAND_LABELS } from '@digecom/shared';
+import { hasPermission, ISLAND_LABELS } from '@digecom/shared';
 import { PageHeader, useIslandFilter } from '@/components/app-shell';
 import { Forbidden } from '@/components/forbidden';
 import { Card, KpiCard } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
+import { SaleReference } from '@/components/sale-reference';
 
 export default function DashboardPage() {
   const { state } = useAuth();
@@ -25,6 +26,9 @@ export default function DashboardPage() {
         <KpiCard label="Stock en alerte" value="—" hint="Disponible en phase 2" />
         <KpiCard label="Règlements à traiter" value="—" hint="Disponible en phase 4" accent />
       </div>
+      {user.scope === 'GLOBAL' && hasPermission(user.role, 'reports:read') ? (
+        <SaleReference />
+      ) : null}
       <Card className="flex flex-col gap-2">
         <h2 className="text-base font-bold text-ink">Bientôt</h2>
         <p className="text-sm text-ink-muted">

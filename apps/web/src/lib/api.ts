@@ -22,6 +22,10 @@ let accessToken: string | null = null;
 let refreshInFlight: Promise<LoginResponse | null> | null = null;
 let onSessionExpired: (() => void) | null = null;
 
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
 export function setAccessToken(token: string | null): void {
   accessToken = token;
 }

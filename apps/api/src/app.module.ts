@@ -7,6 +7,8 @@ import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import { ConfigModule } from './config/config.module';
+import { FinanceModule } from './finance/finance.controller';
+import { LedgerModule } from './finance/ledger.service';
 import { HealthModule } from './health/health.controller';
 import { NotificationsModule } from './notifications/notifications.controller';
 import { OrdersModule } from './orders/orders.module';
@@ -45,12 +47,14 @@ const isDev = process.env.NODE_ENV === 'development';
     SettingsModule,
     StorageModule,
     NotificationsModule,
+    LedgerModule,
     AuditModule,
     AuthModule,
     UsersModule,
     OrganizationModule,
     StockModule,
     OrdersModule,
+    FinanceModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],

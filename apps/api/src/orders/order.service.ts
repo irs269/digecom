@@ -34,6 +34,7 @@ import { CounterService } from '../stock/counter.service';
 import { StockService } from '../stock/stock.service';
 import { BUCKETS, StorageService } from '../storage/storage.service';
 import { DeliveryJobs } from './delivery-jobs';
+import { LedgerService } from '../finance/ledger.service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -97,6 +98,7 @@ export class OrderService {
     private readonly live: LiveService,
     private readonly storage: StorageService,
     private readonly jobs: DeliveryJobs,
+    private readonly ledger: LedgerService,
   ) {}
 
   // --- Périmètre -------------------------------------------------------------------------
@@ -538,6 +540,8 @@ export class OrderService {
 
       case 'markSold': {
         await this.move(tx, order, 'SOLD', action, actor, input.note);
+        // Écritures financières dans la même transaction (règle 5 : définitives en SOLD).
+        await this.ledger.recordSale(tx, order.id, actor.id);
         const cashiers = await this.notifications.usersWithRoles(['CASHIER'], order.islandId);
         after.notify.push({
           users: [...(await admins()), ...cashiers, ...(await logistics())],
@@ -652,6 +656,13 @@ export class OrderService {
 
       case 'returnAfterSale':
         await this.move(tx, order, 'RETURN_IN_PROGRESS', action, actor, input.reason);
+        // Corrections liées et justifiées : jamais de suppression des écritures de vente.
+        await this.ledger.reverseOrder(
+          tx,
+          order.id,
+          actor.id,
+          `Retour après vente : ${input.reason}`,
+        );
         return;
     }
   }
