@@ -10,6 +10,9 @@ const PAGES = [
   '/mot-de-passe',
   '/commandes',
   '/acces-refuse',
+  '/catalogues',
+  '/stock',
+  '/achats',
 ];
 
 export default async function globalSetup(): Promise<void> {

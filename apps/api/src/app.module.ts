@@ -13,6 +13,8 @@ import { PrismaModule } from './prisma/prisma.service';
 import { RedisModule } from './redis/redis.module';
 import { ScopeModule } from './scope/scope.service';
 import { SettingsModule } from './settings/settings.controller';
+import { StockModule } from './stock/stock.module';
+import { StorageModule } from './storage/storage.service';
 import { UsersModule } from './users/users.controller';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -39,10 +41,12 @@ const isDev = process.env.NODE_ENV === 'development';
     RedisModule,
     ScopeModule,
     SettingsModule,
+    StorageModule,
     AuditModule,
     AuthModule,
     UsersModule,
     OrganizationModule,
+    StockModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],

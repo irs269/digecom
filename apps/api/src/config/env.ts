@@ -20,6 +20,9 @@ export const envSchema = z.object({
   LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   S3_ENDPOINT: z.string().url().optional(),
+  /** Adresse de MinIO vue par le navigateur (URL pré-signées). */
+  S3_PUBLIC_ENDPOINT: z.string().url().optional(),
+  S3_REGION: z.string().default('us-east-1'),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
 });

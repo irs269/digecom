@@ -34,3 +34,7 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T8 | Part e-commerçant par défaut (SPEC §6.16) | Paramètre `catalog.defaultSellerShare` = 60 % du prix (7 500 / 12 500 dans l'exemple 4.1), proposé à la création d'un produit. |
 | T9 | Politique de mot de passe | 10 caractères minimum, au moins une lettre et un chiffre ; mot de passe temporaire à changer à la première connexion. |
 | T10 | Qui gère les sites | L'administrateur, via la permission `users:write` (module Utilisateurs et droits). |
+| T11 | Coût unitaire si la quantité reçue diffère de la commande | Coût total ÷ quantité **reçue** (les pertes en transport renchérissent les unités reçues). |
+| T12 | Transferts entre îles | Autorisés ; le site de départ doit être dans le périmètre du gestionnaire de stock, l'arrivée peut être sur une autre île. |
+| T13 | Stock d'un produit jamais approvisionné | Le premier stock exige un coût unitaire ; ensuite, un ajustement positif prend le coût moyen des lots en stock. |
+| T14 | Seuil de stock faible | Seuil propre au produit s'il est renseigné, sinon paramètre `stock.lowThresholdDefault` (3). |

@@ -6,6 +6,7 @@
 import type { IslandCode, Prisma, PrismaClient, Role, SiteType } from '@prisma/client';
 import { SETTING_KEYS, SETTINGS } from '@digecom/shared';
 import * as argon2 from 'argon2';
+import { seedCatalog } from './seed-catalog';
 
 const ISLANDS: { code: IslandCode; name: string }[] = [
   { code: 'GC', name: 'Grande Comore' },
@@ -242,5 +243,7 @@ export async function seedDatabase(
     });
   }
 
-  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres.`;
+  const catalog = adminId ? await seedCatalog(prisma, adminId) : 'catalogues ignorés';
+
+  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres, ${catalog}.`;
 }

@@ -60,6 +60,13 @@ model Site {
   island Island @relation(fields: [islandId], references: [id])
   users  User[]
 
+  stockLevels    StockLevel[]
+  stockMovements StockMovement[]
+  lots           Lot[]
+  purchaseOrders PurchaseOrder[]
+  inventories    Inventory[]
+  stockAlerts    StockAlert[]
+
   @@index([islandId])
 }
 
@@ -96,6 +103,13 @@ model User {
   leftTeams         TeamAssignmentHistory[] @relation("AssignmentFromLeader")
   joinedTeams       TeamAssignmentHistory[] @relation("AssignmentToLeader")
   assignmentsMadeBy TeamAssignmentHistory[] @relation("AssignmentBy")
+
+  products           Product[]       @relation("LeaderProducts")
+  productsCreated    Product[]       @relation("ProductCreatedBy")
+  stockMovements     StockMovement[] @relation("StockMovementBy")
+  purchaseOrders     PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
+  inventoriesStarted Inventory[]     @relation("InventoryStartedBy")
+  inventoriesClosed  Inventory[]     @relation("InventoryClosedBy")
 
   @@index([role])
   @@index([islandId])
@@ -175,4 +189,259 @@ model Setting {
 
   @@unique([key, effectiveFrom])
   @@index([key, effectiveFrom])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 – Catalogues, stock par site, achats en Chine
+// ---------------------------------------------------------------------------
+
+enum ShareType {
+  FIXED
+  PERCENT
+}
+
+enum StockMovementType {
+  ENTRY
+  RESERVE
+  RELEASE
+  OUT
+  RETURN
+  DAMAGED
+  LOSS
+  TRANSFER_OUT
+  TRANSFER_IN
+  ADJUST
+  INVENTORY_DIFF
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  IN_TRANSIT
+  ARRIVED
+  IN_CUSTOMS
+  RECEIVED
+  CLOSED
+}
+
+enum InventoryStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum StockAlertType {
+  LOW
+  OUT
+  UNSOLD
+  INVENTORY_DIFF
+}
+
+/// Compteurs des numéros lisibles (LOT-014, PRD-000123…), incrémentés atomiquement.
+model Counter {
+  key   String @id
+  value Int
+}
+
+/// Fiche produit d'un leader. Le même article chez deux leaders = deux Product.
+model Product {
+  id                String     @id @default(cuid())
+  leaderId          String
+  sku               String     @unique
+  name              String
+  category          String?
+  description       String?
+  quality           String?
+  /// Clés S3 des photos (bucket products), 5 maximum
+  photos            String[]   @default([])
+  salePrice         Int
+  /// Leader Senior : part e-commerçant
+  sellerShareType   ShareType?
+  sellerShareValue  Int?
+  /// Leader Junior : prime TCI par produit vendu (bornée par tci.bonusMin / tci.bonusMax)
+  tciBonus          Int?
+  isPublished       Boolean    @default(false)
+  lowStockThreshold Int?
+  createdById       String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  leader         User            @relation("LeaderProducts", fields: [leaderId], references: [id])
+  createdBy      User            @relation("ProductCreatedBy", fields: [createdById], references: [id])
+  stockLevels    StockLevel[]
+  movements      StockMovement[]
+  lots           Lot[]
+  purchaseOrders PurchaseOrder[]
+  inventoryLines InventoryLine[]
+  alerts         StockAlert[]
+
+  @@index([leaderId, isPublished])
+}
+
+/// Niveau de stock matérialisé, modifié UNIQUEMENT par StockService (transaction + verrou de ligne).
+model StockLevel {
+  id        String   @id @default(cuid())
+  productId String
+  siteId    String
+  available Int      @default(0)
+  reserved  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+  site    Site    @relation(fields: [siteId], references: [id])
+
+  @@unique([productId, siteId])
+  @@index([siteId])
+}
+
+/// Mouvement de stock append-only (UPDATE/DELETE bloqués par trigger).
+model StockMovement {
+  id          String            @id @default(cuid())
+  productId   String
+  siteId      String
+  type        StockMovementType
+  /// Quantité positive ; le sens dépend du type
+  quantity    Int
+  lotId       String?
+  /// Coût unitaire du lot concerné (KMF)
+  unitCost    Int?
+  orderId     String?
+  transferId  String?
+  inventoryId String?
+  reason      String?
+  byId        String
+  at          DateTime          @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  site    Site    @relation(fields: [siteId], references: [id])
+  lot     Lot?    @relation(fields: [lotId], references: [id])
+  by      User    @relation("StockMovementBy", fields: [byId], references: [id])
+
+  @@index([productId, siteId, at])
+  @@index([orderId])
+  @@index([transferId])
+}
+
+/// Lot : coût réel (achat + expédition + douane + frais) / quantité reçue. Consommé en FIFO.
+model Lot {
+  id              String   @id @default(cuid())
+  number          String   @unique
+  productId       String
+  siteId          String
+  purchaseOrderId String?
+  /// Lot d'origine (transfert entre sites)
+  parentLotId     String?
+  quantity        Int
+  remaining       Int
+  unitCost        Int
+  receivedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  product       Product         @relation(fields: [productId], references: [id])
+  site          Site            @relation(fields: [siteId], references: [id])
+  purchaseOrder PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  parentLot     Lot?            @relation("LotSplit", fields: [parentLotId], references: [id])
+  children      Lot[]           @relation("LotSplit")
+  movements     StockMovement[]
+
+  @@index([productId, siteId, receivedAt])
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  platform  String?
+  contact   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id                    String              @id @default(cuid())
+  number                String              @unique
+  supplierId            String
+  productId             String
+  quantity              Int
+  currency              String
+  exchangeRate          Decimal             @db.Decimal(14, 6)
+  purchaseAmountForeign Decimal             @db.Decimal(14, 2)
+  purchaseAmountKmf     Int
+  shippingKmf           Int                 @default(0)
+  customsKmf            Int                 @default(0)
+  otherFeesKmf          Int                 @default(0)
+  destinationSiteId     String
+  status                PurchaseOrderStatus @default(DRAFT)
+  receivedQuantity      Int?
+  /// Paiement fournisseur (écriture SUPPLIER_PAYMENT en phase 4)
+  paidAmountKmf         Int?
+  paidAt                DateTime?
+  notes                 String?
+  orderedAt             DateTime?
+  inTransitAt           DateTime?
+  arrivedAt             DateTime?
+  inCustomsAt           DateTime?
+  receivedAt            DateTime?
+  closedAt              DateTime?
+  createdById           String
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+  product         Product  @relation(fields: [productId], references: [id])
+  destinationSite Site     @relation(fields: [destinationSiteId], references: [id])
+  createdBy       User     @relation("PurchaseOrderCreatedBy", fields: [createdById], references: [id])
+  lots            Lot[]
+
+  @@index([status])
+}
+
+model Inventory {
+  id          String          @id @default(cuid())
+  siteId      String
+  status      InventoryStatus @default(OPEN)
+  startedById String
+  closedById  String?
+  startedAt   DateTime        @default(now())
+  closedAt    DateTime?
+
+  site      Site            @relation(fields: [siteId], references: [id])
+  startedBy User            @relation("InventoryStartedBy", fields: [startedById], references: [id])
+  closedBy  User?           @relation("InventoryClosedBy", fields: [closedById], references: [id])
+  lines     InventoryLine[]
+
+  @@index([siteId, status])
+}
+
+model InventoryLine {
+  id          String @id @default(cuid())
+  inventoryId String
+  productId   String
+  /// Stock physique théorique (disponible + réservé) à l'ouverture
+  expected    Int
+  counted     Int?
+  difference  Int?
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([inventoryId, productId])
+}
+
+/// Alertes persistées (invendus : job quotidien ; écarts d'inventaire). Faible / rupture : calcul direct.
+model StockAlert {
+  id         String         @id @default(cuid())
+  type       StockAlertType
+  productId  String
+  siteId     String
+  value      Int?
+  detectedAt DateTime       @default(now())
+  resolvedAt DateTime?
+
+  product Product @relation(fields: [productId], references: [id])
+  site    Site    @relation(fields: [siteId], references: [id])
+
+  @@index([type, resolvedAt])
 }

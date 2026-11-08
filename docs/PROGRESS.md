@@ -6,7 +6,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | --- | --- | --- | --- | --- |
 | 0 | Socle, Docker, authentification | Terminée | 2026-11-07 | Voir détail ci-dessous |
 | 1 | Organisation, utilisateurs, droits, paramètres | Terminée | 2026-11-08 | Voir détail ci-dessous |
-| 2 | Catalogues leaders, stock, achats Chine | À faire | | |
+| 2 | Catalogues leaders, stock, achats Chine | Terminée | 2026-11-09 | Voir détail ci-dessous |
 | 3 | Commandes, livraisons par île, notifications | À faire | | |
 | 4 | Finance, règlements, caisse, dépenses | À faire | | |
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | À faire | | |
@@ -71,6 +71,32 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 
 - Vitest `shared` : 27 ; Jest unitaires API : 29 (dont `ScopeService` pour les 12 rôles) ; e2e API : 72 (chaque endpoint de la phase avec un rôle autorisé et un rôle refusé) ; Playwright : 8 parcours (dont création → réaffectation → historique, et comptable sans module Utilisateurs).
 
+## Phase 2 – Catalogues des leaders, stock par site et achats en Chine
+
+### Fait
+
+- **StockService** (`apps/api/src/stock/stock.service.ts`) : seule porte d'entrée de `StockLevel`. Chaque opération verrouille la ligne (`SELECT … FOR UPDATE`), écrit ses `StockMovement` (append-only, trigger) et met à jour niveaux et lots dans la même transaction ; refus 409 de tout stock négatif. Opérations : entrée, réservation, libération, sortie FIFO (coût moyen pondéré renvoyé), retour dans les lots d'origine, casse, perte, ajustement, transfert (deux mouvements liés, lots enfants au même coût), écart d'inventaire. Jamais de lot à coût nul (`UNIT_COST_REQUIRED`).
+- **Catalogues** : CRUD produits (leader : les siens, admin : tous ; autre leader → 404), part e-commerçant (Senior, fixe ou %) ou prime TCI (Junior, bornée par `tci.bonusMin` / `tci.bonusMax`), publier / retirer, prime −500 / +500, stock +/− avec motif sur un site de l'île du leader, photos (URL pré-signée MinIO → conversion WebP par sharp, 5 max, 5 Mo), `GET /catalog/visible` (vendeur : catalogue publié de SON leader avec stock de son île ; admin : `?asLeader=`).
+- **Stock** : vue par site (disponible, réservé, coût rendu moyen des lots, valeur, alertes), KPI, historique des mouvements, lots, entrée manuelle, ajustement / casse / perte, transfert, inventaires (photo du théorique, comptage, clôture → `INVENTORY_DIFF` + alerte).
+- **Alertes** : stock faible (seuil produit ou paramètre) et rupture en direct (y compris produits publiés jamais approvisionnés) ; invendus via un job BullMQ quotidien (06:00 heure des Comores) et `POST /stock/alerts/refresh` ; écarts d'inventaire.
+- **Achats Chine** : fournisseurs, commandes fournisseurs (devise, taux en `Decimal`, conversion KMF, frais), statuts avec dates, réception (site de l'île de destination, quantité réellement reçue) → lot au numéro de la commande, coût réel, entrée en stock dans la même transaction ; montant et date de paiement conservés pour la phase 4.
+- **Web** : Catalogues / Mon catalogue (tableau du prototype, actions, formulaire avec photos, « Ce que voit chaque équipe »), Stock (KPI, filtres, actions, inventaire, historique), Achats Chine (lots, étape suivante, commande fournisseur avec coût unitaire estimé, réception, frise des étapes).
+- **Seed** : catalogues du prototype (Ali Mohamed, Nassur Ahmed, Moinaecha Ali, Rachad Ibrahim, Kamaria Said), 4 fournisseurs, lots LOT-014 (clôturé, 750 / unité) à LOT-017 ; stock créé via StockService.
+
+### Critères d'acceptation
+
+- [x] Aucun chemin de code ne modifie `StockLevel` hors `StockService` (test `stock-guard.spec.ts` qui parcourt les sources et le seed).
+- [x] Mouvements de stock tous tracés (qui, quand, pourquoi) ; table append-only.
+- [x] Coût de lot exact (250 + 500 → 750 ; 125 000 + 250 000 / 500 → 750) et FIFO correct (2×700 + 1×800).
+- [x] Cloisonnement des catalogues prouvé par les tests (API et Playwright).
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- StockService contre PostgreSQL : 18 tests, dont **20 réservations simultanées sur un stock de 3 → exactement 3 réussissent** et opérations concurrentes sans stock négatif.
+- e2e API phase 2 : 25 tests (catalogues, primes, photos, stock par île, inventaire, achats, réception). Total e2e API : 115.
+- Playwright : 10 parcours (gestionnaire de stock d'Anjouan limité à Anjouan ; Ali publie un produit visible pour son équipe et pas pour celle de Nassur).
+
 ## Décisions prises
 
 - 2026-11-07 – Images MinIO Chainguard (`chainguard/minio`, `chainguard/minio-client`) épinglées par digest – les images `minio/*` ne sont plus publiées sur Docker Hub.
@@ -81,11 +107,17 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - 2026-11-08 – `apps/api/dist` aussi en volume nommé (et `deleteOutDir: false`) – en CI Linux le conteneur ne peut pas écrire dans le dépôt monté.
 - 2026-11-08 – Réaffectation d'un vendeur vers un leader d'une autre île : le vendeur suit l'île du nouveau leader (son site est retiré) – garder la règle « même île » sans bloquer les déménagements. Voir OPEN-QUESTIONS T7.
 - 2026-11-08 – Sites, îles et réaffectations protégés par les permissions existantes (`users:write`, `network:reassign`) – pas de nouveau module dans la matrice.
+- 2026-11-09 – Coût d'un lot calculé sur la quantité **réellement reçue** (pertes en route incluses dans le coût unitaire) – coût réel, jamais compté deux fois. Voir OPEN-QUESTIONS T11.
+- 2026-11-09 – Reprise des données du prototype : le stock restant de LOT-014 est obtenu par un ajustement tracé « ventes antérieures à la plateforme ».
+- 2026-11-09 – Images MinIO signées avec `S3_PUBLIC_ENDPOINT` (adresse vue par le navigateur), opérations internes via `S3_ENDPOINT`.
 - 2026-11-08 – Playwright : préchauffage des pages et compteurs de connexion remis à zéro par `make e2e` – le mode dev compile chaque page à la première visite.
 
 ## Écarts et dettes techniques
 
 (À traiter avant la mise en production)
+
+- `StockMovement.orderId` n'a pas encore de clé étrangère : le modèle `Order` arrive en phase 3.
+- Le job BullMQ des invendus tourne dans le processus API ; à isoler dans un worker dédié en phase 7 si la charge augmente.
 
 - Mode dev sous Windows (sans impact sur Playwright, qui tourne sur une build de production via le service `web-e2e`) : première compilation d'une page Next.js lente (~15-40 s) à cause du montage de fichiers ; sans impact en production (image `prod` compilée).
 - Rôle PostgreSQL applicatif sans droits UPDATE/DELETE sur `AuditLog` : protégé par trigger pour l'instant ; le rôle DB dédié sera créé en phase 7.
