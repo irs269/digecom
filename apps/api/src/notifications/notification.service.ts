@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { NotificationView, Role } from '@digecom/shared';
+import {
+  channelEnabled,
+  type NotificationPreferences,
+  type NotificationView,
+  type Role,
+} from '@digecom/shared';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveService } from './live.service';
@@ -80,7 +85,17 @@ export class NotificationService {
           }),
         ),
       );
-      await this.push.send(unique, input);
+      // Préférences : l'in-app est toujours actif, le push peut être coupé par type.
+      const prefs = await this.prisma.user.findMany({
+        where: { id: { in: unique } },
+        select: { id: true, notificationPrefs: true },
+      });
+      const pushTo = prefs
+        .filter((u) =>
+          channelEnabled(u.notificationPrefs as NotificationPreferences, input.type, 'push'),
+        )
+        .map((u) => u.id);
+      if (pushTo.length) await this.push.send(pushTo, input);
     } catch (err) {
       // Une notification ratée ne doit jamais annuler l'action métier déjà validée.
       this.logger.error({ err, type: input.type }, 'Échec d’envoi de notification');

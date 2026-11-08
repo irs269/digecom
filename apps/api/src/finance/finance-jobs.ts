@@ -3,6 +3,7 @@ import { businessToday, weekStart } from '@digecom/shared';
 import { Queue, Worker } from 'bullmq';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
+import { NotificationService } from '../notifications/notification.service';
 import { SettingsService } from '../settings/settings.service';
 import { LedgerService } from './ledger.service';
 import { SettlementService } from './settlement.service';
@@ -25,6 +26,7 @@ export class FinanceJobs implements OnModuleInit, OnModuleDestroy {
     private readonly ledger: LedgerService,
     private readonly settlements: SettlementService,
     private readonly settings: SettingsService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -69,6 +71,15 @@ export class FinanceJobs implements OnModuleInit, OnModuleDestroy {
     const week = weekStart(day);
     const amount = await this.settings.get('subscription.weekly');
     const count = await this.ledger.chargeSubscriptions(week, amount);
+    if (count > 0) {
+      const charged = await this.ledger.subscribersOf(week);
+      await this.notifications.send(charged, {
+        type: 'SUBSCRIPTION_DUE',
+        title: 'Abonnement de la semaine',
+        body: `${amount.toLocaleString('fr-FR')} KMF déduits de ton prochain règlement`,
+        link: '/reglements',
+      });
+    }
     this.logger.log(`Abonnements semaine du ${week} : ${count} écriture(s)`);
     return count;
   }

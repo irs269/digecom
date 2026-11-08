@@ -10,7 +10,7 @@ import {
   type OrderView,
   type TciEarnings,
 } from '@digecom/shared';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { AuthUser } from '../auth/auth.types';
 import { AppException } from '../common/app-exception';
 import { OrderService } from '../orders/order.service';
@@ -114,10 +114,15 @@ export class TciService {
         select: ORDER_SELECT,
         orderBy: { soldAt: 'asc' },
       }),
-      this.prisma.order.findMany({
-        where: { ...base, status: 'SOLD' },
-        select: { sellerId: true, items: { select: { tciBonus: true, quantity: true } } },
-      }),
+      // Gains globaux : agrégat SQL (pas de chargement de toutes les ventes).
+      ids.length
+        ? this.prisma.$queryRaw<{ sellerId: string; total: bigint }[]>`
+            SELECT o."sellerId", COALESCE(SUM(oi.quantity * COALESCE(oi."tciBonus", 0)), 0)::bigint AS total
+            FROM "OrderItem" oi JOIN "Order" o ON o.id = oi."orderId"
+            WHERE o.status = 'SOLD' AND o."sellerType" = 'TELECONSULTANT'
+              AND o."sellerId" IN (${Prisma.join(ids)})
+            GROUP BY 1`
+        : Promise.resolve([]),
       this.prisma.order.findMany({
         where: { ...base, status: 'HANDED_OVER' },
         select: ORDER_SELECT,
@@ -134,13 +139,7 @@ export class TciService {
       ...new Map([...created, ...sold, ...toClose].map((o) => [o.id, o])).values(),
     ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const totalBy = new Map<string, number>();
-    for (const o of allSold) {
-      totalBy.set(
-        o.sellerId,
-        (totalBy.get(o.sellerId) ?? 0) +
-          o.items.reduce((s, i) => s + (i.tciBonus ?? 0) * i.quantity, 0),
-      );
-    }
+    for (const o of allSold) totalBy.set(o.sellerId, Number(o.total));
 
     const byProductMap = new Map<
       string,

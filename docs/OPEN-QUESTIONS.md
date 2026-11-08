@@ -48,3 +48,7 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T22 | Taxe Dig'eCom sur une vente TCI | Calculée sur le prix de vente (pas de part vendeur) ; à confirmer avec le partage Dig'eCom / Leader Junior (#7). |
 | T23 | Budget de campagne déjà validé | Non modifiable depuis la campagne : la correction passe par une dépense (ou une annulation) côté finance. |
 | T24 | Répartition automatique | Prospects « à appeler » non attribués, en round-robin, en commençant par les TCI ayant le moins de prospects en cours. |
+| T25 | Quantités attribuées par le Leader Senior | Quota indicatif par e-commerçant et produit (restant = attribué − commandé), sans réservation physique dans le stock du site ; le prototype parle de réservation. À confirmer. |
+| T26 | Export des rapports par les leaders | Autorisé pour les rapports de leur équipe (journalier, hebdomadaire, produit, vendeur ; campagnes et gains TCI pour le Leader Junior). |
+| T27 | « Sommes dues aux vendeurs » | Relevés non payés + commissions nettes (− taxes − abonnements) pas encore incluses dans un relevé ; les primes TCI n'y figurent pas (pas de circuit de paiement défini). |
+| T28 | Objectif « atteint » | Objectif hebdomadaire de CA par équipe (lundi → dimanche), fixé par le leader ou l'administrateur ; une notification par semaine. |

@@ -102,3 +102,33 @@ export async function logout(): Promise<void> {
     setAccessToken(null);
   }
 }
+
+/**
+ * Téléchargement authentifié (export XLSX / PDF). Renvoie le JSON si l'API a mis l'export
+ * en file d'attente (202), sinon enregistre le fichier.
+ */
+export async function apiDownload<T = unknown>(
+  path: string,
+  fallbackName: string,
+): Promise<T | null> {
+  const run = () =>
+    fetch(`${API_URL}${path}`, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
+    });
+  let res = await run();
+  if (res.status === 401 && (await refreshSession())) res = await run();
+  if (!res.ok) throw await parseError(res);
+  if (res.status === 202) return (await res.json()) as T;
+  const name =
+    /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  return null;
+}

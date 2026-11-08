@@ -21,6 +21,9 @@ const PAGES = [
   '/campagnes',
   '/prospects',
   '/ventes-tci',
+  '/reseau',
+  '/rapports',
+  '/preferences',
 ];
 
 export default async function globalSetup(): Promise<void> {

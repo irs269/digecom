@@ -91,6 +91,8 @@ model User {
   /// Disponibilité (COURIER)
   isAvailable        Boolean   @default(false)
   mustChangePassword Boolean   @default(false)
+  /// Préférences de notification par type et canal (l'in-app est toujours actif)
+  notificationPrefs  Json      @default("{}")
   lastLoginAt        DateTime?
   failedLogins       Int       @default(0)
   lockedUntil        DateTime?
@@ -143,6 +145,11 @@ model User {
   campaigns       Campaign[]            @relation("CampaignLeader")
   prospects       Prospect[]            @relation("ProspectTci")
   prospectImports ProspectImportBatch[] @relation("ProspectImportBy")
+
+  allocationsReceived SellerAllocation[] @relation("AllocationSeller")
+  allocationsGiven    SellerAllocation[] @relation("AllocationLeader")
+  allocationsMade     SellerAllocation[] @relation("AllocationBy")
+  salesTarget         SalesTarget?
 
   @@index([role])
   @@index([islandId])
@@ -299,8 +306,8 @@ model Product {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
-  leader         User            @relation("LeaderProducts", fields: [leaderId], references: [id])
-  createdBy      User            @relation("ProductCreatedBy", fields: [createdById], references: [id])
+  leader         User               @relation("LeaderProducts", fields: [leaderId], references: [id])
+  createdBy      User               @relation("ProductCreatedBy", fields: [createdById], references: [id])
   stockLevels    StockLevel[]
   movements      StockMovement[]
   lots           Lot[]
@@ -309,6 +316,7 @@ model Product {
   alerts         StockAlert[]
   orderItems     OrderItem[]
   campaigns      Campaign[]
+  allocations    SellerAllocation[]
 
   @@index([leaderId, isPublished])
 }
@@ -599,6 +607,8 @@ model Order {
   @@index([leaderId])
   @@index([courierId])
   @@index([createdAt])
+  @@index([status, soldAt])
+  @@index([leaderId, status, soldAt])
 }
 
 /// Ligne de commande avec instantanés figés à la création (règle 3) ; unitCost figé à la sortie (FIFO).
@@ -999,4 +1009,40 @@ model ProspectImportBatch {
   campaign  Campaign   @relation(fields: [campaignId], references: [id])
   by        User       @relation("ProspectImportBy", fields: [byId], references: [id])
   prospects Prospect[]
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 – Réseau commercial
+// ---------------------------------------------------------------------------
+
+/// Quantités attribuées par un Leader Senior à un e-commerçant (journal append-only, somme = attribué).
+model SellerAllocation {
+  id        String   @id @default(cuid())
+  leaderId  String
+  sellerId  String
+  productId String
+  /// Quantité ajoutée (positive) ou retirée (négative)
+  quantity  Int
+  byId      String
+  createdAt DateTime @default(now())
+
+  leader  User    @relation("AllocationLeader", fields: [leaderId], references: [id])
+  seller  User    @relation("AllocationSeller", fields: [sellerId], references: [id])
+  by      User    @relation("AllocationBy", fields: [byId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([sellerId, productId])
+  @@index([leaderId])
+}
+
+/// Objectif hebdomadaire de CA d'une équipe (notification « objectif atteint »).
+model SalesTarget {
+  id              String   @id @default(cuid())
+  leaderId        String   @unique
+  weeklyRevenue   Int
+  /// Dernière semaine ISO notifiée (une seule notification par semaine)
+  lastReachedWeek String?
+  updatedAt       DateTime @updatedAt
+
+  leader User @relation(fields: [leaderId], references: [id])
 }

@@ -34,10 +34,11 @@ function OrdersPage() {
   const island = useIslandFilter();
   const islands = useIslands();
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const selectedId = params.get('id');
+  // Filtre initial depuis un lien du tableau de bord (?status=SOLD).
+  const [status, setStatus] = useState(params.get('status') ?? '');
 
   const islandId = island === 'all' ? undefined : islands.data?.find((i) => i.code === island)?.id;
   const list = useQuery({

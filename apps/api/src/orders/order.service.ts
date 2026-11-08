@@ -27,6 +27,7 @@ import type { AuthUser } from '../auth/auth.types';
 import { AppException } from '../common/app-exception';
 import { NotificationService } from '../notifications/notification.service';
 import { LiveService } from '../notifications/live.service';
+import { SalesTargets } from '../reports/insights.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { notFound } from '../scope/scope.service';
 import { SettingsService } from '../settings/settings.service';
@@ -84,6 +85,8 @@ interface AfterCommit {
   notify: { users: string[]; type: string; title: string; body: string }[];
   scheduleNoCourier?: boolean;
   extraLiveUsers?: string[];
+  /** Leader dont l'objectif hebdomadaire est à recontrôler (vente conclue). */
+  salesTarget?: string;
 }
 
 /** Circuit des commandes : création (snapshots, réservation) et transitions de la machine à états. */
@@ -99,6 +102,7 @@ export class OrderService {
     private readonly storage: StorageService,
     private readonly jobs: DeliveryJobs,
     private readonly ledger: LedgerService,
+    private readonly targets: SalesTargets,
   ) {}
 
   // --- Périmètre -------------------------------------------------------------------------
@@ -371,6 +375,7 @@ export class OrderService {
       });
     }
     if (after.scheduleNoCourier) await this.jobs.scheduleNoCourierCheck(order.id);
+    if (after.salesTarget) await this.targets.check(after.salesTarget);
     await this.broadcast(order.id, after.extraLiveUsers);
     return this.get(order.id, actor);
   }
@@ -561,6 +566,16 @@ export class OrderService {
           title: `${order.number} vendue`,
           body: `${order.customerName} a pris · ${formatKmf(this.total(order))}`,
         });
+        if (order.sellerType === 'TELECONSULTANT') {
+          const bonus = order.items.reduce((s, i) => s + (i.tciBonus ?? 0) * i.quantity, 0);
+          after.notify.push({
+            users: [order.sellerId, order.leaderId],
+            type: 'TCI_SALE_CLOSED',
+            title: `${order.number} clôturée : prime ajoutée`,
+            body: `+${formatKmf(bonus)} pour la vente à ${order.customerName}`,
+          });
+        }
+        after.salesTarget = order.leaderId;
         return;
       }
 

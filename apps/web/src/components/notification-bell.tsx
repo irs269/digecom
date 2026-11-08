@@ -3,6 +3,7 @@
 import { formatBusinessDateTime, type NotificationView } from '@digecom/shared';
 import * as Popover from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -70,6 +71,14 @@ export function NotificationBell() {
                 Tout marquer comme lu
               </button>
             ) : null}
+            <Popover.Close asChild>
+              <Link
+                href="/preferences"
+                className="min-h-touch content-center text-sm text-ink-muted underline"
+              >
+                Préférences
+              </Link>
+            </Popover.Close>
           </div>
           <ul
             className="flex-1 divide-y divide-surface-border overflow-y-auto"
@@ -87,7 +96,12 @@ export function NotificationBell() {
                       )}
                       onClick={() => {
                         if (!n.readAt) read.mutate(n.id);
-                        if (n.link) router.push(n.link);
+                        if (n.link?.startsWith('/api/')) {
+                          // Export généré en tâche de fond : lien signé temporaire.
+                          void apiFetch<{ url: string }>(n.link.slice(4)).then((r) => {
+                            window.location.href = r.url;
+                          });
+                        } else if (n.link) router.push(n.link);
                       }}
                     >
                       <span className="text-sm font-semibold text-ink">{n.title}</span>

@@ -10,7 +10,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 3 | Commandes, livraisons par île, notifications | Terminée | 2026-11-10 | Voir détail ci-dessous |
 | 4 | Finance, règlements, caisse, dépenses | Terminée | 2026-11-11 | Voir détail ci-dessous |
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | Terminée | 2026-11-12 | Voir détail ci-dessous |
-| 6 | Tableaux de bord, réseau, rapports et exports | À faire | | |
+| 6 | Tableaux de bord, réseau, rapports et exports | Terminée | 2026-11-13 | Voir détail ci-dessous |
 | 7 | Production Docker, sécurité, sauvegardes | À faire | | |
 | 8 | Application mobile Android | À faire | | |
 
@@ -149,6 +149,30 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 4 : 19 (écritures exactes d'une vente à 12 500, frais de course, refus sans écriture, retour après vente, immuabilité, paiement fournisseur unique, abonnements et relevés idempotents, circuit et séparation des tâches, caisse, dépenses, résultat net, PDF). Total e2e API : 158.
 - Playwright : 12 parcours, dont comptable → responsable financier → caissier sur le relevé de Fatima Said.
 
+## Phase 6 – Tableaux de bord par rôle, réseau commercial, rapports et exports
+
+### Fait
+
+- **Tableaux de bord** (`GET /dashboard`, filtre île pour les rôles globaux) : blocs propres à chaque rôle, comme le prototype. Direction / finance / comptabilité : CA du cycle, ventes, marge après coût et taxe, sommes dues aux vendeurs, taux de refus, livraisons sans livreur, à traiter, commandes récentes, meilleurs vendeurs, CA par île. Caissier, stock, logistique, Leader Senior (dont quantités restantes et classement), Leader Junior et TCI. Chaque chiffre est un lien vers la liste ou le rapport filtré. Agrégats SQL sur les instantanés `OrderItem` des commandes `SOLD`, index `Order(status, soldAt)` et `Order(leaderId, status, soldAt)`, cache Redis 60 s invalidé à chaque écriture d'un modèle suivi (middleware Prisma qui incrémente une version).
+- **Réseau commercial** (`/reseau`) : équipes Senior et Junior, performances individuelles et collectives, comparaison des équipes, quantités attribuées par le Leader Senior à ses e-commerçants (`network:allocate`, journal `SellerAllocation` append-only, jamais sous les unités déjà commandées), objectif hebdomadaire de CA par équipe. Les réaffectations restent dans Utilisateurs (historisées depuis la phase 1).
+- **Rapports** (`/rapports`, `GET /reports/:type`) : journalier, hebdomadaire, mensuel, par produit, lot, vendeur, leader, île, dépenses, marges, règlements, stocks, campagnes, gains TCI, livreurs, et « Simulation 100 produits » (tableau exact de la SPEC §4.1). Filtres période, île, site, leader ; un leader n'obtient que son équipe (autre équipe → 404, rapport global → 403). Un seul format (colonnes, lignes, totaux) pour l'écran, l'export XLSX (en-têtes en gras, montants `#,##0 "KMF"`, formules `SUM` avec résultat, onglet « Paramètres du rapport ») et le PDF (en-tête avec logo, tableau, totaux, pagination). Au-delà de 5 000 lignes : tâche BullMQ, fichier dans MinIO, lien notifié (`REPORT_READY`).
+- **Notifications** : stock faible / rupture (déjà en place), relevé disponible (vendeur), abonnement de la semaine, vente TCI clôturée (TCI et Leader Junior), objectif atteint (une fois par semaine), export prêt. Préférences par utilisateur (`/preferences`, `PUT /notifications/preferences`) : l'in-app est toujours actif, le push (phase 8) peut être coupé par type, SMS et WhatsApp désactivés par défaut.
+- **Charge** : `pnpm --filter api load-test` génère 50 000 commandes, mesure `GET /dashboard` sans cache pour 5 rôles, puis `-- --cleanup` les supprime. Mesuré : direction 192 ms, Leader Senior 161 ms, Leader Junior 302 ms, TCI 169 ms, logistique 47 ms (médianes). Le total des gains TCI est passé en agrégat SQL (il chargeait toutes les ventes : 1,35 s).
+- **Seed** : quantités attribuées par Ali Mohamed à ses e-commerçants et objectifs hebdomadaires (Ali Mohamed, Rachad Ibrahim).
+
+### Critères d'acceptation
+
+- [x] 10 tableaux de bord conformes au prototype et à la SPEC (les 4 rôles globaux partagent la vue direction).
+- [x] Tous les rapports exportables en Excel et PDF, chiffres identiques à l'écran (même calcul de totaux, test de relecture XLSX).
+- [x] Tableau de bord < 800 ms sur 50 000 commandes de test (script fourni, pire médiane 302 ms).
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- Vitest `shared` : 81 (simulation, totaux, rapports par rôle, préférences).
+- e2e API phase 6 : 13 (blocs comparés à une requête de référence, filtre île, 6 rôles, Leader Senior, invalidation du cache, simulation, concordance des 15 rapports, XLSX relu, PDF, périmètre leader 404 / 403, attribution, objectif, préférences). Total e2e API : 185.
+- Playwright : direction (chiffre cliquable → rapport, totaux identiques, export Excel) et Leader Senior (son équipe, attribution, rapports de l'équipe).
+
 ## Phase 5 – Leaders Junior, campagnes, prospects, ventes et gains des téléconseillers
 
 ### Fait
@@ -185,6 +209,9 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - 2026-11-09 – Coût d'un lot calculé sur la quantité **réellement reçue** (pertes en route incluses dans le coût unitaire) – coût réel, jamais compté deux fois. Voir OPEN-QUESTIONS T11.
 - 2026-11-09 – Reprise des données du prototype : le stock restant de LOT-014 est obtenu par un ajustement tracé « ventes antérieures à la plateforme ».
 - 2026-11-09 – Images MinIO signées avec `S3_PUBLIC_ENDPOINT` (adresse vue par le navigateur), opérations internes via `S3_ENDPOINT`.
+- 2026-11-13 – Quantités attribuées = quota de vente par e-commerçant (journal append-only), pas une réservation physique du stock du site (voir OPEN-QUESTIONS T25).
+- 2026-11-13 – Export des rapports ouvert aux leaders pour leur équipe (droit `reports:read` + périmètre), l'action `reports:export` restant réservée aux rôles globaux pour les rapports de toute la plateforme (T26).
+- 2026-11-13 – Format Excel des montants `#,##0 "KMF"` : le séparateur de milliers suit la langue d'Excel (espace en français), plus lisible que le littéral `# ##0`.
 - 2026-11-12 – Import de contacts envoyé en base64 dans un JSON (8 Mo max) : pas de dépendance multipart, aperçu et import par le même endpoint (`dryRun`).
 - 2026-11-12 – Les commandes TCI n'ont ni part vendeur ni taxe e-commerçant (prime seulement) ; la taxe Dig'eCom s'applique sur le prix moins la prime n'étant pas définie, elle porte sur le prix (hypothèse, voir OPEN-QUESTIONS T22).
 - 2026-11-11 – Paiement d'un règlement : sortie de caisse uniquement en espèces ; Huri Money, MVola et virement ne touchent pas la caisse physique.

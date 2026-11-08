@@ -156,6 +156,12 @@ export class SettlementService {
           });
         });
         created += 1;
+        await this.notifications.send([sellerId], {
+          type: 'SETTLEMENT_AVAILABLE',
+          title: 'Relevé disponible',
+          body: `Cycle du ${start} : ${Math.max(balance, 0).toLocaleString('fr-FR')} KMF à recevoir`,
+          link: '/reglements',
+        });
       } catch (err) {
         // Génération concurrente : l'autre instance a déjà créé le relevé.
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')

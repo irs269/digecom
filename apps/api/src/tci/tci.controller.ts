@@ -337,5 +337,6 @@ export class CampaignJobs implements OnModuleInit, OnModuleDestroy {
   imports: [OrdersModule],
   controllers: [CampaignsController, ProspectsController, TciController],
   providers: [CampaignService, TciService, CampaignJobs],
+  exports: [CampaignService, TciService],
 })
 export class TciModule {}

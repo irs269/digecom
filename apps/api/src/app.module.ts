@@ -14,6 +14,8 @@ import { NotificationsModule } from './notifications/notifications.controller';
 import { OrdersModule } from './orders/orders.module';
 import { OrganizationModule } from './organization/organization.controller';
 import { PrismaModule } from './prisma/prisma.service';
+import { InsightsModule } from './reports/insights.module';
+import { ReportsModule } from './reports/reports.controller';
 import { RedisModule } from './redis/redis.module';
 import { ScopeModule } from './scope/scope.service';
 import { SettingsModule } from './settings/settings.controller';
@@ -49,6 +51,7 @@ const isDev = process.env.NODE_ENV === 'development';
     StorageModule,
     NotificationsModule,
     LedgerModule,
+    InsightsModule,
     AuditModule,
     AuthModule,
     UsersModule,
@@ -57,6 +60,7 @@ const isDev = process.env.NODE_ENV === 'development';
     OrdersModule,
     FinanceModule,
     TciModule,
+    ReportsModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],

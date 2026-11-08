@@ -195,6 +195,15 @@ export class LedgerService {
     });
     return count;
   }
+
+  /** E-commerçants débités de l'abonnement d'une semaine (lundi). */
+  async subscribersOf(week: string): Promise<string[]> {
+    const rows = await this.prisma.ledgerEntry.findMany({
+      where: { type: 'SUBSCRIPTION', periodDate: startOfBusinessDay(week), amount: { gt: 0 } },
+      select: { beneficiaryId: true },
+    });
+    return rows.map((r) => r.beneficiaryId!).filter(Boolean);
+  }
 }
 
 @Global()
