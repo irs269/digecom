@@ -35,8 +35,21 @@ jobs:
       REDIS_URL_TEST: redis://localhost:6379/1
       JWT_ACCESS_SECRET: secret-ci-uniquement-pour-les-tests-0123456789abcdef
       WEB_ORIGIN: http://localhost:3000
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: ci-minio
+      S3_SECRET_KEY: ci-minio-secret
     steps:
       - uses: actions/checkout@v4
+      # MinIO (photos, preuves) : les services GitHub ne passent pas d'arguments, d'où docker run.
+      - name: MinIO et buckets
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=ci-minio -e MINIO_ROOT_PASSWORD=ci-minio-secret \
+            chainguard/minio@sha256:869ca3178831d9f521ea02258a0f0d4fbc1e9f84302e707514e1f861b860865d server /data
+          MC=chainguard/minio-client@sha256:7e80e77f8c949810d0eaead1120e28c63f913ff96ae7f78a8e4cd3c1e2f0623f
+          docker run --rm --network host -e MC_HOST_local=http://ci-minio:ci-minio-secret@localhost:9000 $MC ready local
+          docker run --rm --network host -e MC_HOST_local=http://ci-minio:ci-minio-secret@localhost:9000 $MC \
+            mb --ignore-existing local/products local/proofs local/documents
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
