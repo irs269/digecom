@@ -242,7 +242,13 @@ export class StockService {
 
   /** Sortie hors vente (casse, perte, ajustement négatif) : FIFO sur le disponible. */
   async remove(
-    input: StockRef & { quantity: number; type: 'DAMAGED' | 'LOSS' | 'ADJUST'; reason: string },
+    input: StockRef & {
+      quantity: number;
+      type: 'DAMAGED' | 'LOSS' | 'ADJUST';
+      reason: string;
+      /** Commande concernée (casse constatée au retour d'une commande). */
+      orderId?: string;
+    },
     tx?: Tx,
   ): Promise<OutResult> {
     assertQuantity(input.quantity);
@@ -253,6 +259,7 @@ export class StockService {
       }
       const consumed = await this.consumeFifo(db, input, input.quantity, input.type, {
         reason: input.reason,
+        orderId: input.orderId,
       });
       await this.setLevel(db, level, level.available - input.quantity, level.reserved);
       return summarize(consumed);

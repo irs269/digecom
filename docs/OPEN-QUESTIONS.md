@@ -38,3 +38,7 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T12 | Transferts entre îles | Autorisés ; le site de départ doit être dans le périmètre du gestionnaire de stock, l'arrivée peut être sur une autre île. |
 | T13 | Stock d'un produit jamais approvisionné | Le premier stock exige un coût unitaire ; ensuite, un ajustement positif prend le coût moyen des lots en stock. |
 | T14 | Seuil de stock faible | Seuil propre au produit s'il est renseigné, sinon paramètre `stock.lowThresholdDefault` (3). |
+| T15 | Base des taxes en pourcentage | Taxe e-commerçant : % de la part brute vendeur ; taxe Dig'eCom : % de la part commerciale Dig'eCom (prix − part vendeur). En mode fixe (défaut) : 500 KMF par produit. |
+| T16 | Preuve de remise en livraison directe | Montant encaissé obligatoire ; photo de preuve proposée mais facultative (réseau faible). |
+| T17 | Annulation par le vendeur | Possible tant que la commande n'est pas confirmée par le site ; ensuite, le site annule (avec motif) jusqu'à « prête ». |
+| T18 | Site de préparation | Le site de l'île du vendeur qui a le stock (entrepôt en priorité) ; la logistique peut choisir un autre site de l'île. |

@@ -43,8 +43,9 @@ model Island {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  sites Site[]
-  users User[]
+  sites  Site[]
+  users  User[]
+  orders Order[]
 }
 
 model Site {
@@ -66,6 +67,7 @@ model Site {
   purchaseOrders PurchaseOrder[]
   inventories    Inventory[]
   stockAlerts    StockAlert[]
+  orders         Order[]
 
   @@index([islandId])
 }
@@ -110,6 +112,15 @@ model User {
   purchaseOrders     PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
   inventoriesStarted Inventory[]     @relation("InventoryStartedBy")
   inventoriesClosed  Inventory[]     @relation("InventoryClosedBy")
+
+  ordersAsSeller  Order[]                @relation("OrderSeller")
+  ordersAsLeader  Order[]                @relation("OrderLeader")
+  ordersAsCourier Order[]                @relation("OrderCourier")
+  ordersOnBehalf  Order[]                @relation("OrderCreatedOnBehalf")
+  orderEvents     OrderEvent[]           @relation("OrderEventBy")
+  deliveryOffers  DeliveryOffer[]        @relation("CourierOffers")
+  handovers       HandoverConfirmation[] @relation("HandoverBy")
+  notifications   Notification[]
 
   @@index([role])
   @@index([islandId])
@@ -274,6 +285,7 @@ model Product {
   purchaseOrders PurchaseOrder[]
   inventoryLines InventoryLine[]
   alerts         StockAlert[]
+  orderItems     OrderItem[]
 
   @@index([leaderId, isPublished])
 }
@@ -444,4 +456,203 @@ model StockAlert {
   site    Site    @relation(fields: [siteId], references: [id])
 
   @@index([type, resolvedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 – Commandes, livraisons par île, notifications
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PREPARING
+  READY
+  ASSIGNED
+  OUT_FOR_DELIVERY
+  HANDED_OVER
+  SOLD
+  DELIVERY_FAILED
+  REFUSED
+  RETURN_IN_PROGRESS
+  RETURNED_TO_STOCK
+  DAMAGED
+  CANCELLED
+}
+
+enum DeliveryMode {
+  TO_SELLER
+  TO_CUSTOMER
+  PICKUP
+}
+
+enum SellerType {
+  SELLER
+  TELECONSULTANT
+}
+
+enum OfferResponse {
+  PENDING
+  ACCEPTED
+  TAKEN_BY_OTHER
+  IGNORED
+  EXPIRED
+}
+
+enum HandoverKind {
+  PICKUP_FROM_SITE
+  TO_SELLER
+  TO_CUSTOMER
+  SELLER_RECEIVED
+  SITE_HANDOVER
+}
+
+enum NotificationChannel {
+  IN_APP
+  PUSH
+  SMS
+  WHATSAPP
+}
+
+model Order {
+  id                  String       @id @default(cuid())
+  number              String       @unique
+  sellerId            String
+  sellerType          SellerType
+  leaderId            String
+  campaignId          String?
+  prospectId          String?
+  islandId            String
+  siteId              String
+  customerName        String
+  customerPhone       String
+  customerAddress     String?
+  zone                String?
+  deliveryMode        DeliveryMode
+  status              OrderStatus  @default(NEW)
+  courierId           String?
+  failReason          String?
+  refuseReason        String?
+  cancelReason        String?
+  note                String?
+  amountCollected     Int?
+  proofKey            String?
+  /// Frais de course figé à la remise (delivery.feePerRun), écriture en phase 4
+  courierFee          Int?
+  createdOnBehalfById String?
+  confirmedAt         DateTime?
+  preparingAt         DateTime?
+  readyAt             DateTime?
+  assignedAt          DateTime?
+  outForDeliveryAt    DateTime?
+  handedOverAt        DateTime?
+  soldAt              DateTime?
+  failedAt            DateTime?
+  refusedAt           DateTime?
+  returnStartedAt     DateTime?
+  returnClosedAt      DateTime?
+  cancelledAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  seller          User                   @relation("OrderSeller", fields: [sellerId], references: [id])
+  leader          User                   @relation("OrderLeader", fields: [leaderId], references: [id])
+  courier         User?                  @relation("OrderCourier", fields: [courierId], references: [id])
+  createdOnBehalf User?                  @relation("OrderCreatedOnBehalf", fields: [createdOnBehalfById], references: [id])
+  island          Island                 @relation(fields: [islandId], references: [id])
+  site            Site                   @relation(fields: [siteId], references: [id])
+  items           OrderItem[]
+  events          OrderEvent[]
+  offers          DeliveryOffer[]
+  confirmations   HandoverConfirmation[]
+
+  @@index([status, islandId])
+  @@index([sellerId])
+  @@index([leaderId])
+  @@index([courierId])
+  @@index([createdAt])
+}
+
+/// Ligne de commande avec instantanés figés à la création (règle 3) ; unitCost figé à la sortie (FIFO).
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  unitPrice   Int
+  sellerShare Int?
+  sellerTax   Int    @default(0)
+  digecomTax  Int    @default(0)
+  tciBonus    Int?
+  unitCost    Int?
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+/// Frise de la commande (append-only).
+model OrderEvent {
+  id         String       @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  action     String
+  byId       String?
+  role       Role?
+  note       String?
+  at         DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+  by    User? @relation("OrderEventBy", fields: [byId], references: [id])
+
+  @@index([orderId, at])
+}
+
+model DeliveryOffer {
+  id          String        @id @default(cuid())
+  orderId     String
+  courierId   String
+  sentAt      DateTime      @default(now())
+  response    OfferResponse @default(PENDING)
+  respondedAt DateTime?
+
+  order   Order @relation(fields: [orderId], references: [id])
+  courier User  @relation("CourierOffers", fields: [courierId], references: [id])
+
+  @@unique([orderId, courierId])
+  @@index([courierId, response])
+}
+
+model HandoverConfirmation {
+  id              String       @id @default(cuid())
+  orderId         String
+  kind            HandoverKind
+  byId            String
+  amountCollected Int?
+  proofKey        String?
+  at              DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+  by    User  @relation("HandoverBy", fields: [byId], references: [id])
+
+  @@unique([orderId, kind])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  link      String?
+  payload   Json?
+  channel   NotificationChannel @default(IN_APP)
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
 }

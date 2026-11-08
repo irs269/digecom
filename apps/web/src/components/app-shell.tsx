@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation';
 import { createContext, useContext, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
+import { useLiveUpdates } from '@/lib/live';
+import { NotificationBell } from './notification-bell';
 import { cn } from '@/lib/utils';
 
 export type IslandFilter = IslandCode | 'all';
@@ -89,6 +91,14 @@ function Sidebar({ user, onLogout }: { user: MeResponse; onLogout: () => void })
             {user.island ? ` · ${user.island.name}` : ''}
           </span>
         </div>
+        {user.role === 'ADMIN' ? (
+          <Link
+            href="/simulateur"
+            className="flex min-h-touch items-center text-sm font-semibold text-white underline-offset-2 hover:text-white hover:underline"
+          >
+            Simulateur livreur / vendeur (dev)
+          </Link>
+        ) : null}
         <Link
           href="/mot-de-passe"
           className="flex min-h-touch items-center text-sm font-semibold text-white underline-offset-2 hover:text-white hover:underline"
@@ -160,6 +170,7 @@ function ScopeBar({
 
 export function AppShell({ user, children }: { user: MeResponse; children: React.ReactNode }) {
   const { logout } = useAuth();
+  useLiveUpdates(true);
   const [island, setIsland] = useState<IslandFilter>(
     user.scope === 'GLOBAL' ? 'all' : (user.island?.code ?? 'all'),
   );
@@ -171,6 +182,7 @@ export function AppShell({ user, children }: { user: MeResponse; children: React
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex flex-wrap items-center justify-end gap-3 border-b border-surface-border bg-white px-4 py-3 desk:px-8">
             <ScopeBar user={user} island={island} onChange={setIsland} />
+            <NotificationBell />
           </header>
           <main className="flex flex-1 flex-col gap-6 px-4 py-6 desk:px-8">{children}</main>
         </div>

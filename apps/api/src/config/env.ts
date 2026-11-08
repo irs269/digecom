@@ -18,6 +18,8 @@ export const envSchema = z.object({
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
   LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
+  /** Outils de dev (simulateur livreur / vendeur). Jamais en production. */
+  DEV_TOOLS_ENABLED: bool.default('false'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   S3_ENDPOINT: z.string().url().optional(),
   /** Adresse de MinIO vue par le navigateur (URL pré-signées). */

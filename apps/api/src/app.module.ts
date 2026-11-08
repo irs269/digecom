@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import { ConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.controller';
+import { NotificationsModule } from './notifications/notifications.controller';
+import { OrdersModule } from './orders/orders.module';
 import { OrganizationModule } from './organization/organization.controller';
 import { PrismaModule } from './prisma/prisma.service';
 import { RedisModule } from './redis/redis.module';
@@ -42,11 +44,13 @@ const isDev = process.env.NODE_ENV === 'development';
     ScopeModule,
     SettingsModule,
     StorageModule,
+    NotificationsModule,
     AuditModule,
     AuthModule,
     UsersModule,
     OrganizationModule,
     StockModule,
+    OrdersModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],

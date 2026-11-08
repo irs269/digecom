@@ -7,7 +7,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 0 | Socle, Docker, authentification | Terminée | 2026-11-07 | Voir détail ci-dessous |
 | 1 | Organisation, utilisateurs, droits, paramètres | Terminée | 2026-11-08 | Voir détail ci-dessous |
 | 2 | Catalogues leaders, stock, achats Chine | Terminée | 2026-11-09 | Voir détail ci-dessous |
-| 3 | Commandes, livraisons par île, notifications | À faire | | |
+| 3 | Commandes, livraisons par île, notifications | Terminée | 2026-11-10 | Voir détail ci-dessous |
 | 4 | Finance, règlements, caisse, dépenses | À faire | | |
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | À faire | | |
 | 6 | Tableaux de bord, réseau, rapports et exports | À faire | | |
@@ -97,6 +97,31 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 2 : 25 tests (catalogues, primes, photos, stock par île, inventaire, achats, réception). Total e2e API : 115.
 - Playwright : 10 parcours (gestionnaire de stock d'Anjouan limité à Anjouan ; Ali publie un produit visible pour son équipe et pas pour celle de Nassur).
 
+## Phase 3 – Commandes, livraisons par île et notifications
+
+### Fait
+
+- **Machine à états** (`packages/shared/src/orders.ts`) : 14 statuts, 17 actions avec statuts de départ, modes de remise, permission ou rôle propriétaire (vendeur, livreur affecté, offre en attente) et conditions (remises doubles). Utilisée par l'API (409 / 403) et par le web (boutons calculés). `statusAfterConfirmations` gère les doubles confirmations.
+- **OrderService** : création (vendeur du catalogue de son leader, produit publié, stock de l'île, instantanés prix / part / taxes / prime TCI via `SettingsService`), transitions en une transaction avec mise à jour conditionnelle du statut, `OrderEvent` (append-only), audit, stock via `StockService` (réserve à la création, sortie FIFO au retrait du site avec coût figé, libération à l'annulation, retour ou casse au contrôle), notifications.
+- **Livraisons** : passage à « prête » → `DeliveryOffer` pour les livreurs **actifs, disponibles, de l'île du site** ; acceptation « premier qui accepte » (mise à jour conditionnelle, offres des autres → `TAKEN_BY_OTHER`, retirées en temps réel) ; affectation manuelle (même île) ; job BullMQ différé « aucun livreur » ; frais de course figé à la remise (`delivery.feePerRun`).
+- **API livreur** (`/courier/*`) : disponibilité, offres, courses, retrait, remise (montant encaissé obligatoire en livraison directe, photo de preuve par URL pré-signée), échec avec motif, client a pris / a refusé, historique et frais. **API vendeur** (`/me/orders`) : création, réception, client a pris / a refusé, annulation (avant confirmation).
+- **Notifications** : table `Notification`, `NotificationService`, flux SSE `/notifications/stream` authentifié par le cookie de session et relayé par Redis pub/sub (plusieurs instances), liste / non lues / marquer comme lu, interface `PushProvider` (FCM en phase 8). Événements §7 : nouvelle commande, prête à livrer, prête au retrait, course acceptée / affectée, aucun livreur, remise, échec, client a pris / refusé, stock faible / rupture.
+- **Web** : Commandes (tableau, panneau de détail avec frise ✓, boutons selon la machine à états et les droits, message lecture seule, « Nouvelle commande pour le compte de »), Livraisons (4 colonnes temps réel, affectation manuelle, livreurs de l'île), cloche de notifications, simulateur livreur / vendeur (admin, dev, jeton « au nom de » journalisé).
+
+### Critères d'acceptation
+
+- [x] Une commande à Mohéli ne notifie que les livreurs de Mohéli (test e2e : offres et notifications).
+- [x] Stock toujours cohérent (réservé, sorti, retourné) après chaque scénario (vérifié à chaque étape ; lots restants = disponible + réservé).
+- [x] Les trois modes de remise et leurs confirmations fonctionnent (e2e + Playwright).
+- [x] Notifications en temps réel visibles dans le back-office (SSE vérifié à travers le proxy Next.js, cloche, toasts).
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- Machine à états : 34 tests (toutes les transitions valides, invalides par statut, mode, rôle, propriétaire).
+- e2e API phase 3 : 23 tests (trois modes, échec, refus, annulation, casse, retour après vente, changement de mode, isolation par île, **10 acceptations simultanées → 1 seule**, alerte sans livreur avec horloge simulée, snapshots, SSE). Total e2e API : 138.
+- Playwright : 11 parcours, dont logistique GC → commande pour Fatima Said → préparée → affectée → livrée par un livreur simulé ; la caisse de Mohéli n'y a pas accès.
+
 ## Décisions prises
 
 - 2026-11-07 – Images MinIO Chainguard (`chainguard/minio`, `chainguard/minio-client`) épinglées par digest – les images `minio/*` ne sont plus publiées sur Docker Hub.
@@ -110,13 +135,18 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - 2026-11-09 – Coût d'un lot calculé sur la quantité **réellement reçue** (pertes en route incluses dans le coût unitaire) – coût réel, jamais compté deux fois. Voir OPEN-QUESTIONS T11.
 - 2026-11-09 – Reprise des données du prototype : le stock restant de LOT-014 est obtenu par un ajustement tracé « ventes antérieures à la plateforme ».
 - 2026-11-09 – Images MinIO signées avec `S3_PUBLIC_ENDPOINT` (adresse vue par le navigateur), opérations internes via `S3_ENDPOINT`.
+- 2026-11-10 – Livraison échouée et refus passent immédiatement en « retour à contrôler » (deux événements dans la frise) – la marchandise revient au site dans les deux cas.
+- 2026-11-10 – Casse au retour : retour en stock puis sortie `DAMAGED` liée à la commande – mouvements traçables et lots cohérents.
+- 2026-11-10 – Simulateur : jeton d'accès 15 min « au nom de » un livreur ou un vendeur, admin uniquement, `DEV_TOOLS_ENABLED=true` et jamais en production.
+- 2026-11-10 – SSE écrit à la main (pas `@Sse`) pour pouvoir répondre 401 sans session.
 - 2026-11-08 – Playwright : préchauffage des pages et compteurs de connexion remis à zéro par `make e2e` – le mode dev compile chaque page à la première visite.
 
 ## Écarts et dettes techniques
 
 (À traiter avant la mise en production)
 
-- `StockMovement.orderId` n'a pas encore de clé étrangère : le modèle `Order` arrive en phase 3.
+- `StockMovement.orderId` sans clé étrangère vers `Order` (les tests du StockService utilisent des identifiants libres) : à ajouter en phase 7.
+- Les écritures financières (ventes, coûts, taxes, frais de course) sont préparées (instantanés, coût FIFO, frais) mais créées en phase 4.
 - Le job BullMQ des invendus tourne dans le processus API ; à isoler dans un worker dédié en phase 7 si la charge augmente.
 
 - Mode dev sous Windows (sans impact sur Playwright, qui tourne sur une build de production via le service `web-e2e`) : première compilation d'une page Next.js lente (~15-40 s) à cause du montage de fichiers ; sans impact en production (image `prod` compilée).

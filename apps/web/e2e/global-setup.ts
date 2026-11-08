@@ -13,6 +13,8 @@ const PAGES = [
   '/catalogues',
   '/stock',
   '/achats',
+  '/livraisons',
+  '/simulateur',
 ];
 
 export default async function globalSetup(): Promise<void> {

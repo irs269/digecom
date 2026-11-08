@@ -37,7 +37,7 @@ export interface TestContext {
 
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "StockAlert", "InventoryLine", "Inventory", "StockMovement", "Lot", "PurchaseOrder", "Supplier", "StockLevel", "Product", "Counter", "AuditLog", "TeamAssignmentHistory", "RefreshToken", "Setting", "User", "Site", "Island" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Notification", "HandoverConfirmation", "DeliveryOffer", "OrderEvent", "OrderItem", "Order", "StockAlert", "InventoryLine", "Inventory", "StockMovement", "Lot", "PurchaseOrder", "Supplier", "StockLevel", "Product", "Counter", "AuditLog", "TeamAssignmentHistory", "RefreshToken", "Setting", "User", "Site", "Island" RESTART IDENTITY CASCADE',
   );
   await seedDatabase(prisma, PASSWORD, false);
   const redis = new Redis(process.env.REDIS_URL!);
