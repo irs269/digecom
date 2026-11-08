@@ -13,6 +13,8 @@ export function configureApp(app: NestExpressApplication): INestApplication {
   app.set('trust proxy', 1);
   app.use(helmet());
   app.use(cookieParser());
+  // Import de contacts (CSV / XLSX en base64, 5 Mo max) : corps JSON jusqu'à 8 Mo.
+  app.useBodyParser('json', { limit: '8mb' });
   app.enableCors({ origin: [env.WEB_ORIGIN], credentials: true });
   app.enableShutdownHooks();
 

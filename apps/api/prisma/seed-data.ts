@@ -8,6 +8,7 @@ import { SETTING_KEYS, SETTINGS } from '@digecom/shared';
 import * as argon2 from 'argon2';
 import { seedCatalog } from './seed-catalog';
 import { seedFinance } from './seed-finance';
+import { seedTci } from './seed-tci';
 
 const ISLANDS: { code: IslandCode; name: string }[] = [
   { code: 'GC', name: 'Grande Comore' },
@@ -253,6 +254,7 @@ export async function seedDatabase(
 
   const catalog = adminId ? await seedCatalog(prisma, adminId) : 'catalogues ignorés';
   const finance = adminId ? await seedFinance(prisma, adminId) : 'finance ignorée';
+  const tci = adminId ? await seedTci(prisma, adminId) : 'TCI ignorés';
 
-  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres, ${catalog}, ${finance}.`;
+  return `Seed terminé : ${ISLANDS.length} îles, ${SITES.length} sites, ${SEED_USERS.length} comptes, ${Object.keys(DEFAULT_SETTINGS).length} paramètres, ${catalog}, ${finance}, ${tci}.`;
 }

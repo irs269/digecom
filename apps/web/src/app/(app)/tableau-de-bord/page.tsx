@@ -6,6 +6,7 @@ import { Forbidden } from '@/components/forbidden';
 import { Card, KpiCard } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { SaleReference } from '@/components/sale-reference';
+import { TciDashboard } from '@/components/tci-dashboard';
 
 export default function DashboardPage() {
   const { state } = useAuth();
@@ -28,6 +29,9 @@ export default function DashboardPage() {
       </div>
       {user.scope === 'GLOBAL' && hasPermission(user.role, 'reports:read') ? (
         <SaleReference />
+      ) : null}
+      {user.role === 'TELECONSULTANT' || user.role === 'LEADER_JUNIOR' ? (
+        <TciDashboard role={user.role} />
       ) : null}
       <Card className="flex flex-col gap-2">
         <h2 className="text-base font-bold text-ink">Bientôt</h2>

@@ -9,3 +9,4 @@ export * from './stock';
 export * from './orders';
 export * from './finance';
 export * from './finance-api';
+export * from './tci';

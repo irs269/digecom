@@ -19,6 +19,7 @@ import { ScopeModule } from './scope/scope.service';
 import { SettingsModule } from './settings/settings.controller';
 import { StockModule } from './stock/stock.module';
 import { StorageModule } from './storage/storage.service';
+import { TciModule } from './tci/tci.controller';
 import { UsersModule } from './users/users.controller';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -55,6 +56,7 @@ const isDev = process.env.NODE_ENV === 'development';
     StockModule,
     OrdersModule,
     FinanceModule,
+    TciModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],

@@ -140,6 +140,10 @@ model User {
   expensesAsLeader    Expense[]       @relation("ExpenseLeader")
   bankBalances        BankBalance[]   @relation("BankBalanceBy")
 
+  campaigns       Campaign[]            @relation("CampaignLeader")
+  prospects       Prospect[]            @relation("ProspectTci")
+  prospectImports ProspectImportBatch[] @relation("ProspectImportBy")
+
   @@index([role])
   @@index([islandId])
   @@index([leaderId])
@@ -304,6 +308,7 @@ model Product {
   inventoryLines InventoryLine[]
   alerts         StockAlert[]
   orderItems     OrderItem[]
+  campaigns      Campaign[]
 
   @@index([leaderId, isPublished])
 }
@@ -579,6 +584,8 @@ model Order {
   leader          User                   @relation("OrderLeader", fields: [leaderId], references: [id])
   courier         User?                  @relation("OrderCourier", fields: [courierId], references: [id])
   createdOnBehalf User?                  @relation("OrderCreatedOnBehalf", fields: [createdOnBehalfById], references: [id])
+  campaign        Campaign?              @relation(fields: [campaignId], references: [id])
+  prospect        Prospect?              @relation("ProspectOrder")
   island          Island                 @relation(fields: [islandId], references: [id])
   site            Site                   @relation(fields: [siteId], references: [id])
   items           OrderItem[]
@@ -879,10 +886,11 @@ model Expense {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  island     Island @relation(fields: [islandId], references: [id])
-  createdBy  User   @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
-  approvedBy User?  @relation("ExpenseApprovedBy", fields: [approvedById], references: [id])
-  leader     User?  @relation("ExpenseLeader", fields: [leaderId], references: [id])
+  island     Island    @relation(fields: [islandId], references: [id])
+  createdBy  User      @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  approvedBy User?     @relation("ExpenseApprovedBy", fields: [approvedById], references: [id])
+  leader     User?     @relation("ExpenseLeader", fields: [leaderId], references: [id])
+  campaign   Campaign?
 
   @@index([status, periodDate])
 }
@@ -898,4 +906,97 @@ model BankBalance {
   by User @relation("BankBalanceBy", fields: [byId], references: [id])
 
   @@index([date])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 – Leaders Junior : campagnes, prospects, imports
+// ---------------------------------------------------------------------------
+
+enum CampaignChannel {
+  FACEBOOK
+  TIKTOK
+  WHATSAPP
+  INSTAGRAM
+  OTHER
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum ProspectStatus {
+  TO_CALL
+  UNREACHABLE
+  CONFIRMED
+  NOT_INTERESTED
+}
+
+model Campaign {
+  id          String          @id @default(cuid())
+  number      String          @unique
+  leaderId    String
+  productId   String
+  name        String
+  channel     CampaignChannel
+  budget      Int
+  startDate   DateTime
+  endDate     DateTime
+  status      CampaignStatus  @default(ACTIVE)
+  /// Dépense publicitaire liée (validée par la finance, phase 4)
+  expenseId   String?         @unique
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  leader    User                  @relation("CampaignLeader", fields: [leaderId], references: [id])
+  product   Product               @relation(fields: [productId], references: [id])
+  expense   Expense?              @relation(fields: [expenseId], references: [id])
+  prospects Prospect[]
+  imports   ProspectImportBatch[]
+  orders    Order[]
+
+  @@index([leaderId, status])
+}
+
+model Prospect {
+  id            String         @id @default(cuid())
+  campaignId    String
+  fullName      String
+  phone         String
+  note          String?
+  assignedTciId String?
+  status        ProspectStatus @default(TO_CALL)
+  attempts      Int            @default(0)
+  lastCallAt    DateTime?
+  orderId       String?        @unique
+  importBatchId String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  campaign    Campaign             @relation(fields: [campaignId], references: [id])
+  assignedTci User?                @relation("ProspectTci", fields: [assignedTciId], references: [id])
+  order       Order?               @relation("ProspectOrder", fields: [orderId], references: [id])
+  importBatch ProspectImportBatch? @relation(fields: [importBatchId], references: [id])
+
+  @@unique([campaignId, phone])
+  @@index([assignedTciId, status])
+}
+
+model ProspectImportBatch {
+  id         String   @id @default(cuid())
+  campaignId String
+  fileName   String
+  fileKey    String?
+  rows       Int
+  imported   Int
+  duplicates Int
+  errors     Json
+  byId       String
+  createdAt  DateTime @default(now())
+
+  campaign  Campaign   @relation(fields: [campaignId], references: [id])
+  by        User       @relation("ProspectImportBy", fields: [byId], references: [id])
+  prospects Prospect[]
 }

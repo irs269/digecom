@@ -9,7 +9,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 2 | Catalogues leaders, stock, achats Chine | Terminée | 2026-11-09 | Voir détail ci-dessous |
 | 3 | Commandes, livraisons par île, notifications | Terminée | 2026-11-10 | Voir détail ci-dessous |
 | 4 | Finance, règlements, caisse, dépenses | Terminée | 2026-11-11 | Voir détail ci-dessous |
-| 5 | Leaders Junior, campagnes, prospects, gains TCI | À faire | | |
+| 5 | Leaders Junior, campagnes, prospects, gains TCI | Terminée | 2026-11-12 | Voir détail ci-dessous |
 | 6 | Tableaux de bord, réseau, rapports et exports | À faire | | |
 | 7 | Production Docker, sécurité, sauvegardes | À faire | | |
 | 8 | Application mobile Android | À faire | | |
@@ -149,6 +149,29 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 4 : 19 (écritures exactes d'une vente à 12 500, frais de course, refus sans écriture, retour après vente, immuabilité, paiement fournisseur unique, abonnements et relevés idempotents, circuit et séparation des tâches, caisse, dépenses, résultat net, PDF). Total e2e API : 158.
 - Playwright : 12 parcours, dont comptable → responsable financier → caissier sur le relevé de Fatima Said.
 
+## Phase 5 – Leaders Junior, campagnes, prospects, ventes et gains des téléconseillers
+
+### Fait
+
+- **Campagnes** (`/campaigns`) : CRUD du Leader Junior (produit de son catalogue uniquement, autre leader → 404), canal, budget, dates, pause / relance, fin automatique à la date de fin (job BullMQ quotidien + contrôle à la lecture). Le budget crée une dépense `ADVERTISING` rattachée à la campagne et au leader, validée par la finance (phase 4) ; budget non modifiable une fois validé. Indicateurs : contacts, confirmées, vendues (`SOLD`), taux de confirmation, coût par vente.
+- **Prospects** : import CSV / XLSX (exceljs) avec aperçu, téléphones normalisés +269, doublons (fichier et campagne), lignes invalides, rapport `ProspectImportBatch` (fichier conservé dans MinIO) ; saisie manuelle ; répartition manuelle ou équitable (round-robin en commençant par les TCI les moins chargés) avec notification ; TCI : injoignable (compteur, à rappeler), pas intéressé, note d'appel ; « Commande confirmée » crée la commande par le service de la phase 3 (`sellerType = TELECONSULTANT`, `campaignId`, `prospectId`, prime figée, stock du Leader Junior), dans la même transaction que le passage du prospect à « confirmé ».
+- **Clôture et gains** : `POST /tci/sales/:id/close` (Vendu → `SOLD` + écriture `TCI_BONUS` ; Client a refusé → retour, aucune prime). `GET /tci/me/earnings?week=YYYY-Www` et `GET /tci/team/earnings` : montant vendu, produits vendus, gains de la semaine, gains globaux, ventes à clôturer, commandes de la semaine, gains par produit, tableau par TCI. Calcul **uniquement** depuis les instantanés `OrderItem.tciBonus` des commandes `SOLD` (semaine ISO lundi → dimanche, Indian/Comoro).
+- **Web** : Campagnes (4 KPI, tableau, nouvelle campagne, pause / relance), Prospects (4 KPI, colonne TCI pour le leader, boutons d'appel, lien `tel:`, import avec aperçu et répartition), Mes ventes et gains / Ventes de l'équipe (sélecteur de semaine, 4 KPI, tableau par TCI, commandes à clôturer, gains par produit), cartes de tableau de bord Leader Junior et TCI.
+- **Seed** : campagnes CP-06 (terminée) et CP-07 (active), prospects du prototype, commandes TCI du prototype datées par rapport à la semaine en cours et historique des primes (Anlia 54 000, Faïza 31 000, Bacar 18 000).
+
+### Critères d'acceptation
+
+- [x] Les gains du TCI se calculent seuls, par semaine et au total (Anlia : 47 500 vendus / 8 500 / 68 000, puis 11 500 après clôture).
+- [x] Prime fixée par le Leader Junior, bornée (phase 2), figée sur chaque vente (test : prime modifiée après la vente).
+- [x] Les commandes TCI suivent le même circuit de livraison et de stock que les autres.
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- Vitest `shared` : 77 (dont semaines ISO, CSV, rapport d'import, round-robin).
+- e2e API phase 5 : 14 (gains du prototype et clôture, équipe, campagnes et dépense, import CSV / XLSX, doublons et invalides, répartition, isolement des TCI, scénario complet +3 000, refus sans prime, prime figée). Total e2e API : 172.
+- Playwright : parcours Leader Junior (campagne, import, répartition) puis TCI (appel, confirmation, livraison, clôture, gains).
+
 ## Décisions prises
 
 - 2026-11-07 – Images MinIO Chainguard (`chainguard/minio`, `chainguard/minio-client`) épinglées par digest – les images `minio/*` ne sont plus publiées sur Docker Hub.
@@ -162,6 +185,8 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - 2026-11-09 – Coût d'un lot calculé sur la quantité **réellement reçue** (pertes en route incluses dans le coût unitaire) – coût réel, jamais compté deux fois. Voir OPEN-QUESTIONS T11.
 - 2026-11-09 – Reprise des données du prototype : le stock restant de LOT-014 est obtenu par un ajustement tracé « ventes antérieures à la plateforme ».
 - 2026-11-09 – Images MinIO signées avec `S3_PUBLIC_ENDPOINT` (adresse vue par le navigateur), opérations internes via `S3_ENDPOINT`.
+- 2026-11-12 – Import de contacts envoyé en base64 dans un JSON (8 Mo max) : pas de dépendance multipart, aperçu et import par le même endpoint (`dryRun`).
+- 2026-11-12 – Les commandes TCI n'ont ni part vendeur ni taxe e-commerçant (prime seulement) ; la taxe Dig'eCom s'applique sur le prix moins la prime n'étant pas définie, elle porte sur le prix (hypothèse, voir OPEN-QUESTIONS T22).
 - 2026-11-11 – Paiement d'un règlement : sortie de caisse uniquement en espèces ; Huri Money, MVola et virement ne touchent pas la caisse physique.
 - 2026-11-11 – Les relevés ne concernent que les e-commerçants ; les gains des TCI (primes) sont suivis en phase 5.
 - 2026-11-11 – Résultat net : les frais de course sont comptés comme charge (catégorie livraison).

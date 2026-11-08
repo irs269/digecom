@@ -174,7 +174,16 @@ export class OrderService {
 
   // --- Création ----------------------------------------------------------------------------
 
-  async create(input: CreateOrderInput, actor: AuthUser): Promise<OrderView> {
+  async create(
+    input: CreateOrderInput,
+    actor: AuthUser,
+    extra: {
+      campaignId?: string;
+      prospectId?: string;
+      /** Exécuté dans la transaction de création (ex. prospect passé à « confirmé »). */
+      afterCreate?: (tx: Tx, orderId: string) => Promise<void>;
+    } = {},
+  ): Promise<OrderView> {
     const selfSeller = actor.role === 'SELLER' || actor.role === 'TELECONSULTANT';
     if (!selfSeller && !['ADMIN', 'LOGISTICS_ASSISTANT'].includes(actor.role)) throw forbidden();
     const sellerId = selfSeller ? actor.id : input.sellerId;
@@ -238,6 +247,8 @@ export class OrderService {
             deliveryMode: input.deliveryMode,
             note: input.note,
             createdOnBehalfById: selfSeller ? null : actor.id,
+            campaignId: extra.campaignId,
+            prospectId: extra.prospectId,
             // Instantanés (règle 3) : prix, part, prime et taxes en vigueur à la création.
             items: {
               create: input.items.map((item) => {
@@ -276,6 +287,7 @@ export class OrderService {
             tx,
           );
         }
+        if (extra.afterCreate) await extra.afterCreate(tx, created.id);
         return created;
       },
       { timeout: 30_000, maxWait: 30_000 },

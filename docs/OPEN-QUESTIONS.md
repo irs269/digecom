@@ -45,3 +45,6 @@ Tant que Dig'eCom n'a pas répondu, applique l'hypothèse par défaut, rends-la 
 | T19 | Paiement d'un règlement hors espèces | Écriture `SETTLEMENT_PAYMENT` sans opération de caisse ; seules les espèces sortent de la caisse du site. |
 | T20 | Abonnement d'un e-commerçant créé en cours de semaine | Premier abonnement prélevé le lundi suivant sa création. |
 | T21 | Séparation des tâches pour l'administrateur | L'administrateur peut faire chaque étape, mais jamais vérifier puis valider le même relevé (PERMISSIONS.md). |
+| T22 | Taxe Dig'eCom sur une vente TCI | Calculée sur le prix de vente (pas de part vendeur) ; à confirmer avec le partage Dig'eCom / Leader Junior (#7). |
+| T23 | Budget de campagne déjà validé | Non modifiable depuis la campagne : la correction passe par une dépense (ou une annulation) côté finance. |
+| T24 | Répartition automatique | Prospects « à appeler » non attribués, en round-robin, en commençant par les TCI ayant le moins de prospects en cours. |
