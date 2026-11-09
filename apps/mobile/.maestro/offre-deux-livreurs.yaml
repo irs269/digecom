@@ -1,0 +1,42 @@
+# Une offre est proposée aux deux livreurs de Grande Comore ; le premier l'accepte, elle
+# disparaît chez le second. À lancer sur deux appareils (ou deux émulateurs) :
+#   maestro --device <A> test -e ROLE=premier  offre-deux-livreurs.yaml
+#   maestro --device <B> test -e ROLE=second   offre-deux-livreurs.yaml
+# Préalable : une commande « prête » à Grande Comore (scripts/back-office.js après une vente).
+appId: km.digecom.app
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: phone
+- runFlow:
+    when:
+      true: ${ROLE == 'premier'}
+    commands:
+      - inputText: '+2693300023'
+- runFlow:
+    when:
+      true: ${ROLE == 'second'}
+    commands:
+      - inputText: '+2693300024'
+- tapOn:
+    id: password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login
+- assertVisible: 'NOUVELLE LIVRAISON'
+- runFlow:
+    when:
+      true: ${ROLE == 'premier'}
+    commands:
+      - tapOn: 'Accepter'
+      - assertVisible: 'COURSE EN COURS.*'
+- runFlow:
+    when:
+      true: ${ROLE == 'second'}
+    commands:
+      # L'offre se retire au plus tard au rafraîchissement suivant (push ou 15 s).
+      - extendedWaitUntil:
+          notVisible: 'NOUVELLE LIVRAISON'
+          timeout: 30000
+      - assertVisible: 'Aucune course pour le moment'

@@ -1,0 +1,79 @@
+# Vente par l'e-commerçant → livraison par un livreur de Grande Comore → « le client a pris ».
+appId: km.digecom.app
+---
+- launchApp:
+    clearState: true
+# 1. L'e-commerçant enregistre la vente (catalogue de son leader uniquement).
+- tapOn:
+    id: phone
+- inputText: '+2693300011'
+- tapOn:
+    id: password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login
+- assertVisible: 'Fatima Said'
+- tapOn:
+    id: nouvelle-vente
+- assertVisible: 'Tu vois uniquement les produits et le stock publiés par'
+- tapOn:
+    text: '.*disponible.*'
+    index: 0
+- tapOn:
+    id: customerName
+- inputText: 'Client Maestro'
+- tapOn:
+    id: customerPhone
+- inputText: '+2693412345'
+- tapOn:
+    id: mode-TO_SELLER
+- scrollUntilVisible:
+    element:
+      id: enregistrer-vente
+- assertVisible: 'Ce que tu gagnes sur cette vente'
+- tapOn:
+    id: enregistrer-vente
+- assertVisible: 'Vente enregistrée.*'
+# 2. Le back-office prépare la commande (API).
+- runScript: scripts/back-office.js
+# 3. Un livreur de Grande Comore accepte, récupère et remet.
+- tapOn: 'Accueil'
+- tapOn: 'Déconnexion'
+- tapOn:
+    id: phone
+- inputText: '+2693300023'
+- tapOn:
+    id: password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login
+- assertVisible: 'NOUVELLE LIVRAISON'
+- tapOn:
+    id: accepter-${output.orderNumber}
+- tapOn:
+    id: recupere
+- assertVisible: 'Retrait confirmé.*'
+- scrollUntilVisible:
+    element:
+      id: confirmer-livraison
+- tapOn:
+    id: confirmer-livraison
+- assertVisible: 'Remise confirmée de ton côté.*'
+- tapOn: '← Mes courses'
+- tapOn: 'Déconnexion'
+# 4. L'e-commerçant confirme la réception puis « le client a pris ».
+- tapOn:
+    id: phone
+- inputText: '+2693300011'
+- tapOn:
+    id: password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login
+- tapOn: 'J’ai reçu le produit'
+- tapOn:
+    id: recu
+- assertVisible: 'Réception confirmée.'
+- tapOn:
+    id: client-a-pris
+- assertVisible: 'Vente validée.*'

@@ -134,18 +134,42 @@ async function enqueue(action: QueuedAction) {
   await persist();
 }
 
-/** Rejoue les actions en attente, dans l'ordre. S'arrête à la première coupure réseau. */
-export async function flush(): Promise<void> {
-  await load();
-  if (state.flushing || !state.pending.length) return;
+let running: Promise<void> | null = null;
+let again = false;
+
+/**
+ * Rejoue les actions en attente, dans l'ordre. S'arrête à la première coupure réseau.
+ * Un appel pendant un envoi en cours attend celui-ci et déclenche un passage de plus.
+ */
+export function flush(): Promise<void> {
+  if (running) {
+    again = true;
+    return running;
+  }
+  running = (async () => {
+    await load();
+    do {
+      again = false;
+      await drain();
+    } while (again && state.pending.length);
+  })().finally(() => {
+    running = null;
+  });
+  return running;
+}
+
+async function drain(): Promise<void> {
+  if (!state.pending.length) return;
   set({ flushing: true });
   let synced = false;
   try {
     while (state.pending.length) {
-      const [next, ...rest] = state.pending;
+      const next = state.pending[0]!;
+      // Retrait par identifiant : une action ajoutée pendant l'envoi n'est jamais perdue.
+      const without = () => state.pending.filter((a) => a.id !== next.id);
       try {
-        await send(next!);
-        set({ pending: rest });
+        await send(next);
+        set({ pending: without() });
         synced = true;
       } catch (err) {
         if (err instanceof ApiError && (err.isNetwork || err.status >= 500 || err.status === 409)) {
@@ -153,7 +177,7 @@ export async function flush(): Promise<void> {
           break;
         }
         const message = err instanceof Error ? err.message : 'Erreur';
-        set({ pending: rest, failed: [...state.failed, { ...next!, error: message }] });
+        set({ pending: without(), failed: [...state.failed, { ...next, error: message }] });
       }
       await persist();
     }
