@@ -12,7 +12,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | Terminée | 2026-11-12 | Voir détail ci-dessous |
 | 6 | Tableaux de bord, réseau, rapports et exports | Terminée | 2026-11-13 | Voir détail ci-dessous |
 | 7 | Production Docker, sécurité, sauvegardes | Prête à déployer | 2026-11-09 | Branche `deploy/phase-7-vps` ; déploiement sur le VPS à faire (docs/DEPLOY.md) |
-| 8 | Application mobile Android | À faire | | |
+| 8 | Application mobile Android | En cours | 2026-11-09 | Code et tests faits (branche `feat/phase-8-mobile`) ; push, APK, AAB et Play Store après le déploiement du web (docs/MOBILE.md) |
 
 ## Phase 0 – Socle, Docker, authentification
 
@@ -149,6 +149,43 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 4 : 19 (écritures exactes d'une vente à 12 500, frais de course, refus sans écriture, retour après vente, immuabilité, paiement fournisseur unique, abonnements et relevés idempotents, circuit et séparation des tâches, caisse, dépenses, résultat net, PDF). Total e2e API : 158.
 - Playwright : 12 parcours, dont comptable → responsable financier → caissier sur le relevé de Fatima Said.
 
+## Phase 8 – Application mobile Android (e-commerçants et livreurs)
+
+Lancée avant le déploiement du web, à la demande. Le code tourne contre l'API locale ; tout ce qui demande l'API en ligne (push réel, APK de test, Play Store) attend la phase 7. Guide : docs/MOBILE.md.
+
+### Fait
+
+- **`apps/mobile`** : Expo SDK 58, Expo Router, TypeScript strict, TanStack Query avec cache persistant (24 h), react-hook-form + schémas Zod de `packages/shared`, thème du prototype (Poppins, bleu `#0B2FE0`, orange `#FFA500`), icône et écran de démarrage tirés du logo, package `km.digecom.app`.
+- **Authentification** : même API ; en-tête `X-Client: mobile` → le refresh token circule dans le corps (gardé en SecureStore), pas en cookie ; rotation et détection de réutilisation inchangées. Session refusée (compte désactivé, révoqué) → déconnexion, cache et file vidés. Mot de passe provisoire à changer au premier lancement.
+- **E-commerçant** : accueil (solde du cycle, à faire, statistiques), nouvelle vente (catalogue du leader seulement, produits en rupture non vendables, trois modes, « ce que tu gagnes » avec la taxe réelle du paramètre `tax.seller`), commandes (frise, reçu / récupéré, client a pris / refusé avec motif, annulation), solde (`GET /me/balance` : cycle en cours et relevés).
+- **Livreur** : disponible / indisponible, offres de l'île (accepter / ignorer, retirées quand un autre accepte : push + rafraîchissement 15 s), course en cours (retrait, appel, remise avec montant encaissé et photo de preuve compressée 1280 px JPEG 70 %, client a pris / refusé, signaler un problème), historique, gains et argent à remettre à la caisse.
+- **Push** : `POST/DELETE /me/devices` (table `Device`), `ExpoPushProvider` (service Expo → FCM, lots de 100, jetons périmés supprimés, un échec n'interrompt jamais l'action), canal Android `courses` (priorité max, son, vibration) pour `DELIVERY_OFFER` / `DELIVERY_ASSIGNED`. Désactivé par défaut (`PUSH_ENABLED`).
+- **Hors ligne** : file d'actions sur le téléphone (AsyncStorage), rejouée dans l'ordre au retour du réseau ; `Idempotency-Key` fixée à la création de l'action ; intercepteur API (Redis, 24 h) qui renvoie la réponse déjà donnée sans refaire l'action ; une erreur libère la clé ; photo prise hors ligne envoyée juste avant l'action. Vente et acceptation d'une course exigent le réseau.
+- **Publication préparée** : `eas.json` (development, preview APK, production AAB, signature gérée par EAS), fiche Play Store et politique de confidentialité (docs/store).
+
+### Reste à faire
+
+- Déployer le web et l'API (phase 7), puis remplacer `digecom.example.km` dans `apps/mobile/eas.json`.
+- Firebase (`google-services.json`), clé FCM V1 dans EAS, `eas init` (projectId), `PUSH_ENABLED=true` en production ; mesurer le délai de notification sur téléphone réel.
+- Construire l'APK `preview` et l'AAB `production`, jouer les parcours Maestro sur téléphone ou émulateur.
+- Play Store : compte développeur, fiche, captures, URL de la politique de confidentialité, test fermé 12 testeurs × 14 jours, puis production.
+- Facultatif : écran « Mon catalogue » du Leader Senior.
+
+### Critères d'acceptation
+
+- [x] Un e-commerçant ne voit que le catalogue de son leader (`/catalog/visible` filtré côté API, tests e2e phase 2).
+- [ ] Un livreur ne reçoit que les courses de son île, notification en moins de 10 s (filtrage par île testé en phase 3 ; délai du push à mesurer sur téléphone).
+- [x] Les actions faites hors ligne sont rejouées sans doublon (tests Jest de la file + tests e2e `Idempotency-Key`).
+- [ ] APK de test installable, AAB prêt pour le Play Store (configuration EAS prête, builds après le déploiement).
+- [x] `docs/PROGRESS.md` mis à jour.
+
+### Tests
+
+- API e2e : `mobile.e2e-spec.ts` (8 tests : appareils, canal des offres, solde, `Idempotency-Key` rejoué / libéré / invalide) et refresh token mobile dans `auth.e2e-spec.ts`.
+- Mobile (Jest) : 10 tests, dont action hors ligne envoyée une seule fois, réponse perdue puis renvoi avec la même clé (une seule exécution), ordre conservé, refus définitif signalé, photo envoyée une fois.
+- Maestro (`apps/mobile/.maestro`) : vente → livraison → client a pris ; offre acceptée par un livreur et retirée chez l'autre (deux appareils). Écrits, **pas encore joués** (pas d'émulateur ni de build ici).
+- `expo export --platform android` : bundle produit (3,4 Mo).
+
 ## Phase 7 – Mise en production sur le VPS (Docker, sécurité, sauvegardes)
 
 Cible : VPS Contabo partagé (Ubuntu 24.04, Docker sans buildx), Nginx de l'hôte pour le HTTPS (Certbot), seuls 22/80/443 ouverts, ports 3000, 5432, 8069, 8071, 8080 et 8090 déjà pris. Branche `deploy/phase-7-vps`.
@@ -254,6 +291,12 @@ Cible : VPS Contabo partagé (Ubuntu 24.04, Docker sans buildx), Nginx de l'hôt
 - 2026-11-10 – Simulateur : jeton d'accès 15 min « au nom de » un livreur ou un vendeur, admin uniquement, `DEV_TOOLS_ENABLED=true` et jamais en production.
 - 2026-11-10 – SSE écrit à la main (pas `@Sse`) pour pouvoir répondre 401 sans session.
 - 2026-11-08 – Playwright : préchauffage des pages et compteurs de connexion remis à zéro par `make e2e` – le mode dev compile chaque page à la première visite.
+
+- 2026-11-09 – Push via le service Expo (qui relaie vers FCM) plutôt que l'Admin SDK Firebase dans l'API – pas de clé Google sur le serveur, un seul appel HTTP, jetons périmés signalés par la réponse.
+- 2026-11-09 – Refresh token du mobile dans le corps (en-tête `X-Client: mobile`) et en SecureStore – pas de cookie fiable dans une application native ; le web garde le cookie httpOnly.
+- 2026-11-09 – Idempotence par en-tête `Idempotency-Key` (Redis, 24 h) sur les POST / PATCH authentifiés plutôt que par endpoint – toute action de terrain du mobile en profite sans code dédié.
+- 2026-11-09 – Vente et acceptation de course exclues de la file hors ligne – le stock et « le premier qui accepte » doivent être vérifiés en direct.
+- 2026-11-09 – L'app mobile passe par le back-office (`https://<domaine>/api`) – même chemin et même HTTPS que le web, aucun port de l'API exposé.
 
 ## Écarts et dettes techniques
 

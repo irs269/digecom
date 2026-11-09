@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Clés de compte de service (FCM V1) : jamais dans le dépôt
+*service-account*.json
+*firebase-adminsdk*.json

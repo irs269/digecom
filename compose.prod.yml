@@ -162,6 +162,8 @@ services:
       WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN manquant dans .env}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
       DEV_TOOLS_ENABLED: ${DEV_TOOLS_ENABLED:-false}
+      PUSH_ENABLED: ${PUSH_ENABLED:-false}
+      EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Nginx (hôte) → Next.js → API : deux proxys de confiance.
       TRUST_PROXY: ${TRUST_PROXY:-2}

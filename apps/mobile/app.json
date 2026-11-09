@@ -13,9 +13,9 @@
     "android": {
       "package": "km.digecom.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0B2FE0",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#0B2FE0"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -40,7 +40,6 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/android-icon-monochrome.png",
           "color": "#0B2FE0",
           "defaultChannel": "default"
         }
