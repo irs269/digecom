@@ -1,0 +1,18 @@
+# Contexte de build Docker : jamais de secrets, de dépendances locales ni d'artefacts.
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+.git
+.github
+.husky
+.env
+.env.*
+!.env.example
+backups
+docs/prototype
+docs/guides

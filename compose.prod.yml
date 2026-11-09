@@ -1,0 +1,209 @@
+# Dig'eCom – production sur un VPS partagé, derrière le Nginx de l'hôte. Voir docs/DEPLOY.md.
+#   docker compose -f compose.prod.yml --env-file .env config     # vérifier
+#   docker compose -f compose.prod.yml --env-file .env build
+#   docker compose -f compose.prod.yml --env-file .env up -d
+#
+# Règles du serveur :
+#   - aucun port sur 0.0.0.0 (Docker contourne UFW) : seuls le web et l'API S3 de MinIO sont
+#     publiés, sur 127.0.0.1, pour le Nginx de l'hôte ;
+#   - PostgreSQL, Redis et la console MinIO ne sont jamais publiés (réseau interne) ;
+#   - mémoire totale ≈ 1,4 Go (limites ci-dessous).
+name: ${COMPOSE_PROJECT_NAME:-digecom-prod}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # Propriétaire du schéma : migrations uniquement.
+      POSTGRES_USER: ${POSTGRES_USER:-digecom}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+      POSTGRES_DB: ${POSTGRES_DB:-digecom}
+      TZ: UTC
+    command:
+      - postgres
+      - -c
+      - shared_buffers=96MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=40
+      - -c
+      - log_min_duration_statement=1000
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    shm_size: 128m
+    mem_limit: 384m
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD manquant dans .env}
+      - --appendonly
+      - 'yes'
+      - --maxmemory
+      - 64mb
+      # Files BullMQ : jamais d'éviction.
+      - --maxmemory-policy
+      - noeviction
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    mem_limit: 96m
+    logging: *logging
+
+  minio:
+    image: chainguard/minio@sha256:869ca3178831d9f521ea02258a0f0d4fbc1e9f84302e707514e1f861b860865d
+    restart: unless-stopped
+    # Console non publiée (elle écoute sur un port interne aléatoire).
+    command: ['server', '/data']
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?S3_ACCESS_KEY manquant dans .env}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?S3_SECRET_KEY manquant dans .env}
+    ports:
+      # API S3 seule, relayée par Nginx (sous-domaine des fichiers).
+      - '127.0.0.1:${MINIO_PORT:-9100}:9000'
+    volumes:
+      - minio_data:/data
+    mem_limit: 256m
+    logging: *logging
+
+  # Attente de MinIO puis création des buckets (image sans shell : deux services).
+  minio-ready:
+    image: &mc-image chainguard/minio-client@sha256:7e80e77f8c949810d0eaead1120e28c63f913ff96ae7f78a8e4cd3c1e2f0623f
+    depends_on: [minio]
+    environment: &mc-env
+      MC_HOST_local: http://${S3_ACCESS_KEY}:${S3_SECRET_KEY}@minio:9000
+    command: ['ready', 'local']
+    restart: 'no'
+    logging: *logging
+
+  minio-init:
+    image: *mc-image
+    depends_on:
+      minio-ready:
+        condition: service_completed_successfully
+    environment: *mc-env
+    command: ['mb', '--ignore-existing', 'local/products', 'local/proofs', 'local/documents']
+    restart: 'no'
+    logging: *logging
+
+  # Migrations (prisma migrate deploy) puis droits du rôle applicatif, à chaque démarrage.
+  # Aussi : docker compose -f compose.prod.yml run --rm migrate pnpm --filter api create-admin
+  migrate:
+    image: digecom-prod-migrate:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    restart: 'no'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-digecom}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-digecom}?schema=public
+      APP_DB_USER: ${APP_DB_USER:-digecom_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD manquant dans .env}
+    mem_limit: 512m
+    logging: *logging
+
+  api:
+    image: digecom-prod-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: prod
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      # Rôle applicatif : sans DDL, sans UPDATE/DELETE sur les tables append-only.
+      DATABASE_URL: postgresql://${APP_DB_USER:-digecom_app}:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-digecom}?schema=public&connection_limit=10
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET manquant dans .env}
+      JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN manquant dans .env}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      DEV_TOOLS_ENABLED: ${DEV_TOOLS_ENABLED:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Nginx (hôte) → Next.js → API : deux proxys de confiance.
+      TRUST_PROXY: ${TRUST_PROXY:-2}
+      # Une seule instance : HTTP et jobs BullMQ dans le même processus (voir docs/DEPLOY.md).
+      PROCESS_ROLE: all
+      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-5}
+      LOGIN_WINDOW_MINUTES: ${LOGIN_WINDOW_MINUTES:-15}
+      LOCKOUT_MINUTES: ${LOCKOUT_MINUTES:-15}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-600}
+      RATE_LIMIT_SENSITIVE_PER_MINUTE: ${RATE_LIMIT_SENSITIVE_PER_MINUTE:-30}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:?S3_PUBLIC_ENDPOINT manquant dans .env}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    mem_limit: 448m
+    logging: *logging
+
+  web:
+    image: digecom-prod-web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: prod
+      args:
+        API_INTERNAL_URL: http://api:4000
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - web_cache:/app/apps/web/.next/cache
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      # Back-office, relayé par Nginx (le navigateur appelle /api/… → API via Next.js).
+      - '127.0.0.1:${WEB_PORT:-3100}:3000'
+    mem_limit: 256m
+    logging: *logging
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+  web_cache:
