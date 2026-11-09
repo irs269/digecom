@@ -10,6 +10,7 @@ import { ConfigModule } from './config/config.module';
 import { FinanceModule } from './finance/finance.controller';
 import { LedgerModule } from './finance/ledger.service';
 import { HealthModule } from './health/health.controller';
+import { OpsModule } from './health/ops.module';
 import { NotificationsModule } from './notifications/notifications.controller';
 import { OrdersModule } from './orders/orders.module';
 import { OrganizationModule } from './organization/organization.controller';
@@ -62,6 +63,7 @@ const isDev = process.env.NODE_ENV === 'development';
     TciModule,
     ReportsModule,
     HealthModule,
+    OpsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],
 })

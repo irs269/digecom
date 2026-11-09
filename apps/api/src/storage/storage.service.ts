@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -25,8 +26,10 @@ type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 export class StorageService {
   private readonly internal: S3Client;
   private readonly publicSigner: S3Client;
+  private readonly prefix: string;
 
   constructor(@Inject(ENV) env: Env) {
+    this.prefix = env.S3_BUCKET_PREFIX ?? '';
     const credentials = {
       accessKeyId: env.S3_ACCESS_KEY ?? 'minio',
       secretAccessKey: env.S3_SECRET_KEY ?? 'minio-secret',
@@ -39,12 +42,25 @@ export class StorageService {
     });
   }
 
+  /** Nom réel du bucket (préfixe pour un S3 externe où les noms sont uniques). */
+  private name(bucket: Bucket): string {
+    return `${this.prefix}${bucket}`;
+  }
+
+  /** Disponibilité du stockage (GET /ready). */
+  async ping(): Promise<boolean> {
+    return this.internal
+      .send(new HeadBucketCommand({ Bucket: this.name(BUCKETS.documents) }))
+      .then(() => true)
+      .catch(() => false);
+  }
+
   /** URL pré-signée d'envoi direct (PUT) vers une clé temporaire. */
   async presignUpload(bucket: Bucket, prefix: string, contentType: string) {
     const key = `tmp/${prefix}/${createId()}`;
     const uploadUrl = await getSignedUrl(
       this.publicSigner,
-      new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+      new PutObjectCommand({ Bucket: this.name(bucket), Key: key, ContentType: contentType }),
       { expiresIn: 300 },
     );
     return { key, uploadUrl, expiresIn: 300 };
@@ -52,9 +68,13 @@ export class StorageService {
 
   /** URL pré-signée de lecture (1 h). */
   presignGet(bucket: Bucket, key: string): Promise<string> {
-    return getSignedUrl(this.publicSigner, new GetObjectCommand({ Bucket: bucket, Key: key }), {
-      expiresIn: 3600,
-    });
+    return getSignedUrl(
+      this.publicSigner,
+      new GetObjectCommand({ Bucket: this.name(bucket), Key: key }),
+      {
+        expiresIn: 3600,
+      },
+    );
   }
 
   /**
@@ -71,7 +91,9 @@ export class StorageService {
     }
     let size: number | undefined;
     try {
-      const head = await this.internal.send(new HeadObjectCommand({ Bucket: bucket, Key: tmpKey }));
+      const head = await this.internal.send(
+        new HeadObjectCommand({ Bucket: this.name(bucket), Key: tmpKey }),
+      );
       size = head.ContentLength;
     } catch {
       throw new AppException('NOT_FOUND', 'Fichier envoyé introuvable', HttpStatus.NOT_FOUND);
@@ -84,7 +106,9 @@ export class StorageService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    const obj = await this.internal.send(new GetObjectCommand({ Bucket: bucket, Key: tmpKey }));
+    const obj = await this.internal.send(
+      new GetObjectCommand({ Bucket: this.name(bucket), Key: tmpKey }),
+    );
     const input = Buffer.from(await obj.Body!.transformToByteArray());
     let output: Buffer;
     try {
@@ -103,7 +127,12 @@ export class StorageService {
     }
     const key = `${destPrefix}/${createId()}.webp`;
     await this.internal.send(
-      new PutObjectCommand({ Bucket: bucket, Key: key, Body: output, ContentType: 'image/webp' }),
+      new PutObjectCommand({
+        Bucket: this.name(bucket),
+        Key: key,
+        Body: output,
+        ContentType: 'image/webp',
+      }),
     );
     await this.delete(bucket, tmpKey);
     return key;
@@ -112,13 +141,18 @@ export class StorageService {
   /** Envoi direct depuis l'API (seed, tests). */
   async put(bucket: Bucket, key: string, body: Buffer, contentType: string): Promise<void> {
     await this.internal.send(
-      new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+      new PutObjectCommand({
+        Bucket: this.name(bucket),
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
     );
   }
 
   async delete(bucket: Bucket, key: string): Promise<void> {
     await this.internal
-      .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+      .send(new DeleteObjectCommand({ Bucket: this.name(bucket), Key: key }))
       .catch(() => undefined);
   }
 }

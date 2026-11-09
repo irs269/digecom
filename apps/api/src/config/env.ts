@@ -14,6 +14,19 @@ export const envSchema = z.object({
   /** Cookie `Secure` : obligatoire en prod (HTTPS), désactivable en dev sur http://localhost. */
   COOKIE_SECURE: bool.default('true'),
   WEB_ORIGIN: z.string().url(),
+  /** Origines CORS supplémentaires (virgules), ex. https://app.exemple.km. */
+  CORS_EXTRA_ORIGINS: z.string().optional(),
+  /**
+   * Proxys de confiance devant l'API (X-Forwarded-For) : 1 = Next.js seul (dev), 2 = Nginx de
+   * l'hôte puis Next.js (production). Trop haut : un visiteur pourrait usurper son IP.
+   */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(1),
+  /** api : HTTP seul ; worker : jobs BullMQ seuls ; all : les deux (développement). */
+  PROCESS_ROLE: z.enum(['all', 'api', 'worker']).default('all'),
+  /** Limite globale de requêtes par IP et par minute (0 = désactivée). */
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(600),
+  /** Limite des routes sensibles (connexion, imports, exports) par IP et par minute. */
+  RATE_LIMIT_SENSITIVE_PER_MINUTE: z.coerce.number().int().min(0).default(30),
   SWAGGER_ENABLED: bool.optional(),
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
@@ -27,9 +40,43 @@ export const envSchema = z.object({
   S3_REGION: z.string().default('us-east-1'),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
+  /** Préfixe des buckets (S3 externe : noms uniques), ex. « digecom-prod- ». */
+  S3_BUCKET_PREFIX: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+function safePassword(url: string): string | undefined {
+  try {
+    return decodeURIComponent(new URL(url).password);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Règles propres à la production : l'API refuse de démarrer si elles ne sont pas respectées. */
+function productionIssues(env: Env): string[] {
+  if (env.NODE_ENV !== 'production') return [];
+  const issues: string[] = [];
+  if (env.DEV_TOOLS_ENABLED) issues.push('DEV_TOOLS_ENABLED doit être false en production');
+  if (env.SWAGGER_ENABLED) issues.push('SWAGGER_ENABLED doit être false en production');
+  if (!env.COOKIE_SECURE) issues.push('COOKIE_SECURE doit être true en production');
+  if (!env.WEB_ORIGIN.startsWith('https://')) issues.push('WEB_ORIGIN doit être en https://');
+  // Secrets laissés à leur valeur d'exemple (.env.example, .env.production.example).
+  const placeholder = /a-generer|à-générer|remplace-moi|change-moi|changeme|exemple/i;
+  const secrets: [string, string | undefined][] = [
+    ['JWT_ACCESS_SECRET', env.JWT_ACCESS_SECRET],
+    ['DATABASE_URL (mot de passe)', safePassword(env.DATABASE_URL)],
+    ['REDIS_URL (mot de passe)', safePassword(env.REDIS_URL)],
+    ['S3_ACCESS_KEY', env.S3_ACCESS_KEY],
+    ['S3_SECRET_KEY', env.S3_SECRET_KEY],
+  ];
+  for (const [name, value] of secrets) {
+    if (value && placeholder.test(value)) issues.push(`${name} : valeur d’exemple, à générer`);
+  }
+  if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY) issues.push('S3_ACCESS_KEY / S3_SECRET_KEY requis');
+  return issues;
+}
 
 export function validateEnv(raw: Record<string, unknown>): Env {
   const parsed = envSchema.safeParse(raw);
@@ -37,5 +84,21 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);
     throw new Error(`Configuration invalide :\n${issues.join('\n')}`);
   }
+  const issues = productionIssues(parsed.data);
+  if (issues.length)
+    throw new Error(
+      `Configuration de production invalide :\n${issues.map((i) => `  - ${i}`).join('\n')}`,
+    );
   return parsed.data;
+}
+
+/** Origines autorisées par le CORS. */
+export function corsOrigins(env: Env): string[] {
+  return [
+    env.WEB_ORIGIN,
+    ...(env.CORS_EXTRA_ORIGINS ?? '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean),
+  ];
 }

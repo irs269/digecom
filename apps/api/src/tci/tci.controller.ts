@@ -30,11 +30,12 @@ import {
   type ProspectConfirmInput,
   type ProspectStatus,
 } from '@digecom/shared';
-import { Queue, Worker } from 'bullmq';
+import { Queue, type Worker } from 'bullmq';
 import { z } from 'zod';
 import type { AuthenticatedRequest, AuthUser } from '../auth/auth.types';
 import { CurrentUser, RequirePermission } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { createWorker, redisConnection, usesQueues } from '../common/jobs';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { OrdersModule } from '../orders/orders.module';
@@ -301,30 +302,19 @@ export class CampaignJobs implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit() {
-    if (this.env.NODE_ENV === 'test') return;
-    const url = new URL(this.env.REDIS_URL);
-    const connection = {
-      host: url.hostname,
-      port: Number(url.port || 6379),
-      db: Number(url.pathname.slice(1) || 0),
-      password: url.password || undefined,
-      maxRetriesPerRequest: null,
-    };
+    if (!usesQueues(this.env)) return;
+    const connection = redisConnection(this.env);
     this.queue = new Queue('campaigns', { connection });
     await this.queue.upsertJobScheduler(
       'end-campaigns',
       { pattern: '5 21 * * *', tz: 'UTC' },
       { name: 'end' },
     );
-    this.worker = new Worker(
-      'campaigns',
-      async () => {
-        const n = await this.campaigns.endExpired();
-        this.logger.log(`${n} campagne(s) terminée(s)`);
-        return n;
-      },
-      { connection },
-    );
+    this.worker = createWorker(this.env, 'campaigns', async () => {
+      const n = await this.campaigns.endExpired();
+      this.logger.log(`${n} campagne(s) terminée(s)`);
+      return n;
+    });
   }
 
   async onModuleDestroy() {

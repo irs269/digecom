@@ -15,7 +15,10 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
-    "load-test": "tsx prisma/load-test.ts"
+    "load-test": "tsx prisma/load-test.ts",
+    "start:worker": "node dist/worker.js",
+    "db:grants": "node dist/cli/db-grants.js",
+    "create-admin": "tsx src/cli/create-admin.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
