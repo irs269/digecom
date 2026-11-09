@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { api, ApiError } from './api';
+import { api, ApiError, uploadFile } from './api';
 
 /**
  * File d'actions hors ligne. Une action de terrain (réception, retrait, remise, client a pris /
@@ -18,6 +18,11 @@ export interface QueuedAction {
   /** Texte affiché à l'utilisateur (« Client a pris – #C-0042 »). */
   label: string;
   createdAt: string;
+  /**
+   * Photo de preuve prise hors ligne : envoyée vers le stockage juste avant l'action ; la clé
+   * obtenue est ajoutée au corps (`proofKey`) et conservée pour ne pas renvoyer la photo.
+   */
+  photo?: { uri: string; contentType: 'image/jpeg'; presignPath: string };
   /** Dernière erreur définitive du serveur : l'action est retirée et signalée. */
   error?: string;
 }
@@ -78,8 +83,9 @@ export type SubmitResult<T> = { status: 'sent'; data: T } | { status: 'queued' }
  */
 export async function submitAction<T>(
   path: string,
-  body: unknown,
+  body: Record<string, unknown>,
   label: string,
+  photo?: QueuedAction['photo'],
 ): Promise<SubmitResult<T>> {
   await load();
   const action: QueuedAction = {
@@ -88,6 +94,7 @@ export async function submitAction<T>(
     body,
     label,
     createdAt: new Date().toISOString(),
+    photo,
   };
   // Des actions attendent déjà : on respecte l'ordre.
   if (state.pending.length) {
@@ -96,7 +103,7 @@ export async function submitAction<T>(
     return { status: 'queued' };
   }
   try {
-    const data = await api<T>(path, { method: 'POST', body, idempotencyKey: action.id });
+    const data = await send<T>(action);
     return { status: 'sent', data };
   } catch (err) {
     if (err instanceof ApiError && err.isNetwork) {
@@ -105,6 +112,21 @@ export async function submitAction<T>(
     }
     throw err;
   }
+}
+
+/** Envoie la photo éventuelle (une seule fois), puis l'action avec sa clé d'idempotence. */
+async function send<T>(action: QueuedAction): Promise<T> {
+  const body = action.body as Record<string, unknown>;
+  if (action.photo && !body.proofKey) {
+    const { key, uploadUrl } = await api<{ key: string; uploadUrl: string }>(
+      action.photo.presignPath,
+      { method: 'POST', body: { contentType: action.photo.contentType } },
+    );
+    await uploadFile(uploadUrl, action.photo.uri, action.photo.contentType);
+    body.proofKey = key;
+    await persist();
+  }
+  return api<T>(action.path, { method: 'POST', body, idempotencyKey: action.id });
 }
 
 async function enqueue(action: QueuedAction) {
@@ -122,7 +144,7 @@ export async function flush(): Promise<void> {
     while (state.pending.length) {
       const [next, ...rest] = state.pending;
       try {
-        await api(next!.path, { method: 'POST', body: next!.body, idempotencyKey: next!.id });
+        await send(next!);
         set({ pending: rest });
         synced = true;
       } catch (err) {
