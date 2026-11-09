@@ -11,7 +11,7 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 | 4 | Finance, règlements, caisse, dépenses | Terminée | 2026-11-11 | Voir détail ci-dessous |
 | 5 | Leaders Junior, campagnes, prospects, gains TCI | Terminée | 2026-11-12 | Voir détail ci-dessous |
 | 6 | Tableaux de bord, réseau, rapports et exports | Terminée | 2026-11-13 | Voir détail ci-dessous |
-| 7 | Production Docker, sécurité, sauvegardes | À faire | | |
+| 7 | Production Docker, sécurité, sauvegardes | Prête à déployer | 2026-11-09 | Branche `deploy/phase-7-vps` ; déploiement sur le VPS à faire (docs/DEPLOY.md) |
 | 8 | Application mobile Android | À faire | | |
 
 ## Phase 0 – Socle, Docker, authentification
@@ -149,6 +149,38 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 - e2e API phase 4 : 19 (écritures exactes d'une vente à 12 500, frais de course, refus sans écriture, retour après vente, immuabilité, paiement fournisseur unique, abonnements et relevés idempotents, circuit et séparation des tâches, caisse, dépenses, résultat net, PDF). Total e2e API : 158.
 - Playwright : 12 parcours, dont comptable → responsable financier → caissier sur le relevé de Fatima Said.
 
+## Phase 7 – Mise en production sur le VPS (Docker, sécurité, sauvegardes)
+
+Cible : VPS Contabo partagé (Ubuntu 24.04, Docker sans buildx), Nginx de l'hôte pour le HTTPS (Certbot), seuls 22/80/443 ouverts, ports 3000, 5432, 8069, 8071, 8080 et 8090 déjà pris. Branche `deploy/phase-7-vps`.
+
+### Fait
+
+- **`compose.prod.yml`** (le `compose.yml` de développement est inchangé) : cibles `prod` pour api et web, aucun code monté ; PostgreSQL, Redis (mot de passe) et MinIO sans port publié ; seuls `127.0.0.1:${WEB_PORT:-3100}` (web) et `127.0.0.1:${MINIO_PORT:-9100}` (API S3 de MinIO, console non publiée) ; `restart: unless-stopped`, healthchecks, limites mémoire (≈ 1,4 Go au total ; mesuré au repos : ≈ 260 Mo) ; buckets créés au démarrage ; ni base de test ni e2e.
+- **Images** compatibles avec le builder classique (aucun `RUN --mount`), construites et vérifiées avec `DOCKER_BUILDKIT=0` : `prod` (api, sans CLI prisma ni tsx, 573 Mo), `migrate` (CLI prisma + tsx : `prisma migrate deploy` puis droits du rôle applicatif), web `standalone` (351 Mo).
+- **Premier administrateur** : `docker compose -f compose.prod.yml run --rm migrate pnpm --filter api create-admin` (nom, téléphone, mot de passe masqué, politique de l'application) ; crée îles, sites et paramètres par défaut, aucun compte fictif. Seed de démonstration refusé si `NODE_ENV=production` (sauf `ALLOW_DEMO_SEED=oui-je-confirme`, préproduction).
+- **`.env.production.example`** commenté (commande `openssl` pour chaque secret) ; l'API refuse de démarrer si un secret vaut `A-GENERER-…`, si Swagger ou les outils de dev sont actifs, si le cookie n'est pas `Secure` ou si `WEB_ORIGIN` n'est pas en HTTPS.
+- **Derrière le proxy** : `TRUST_PROXY=2` (Nginx de l'hôte → Next.js → API) ; Nginx remplace `X-Forwarded-For` par `$remote_addr` (pas d'usurpation). Vérifié : 5 échecs depuis une IP → 429 pour cette IP seulement, l'audit enregistre l'IP réelle ; cookie `dc_rt` `HttpOnly; Secure; SameSite=Lax`, rafraîchissement OK.
+- **MinIO derrière Nginx** : URL pré-signées signées pour `S3_PUBLIC_ENDPOINT`, en-tête `Host` conservé. Vérifié : PUT et GET 200 avec `Host` conservé, 403 sans (configuration Nginx exacte dans docs/DEPLOY.md, `client_max_body_size 12m`).
+- **Sauvegardes** : `scripts/backup.sh` (cron de l'hôte) : `pg_dump` compressé + manifeste de comptages pris dans le même instantané + copie des buckets + `SHA256SUMS`, 14 jours gardés. `scripts/restore.sh` : test sur base temporaire (comptages = manifeste) ou `--production` (bascule de base, ancienne conservée, fichiers recopiés). Vérifié sur 60 commandes / 294 écritures : test et restauration de production réussis, fichier altéré refusé.
+- **Dettes traitées** : clé étrangère `StockMovement.orderId` → `Order` ; rôle PostgreSQL applicatif sans UPDATE/DELETE sur `AuditLog` et les autres tables append-only (vérifié : circuit de commande complet, vente et retour après vente avec ce rôle) ; jobs gardés dans l'API (choix documenté).
+- **Sécurité** : Next.js 15.5.29 / React 19.1.10 (4 vulnérabilités critiques de Next.js 15.3.1 corrigées) ; limitation de débit globale et par route sensible (Redis) ; corps JSON limité à 1 Mo (8 Mo pour l'import de contacts) ; `GET /ready` (base, migrations, Redis, S3) ; `GET /ops/metrics` (5xx, latence, jobs en échec) ; alerte in-app si un job échoue. CI : `pnpm audit --audit-level critical`, build classique des images et Trivy (vulnérabilités critiques).
+- **Documentation** : docs/DEPLOY.md (pas à pas, blocs Nginx, Certbot, vérifications, mise à jour, sauvegarde et restauration), docs/EXPLOITATION.md, guides par rôle (docs/guides), recette SPEC §9 (`apps/web/e2e/recette`, `RECETTE=1`).
+
+### Reste à faire
+
+- Déployer sur le VPS en suivant docs/DEPLOY.md, puis cocher les critères ci-dessous.
+- Captures d'écran des guides (`e2e/guides`, `GUIDES=1`) à générer.
+- Recette SPEC §9 à jouer contre la préproduction.
+
+### Critères d'acceptation
+
+- [x] `docker compose -f compose.prod.yml config` valide ; images prod construites (builder classique) et démarrées : api `/health` et `/ready` OK, page `/connexion` 200.
+- [x] Restauration d'une sauvegarde testée avec succès (base temporaire et production, en local).
+- [ ] Déploiement reproductible sur le VPS en suivant docs/DEPLOY.md.
+- [ ] HTTPS valide (Certbot) et en-têtes vérifiés sur le domaine réel.
+- [ ] Recette SPEC §9 verte en préproduction.
+- [x] `docs/PROGRESS.md` mis à jour.
+
 ## Phase 6 – Tableaux de bord par rôle, réseau commercial, rapports et exports
 
 ### Fait
@@ -227,10 +259,10 @@ Mis à jour par Claude Code à la fin de chaque phase : ce qui est fait, ce qui 
 
 (À traiter avant la mise en production)
 
-- `StockMovement.orderId` sans clé étrangère vers `Order` (les tests du StockService utilisent des identifiants libres) : à ajouter en phase 7.
+- ~~`StockMovement.orderId` sans clé étrangère vers `Order`~~ : **traité en phase 7** (migration `20261114000000`, contrainte validée).
 - Les écritures financières (ventes, coûts, taxes, frais de course) sont préparées (instantanés, coût FIFO, frais) mais créées en phase 4.
-- Le job BullMQ des invendus tourne dans le processus API ; à isoler dans un worker dédié en phase 7 si la charge augmente.
+- Job BullMQ des invendus (et tous les jobs) : **gardés dans le processus API en phase 7** (`PROCESS_ROLE=all`, une seule instance, mémoire limitée sur le VPS). Un worker dédié est prêt (`dist/worker.js`, `PROCESS_ROLE=worker`) si la charge augmente ; voir docs/DEPLOY.md §13.
 
 - Mode dev sous Windows (sans impact sur Playwright, qui tourne sur une build de production via le service `web-e2e`) : première compilation d'une page Next.js lente (~15-40 s) à cause du montage de fichiers ; sans impact en production (image `prod` compilée).
-- Rôle PostgreSQL applicatif sans droits UPDATE/DELETE sur `AuditLog` : protégé par trigger pour l'instant ; le rôle DB dédié sera créé en phase 7.
-- Prisma 5 / NestJS 10 conformes au plan validé ; montée de version à évaluer en phase 7.
+- ~~Rôle PostgreSQL applicatif sans droits UPDATE/DELETE sur `AuditLog`~~ : **traité en phase 7** (rôle `digecom_app` posé par `migrate` : sans DDL, sans UPDATE/DELETE/TRUNCATE sur `AuditLog`, `LedgerEntry`, `StockMovement`, `OrderEvent`, `SellerAllocation` ; les triggers restent en place).
+- Prisma 5 / NestJS 10 conformes au plan validé ; montée de version reportée (aucune vulnérabilité critique : `pnpm audit --audit-level critical` vert après la mise à jour de Next.js).
