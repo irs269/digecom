@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
+  taxAmount,
   hasPermission,
   MAX_PRODUCT_PHOTOS,
   ROLE_SCOPE,
@@ -323,6 +324,7 @@ export class ProductsService {
       orderBy: { name: 'asc' },
     });
     const visibleRows = all.filter((p) => p.isPublished && p.stockLevels.length > 0);
+    const taxSeller = await this.settings.get('tax.seller');
     const products = await Promise.all(
       visibleRows.map(async (p) => ({
         id: p.id,
@@ -334,6 +336,10 @@ export class ProductsService {
         photos: await this.photoUrls(p.photos),
         salePrice: p.salePrice,
         sellerAmount: sellerAmountOf(leader.role, p),
+        sellerTax: (() => {
+          const share = sellerAmountOf(leader.role, p);
+          return share !== null ? taxAmount(taxSeller, share) : 0;
+        })(),
         tciBonus: p.tciBonus,
         sites: p.stockLevels.map((l) => ({
           siteId: l.site.id,

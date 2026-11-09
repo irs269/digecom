@@ -33,6 +33,20 @@ export const envSchema = z.object({
   LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   /** Outils de dev (simulateur livreur / vendeur). Jamais en production. */
   DEV_TOOLS_ENABLED: bool.default('false'),
+  /** Push mobile via le service Expo (FCM sur Android). Désactivé : aucun envoi, rien n'échoue. */
+  PUSH_ENABLED: bool.default('false'),
+  /** Jeton d'accès Expo (facultatif, recommandé en production : « Enhanced push security »). */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
+  /**
+   * Relais TURN (coturn) des appels dans l'application, ex. `turn:digecom.km:3478`.
+   * Plusieurs adresses séparées par des virgules. Vide : STUN public seulement (le Wi-Fi marche,
+   * les réseaux mobiles souvent pas).
+   */
+  TURN_URLS: z.string().optional(),
+  /** Secret partagé avec coturn (`static-auth-secret`) : identifiants TURN temporaires. */
+  TURN_SECRET: z.string().optional(),
+  /** Validité des identifiants TURN remis à un téléphone. */
+  TURN_TTL_SECONDS: z.coerce.number().int().positive().default(3600),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   S3_ENDPOINT: z.string().url().optional(),
   /** Adresse de MinIO vue par le navigateur (URL pré-signées). */
@@ -70,6 +84,7 @@ function productionIssues(env: Env): string[] {
     ['REDIS_URL (mot de passe)', safePassword(env.REDIS_URL)],
     ['S3_ACCESS_KEY', env.S3_ACCESS_KEY],
     ['S3_SECRET_KEY', env.S3_SECRET_KEY],
+    ['TURN_SECRET', env.TURN_SECRET],
   ];
   for (const [name, value] of secrets) {
     if (value && placeholder.test(value)) issues.push(`${name} : valeur d’exemple, à générer`);

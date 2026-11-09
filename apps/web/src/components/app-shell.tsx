@@ -8,7 +8,9 @@ import { createContext, useContext, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { useLiveUpdates } from '@/lib/live';
+import { CallOverlay, CallsButton } from './calls';
 import { NotificationBell } from './notification-bell';
+import { WebCallProvider } from '@/lib/calls';
 import { cn } from '@/lib/utils';
 
 export type IslandFilter = IslandCode | 'all';
@@ -177,16 +179,20 @@ export function AppShell({ user, children }: { user: MeResponse; children: React
 
   return (
     <IslandFilterContext.Provider value={island}>
-      <div className="flex min-h-screen flex-col desk:flex-row">
-        <Sidebar user={user} onLogout={() => void logout()} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex flex-wrap items-center justify-end gap-3 border-b border-surface-border bg-white px-4 py-3 desk:px-8">
-            <ScopeBar user={user} island={island} onChange={setIsland} />
-            <NotificationBell />
-          </header>
-          <main className="flex flex-1 flex-col gap-6 px-4 py-6 desk:px-8">{children}</main>
+      <WebCallProvider userId={user.id}>
+        <div className="flex min-h-screen flex-col desk:flex-row">
+          <Sidebar user={user} onLogout={() => void logout()} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="flex flex-wrap items-center justify-end gap-3 border-b border-surface-border bg-white px-4 py-3 desk:px-8">
+              <ScopeBar user={user} island={island} onChange={setIsland} />
+              <CallsButton userId={user.id} />
+              <NotificationBell />
+            </header>
+            <main className="flex flex-1 flex-col gap-6 px-4 py-6 desk:px-8">{children}</main>
+          </div>
         </div>
-      </div>
+        <CallOverlay userId={user.id} />
+      </WebCallProvider>
     </IslandFilterContext.Provider>
   );
 }

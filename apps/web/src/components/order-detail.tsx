@@ -23,6 +23,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/input';
 import { SelectField } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
+import { CallUserButton } from '@/components/calls';
 import { apiFetch } from '@/lib/api';
 import { errorMessage } from '@/lib/queries';
 
@@ -259,9 +260,12 @@ export function OrderDetail({ order }: { order: OrderView }) {
           ) : null}
         </dd>
         <dt className="text-ink-muted">Vendeur</dt>
-        <dd>
-          {order.seller.fullName}
-          {order.sellerType === 'TELECONSULTANT' ? ' (TCI)' : ''}
+        <dd className="flex flex-wrap items-center gap-2">
+          <span>
+            {order.seller.fullName}
+            {order.sellerType === 'TELECONSULTANT' ? ' (TCI)' : ''}
+          </span>
+          <CallUserButton userId={order.seller.id} name={order.seller.fullName} />
         </dd>
         <dt className="text-ink-muted">Leader</dt>
         <dd>{order.leader.fullName}</dd>
@@ -270,8 +274,15 @@ export function OrderDetail({ order }: { order: OrderView }) {
           {order.site.name} · {order.island.name}
         </dd>
         <dt className="text-ink-muted">Livreur</dt>
-        <dd>
-          {order.courier ? `${order.courier.fullName} · ${formatPhone(order.courier.phone)}` : '—'}
+        <dd className="flex flex-wrap items-center gap-2">
+          <span>
+            {order.courier
+              ? `${order.courier.fullName} · ${formatPhone(order.courier.phone)}`
+              : '—'}
+          </span>
+          {order.courier ? (
+            <CallUserButton userId={order.courier.id} name={order.courier.fullName} />
+          ) : null}
         </dd>
         {order.createdOnBehalfBy ? (
           <>

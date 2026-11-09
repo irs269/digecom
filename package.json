@@ -10,7 +10,7 @@
     "lint": "pnpm -r --parallel lint && prettier --check . && pnpm -r typecheck",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
-    "test": "pnpm --filter @digecom/shared test && pnpm --filter api test && pnpm --filter api test:e2e",
+    "test": "pnpm --filter @digecom/shared test && pnpm --filter api test && pnpm --filter api test:e2e && pnpm --filter mobile test",
     "e2e": "pnpm --filter web e2e",
     "prepare": "husky || true"
   },

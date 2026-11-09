@@ -307,6 +307,8 @@ export interface VisibleProduct {
   photos: { key: string; url: string }[];
   salePrice: number;
   sellerAmount: number | null;
+  /** Taxe e-commerçant unitaire (paramètre `tax.seller` appliqué à la part). */
+  sellerTax: number;
   tciBonus: number | null;
   sites: { siteId: string; siteName: string; available: number }[];
   available: number;

@@ -162,6 +162,10 @@ services:
       WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN manquant dans .env}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
       DEV_TOOLS_ENABLED: ${DEV_TOOLS_ENABLED:-false}
+      PUSH_ENABLED: ${PUSH_ENABLED:-false}
+      EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN:-}
+      TURN_URLS: ${TURN_URLS:-}
+      TURN_SECRET: ${TURN_SECRET:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Nginx (hôte) → Next.js → API : deux proxys de confiance.
       TRUST_PROXY: ${TRUST_PROXY:-2}
@@ -200,6 +204,42 @@ services:
       # Back-office, relayé par Nginx (le navigateur appelle /api/… → API via Next.js).
       - '127.0.0.1:${WEB_PORT:-3100}:3000'
     mem_limit: 256m
+    logging: *logging
+
+  # Relais TURN des appels dans l'application mobile (WebRTC). Réseau de l'hôte : le relais
+  # alloue un port UDP par appel, ce que la traduction de ports de Docker gère mal.
+  # Ports à ouvrir sur le pare-feu : 3478/udp, 3478/tcp et 49160-49200/udp (docs/MOBILE.md §7).
+  # Facultatif : sans lui (profil non activé), les appels passent en Wi-Fi, rarement en 4G.
+  coturn:
+    image: coturn/coturn:4.6.2
+    profiles: ['appels']
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - -n
+      - --listening-port=3478
+      - --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+      - --realm=${TURN_REALM:-digecom}
+      # Identifiants temporaires signés par l'API (TURN_SECRET) : aucun compte stocké.
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET:-}
+      - --min-port=49160
+      - --max-port=49200
+      - --fingerprint
+      - --no-cli
+      - --no-tls
+      - --no-dtls
+      - --no-multicast-peers
+      # Jamais de relais vers le réseau interne du VPS (Docker, localhost).
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      - --user-quota=4
+      - --total-quota=80
+      - --log-file=stdout
+    mem_limit: 64m
     logging: *logging
 
 volumes:

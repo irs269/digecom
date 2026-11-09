@@ -1,0 +1,5 @@
+# Parcours e2e Maestro (application de test installée : APK « preview » ou build de développement).
+# Lancer :  maestro test -e PASSWORD=... -e API_URL=http://10.0.2.2:3100/api .maestro
+flows:
+  - vente-livraison.yaml
+  - offre-deux-livreurs.yaml

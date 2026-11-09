@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "322479660358",
+    "project_id": "digecom-6fb3b",
+    "storage_bucket": "digecom-6fb3b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:322479660358:android:b2d06671f547358e9a1947",
+        "android_client_info": {
+          "package_name": "km.digecom.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSmQ2Hpvs5FxxjJhCWfmaPSkJR0CA3A-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

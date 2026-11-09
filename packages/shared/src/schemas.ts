@@ -65,10 +65,26 @@ export interface MeResponse {
   site: { id: string; name: string } | null;
   mustChangePassword: boolean;
   modules: AllowedModule[];
+  /** Livreur uniquement : disponible pour recevoir des courses. */
+  isAvailable?: boolean;
 }
 
 export interface LoginResponse {
   accessToken: string;
   expiresIn: number;
   user: MeResponse;
+  /** Uniquement pour l'application mobile (en-tête `X-Client: mobile`) : le web garde le cookie httpOnly. */
+  refreshToken?: string;
 }
+
+/** En-tête envoyé par l'application mobile : le refresh token circule dans le corps, pas en cookie. */
+export const MOBILE_CLIENT_HEADER = 'x-client';
+export const MOBILE_CLIENT_VALUE = 'mobile';
+
+// --- Application mobile ------------------------------------------------------------------------
+
+export const registerDeviceSchema = z.object({
+  token: z.string().trim().min(10).max(300),
+  platform: z.enum(['android', 'ios']),
+});
+export type RegisterDeviceInput = z.infer<typeof registerDeviceSchema>;

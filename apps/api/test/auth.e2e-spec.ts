@@ -118,6 +118,33 @@ describe('Auth (e2e)', () => {
       expect(afterReuse.status).toBe(401);
     });
 
+    it('mobile : refresh token dans le corps, sans cookie, rotatif', async () => {
+      const COURIER = SEED_USERS.find((u) => u.role === 'COURIER')!.phone;
+      const res = await http()
+        .post('/auth/login')
+        .set('X-Client', 'mobile')
+        .set('X-Forwarded-For', freshIp())
+        .send({ phone: COURIER, password: PASSWORD });
+      expect(res.status).toBe(200);
+      expect(res.headers['set-cookie']).toBeUndefined();
+      const first = (res.body as LoginResponse).refreshToken!;
+      expect(first).toEqual(expect.any(String));
+
+      const r1 = await http()
+        .post('/auth/refresh')
+        .set('X-Client', 'mobile')
+        .send({ refreshToken: first });
+      expect(r1.status).toBe(200);
+      const second = (r1.body as LoginResponse).refreshToken!;
+      expect(second).not.toBe(first);
+
+      const out = await http()
+        .post('/auth/logout')
+        .set('X-Client', 'mobile')
+        .send({ refreshToken: second });
+      expect(out.status).toBe(204);
+    });
+
     it('refuse le refresh sans cookie', async () => {
       const res = await http().post('/auth/refresh');
       expect(res.status).toBe(401);

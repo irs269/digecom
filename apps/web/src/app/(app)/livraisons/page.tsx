@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/card';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { qs, useIslands } from '@/lib/queries';
+import { CallUserButton } from '@/components/calls';
 
 interface Board {
   waiting: OrderView[];
@@ -153,13 +154,16 @@ export default function DeliveriesPage() {
                     {c.island?.name} · {c.deliveredToday} livrée(s) aujourd’hui
                   </div>
                 </div>
-                <Badge tone={c.activeRuns ? 'orange' : c.isAvailable ? 'green' : 'red'}>
-                  {c.activeRuns
-                    ? `En course (${c.activeRuns})`
-                    : c.isAvailable
-                      ? 'Disponible'
-                      : 'Indisponible'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <CallUserButton userId={c.id} name={c.fullName} />
+                  <Badge tone={c.activeRuns ? 'orange' : c.isAvailable ? 'green' : 'red'}>
+                    {c.activeRuns
+                      ? `En course (${c.activeRuns})`
+                      : c.isAvailable
+                        ? 'Disponible'
+                        : 'Indisponible'}
+                  </Badge>
+                </div>
               </li>
             ))}
           </ul>

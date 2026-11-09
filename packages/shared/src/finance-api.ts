@@ -237,3 +237,16 @@ export interface NetResult {
   netResult: number;
   pendingExpenses: number;
 }
+
+/** Solde de l'e-commerçant (application mobile, `GET /me/balance`). */
+export interface SellerBalanceView {
+  cycle: { start: string; end: string };
+  current: {
+    salesCount: number;
+    commission: number;
+    taxes: number;
+    subscriptions: number;
+    estimatedNet: number;
+  };
+  statements: SettlementView[];
+}

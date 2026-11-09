@@ -3,6 +3,8 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   changePasswordSchema,
   loginSchema,
+  MOBILE_CLIENT_HEADER,
+  MOBILE_CLIENT_VALUE,
   type ChangePasswordInput,
   type LoginInput,
   type LoginResponse,
@@ -28,6 +30,19 @@ function clientInfo(req: Request): ClientInfo {
   };
 }
 
+function isMobile(req: Request): boolean {
+  return req.headers[MOBILE_CLIENT_HEADER] === MOBILE_CLIENT_VALUE;
+}
+
+/** Refresh token : corps de la requête pour le mobile, cookie httpOnly pour le web. */
+function readRefreshToken(req: Request): string | undefined {
+  if (isMobile(req)) {
+    const body = req.body as { refreshToken?: unknown } | undefined;
+    return typeof body?.refreshToken === 'string' ? body.refreshToken : undefined;
+  }
+  return (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE];
+}
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -46,9 +61,16 @@ export class AuthController {
     };
   }
 
-  private respond(res: Response, session: IssuedSession): LoginResponse {
+  private respond(req: Request, res: Response, session: IssuedSession): LoginResponse {
+    const base = {
+      accessToken: session.accessToken,
+      expiresIn: session.expiresIn,
+      user: session.user,
+    };
+    // Application mobile : pas de cookie, le refresh token est rendu dans le corps (stocké en SecureStore).
+    if (isMobile(req)) return { ...base, refreshToken: session.refreshToken };
     res.cookie(REFRESH_COOKIE, session.refreshToken, this.cookieOptions(session.refreshExpiresAt));
-    return { accessToken: session.accessToken, expiresIn: session.expiresIn, user: session.user };
+    return base;
   }
 
   @Public()
@@ -70,7 +92,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponse> {
-    return this.respond(res, await this.auth.login(body, clientInfo(req)));
+    return this.respond(req, res, await this.auth.login(body, clientInfo(req)));
   }
 
   @Public()
@@ -81,11 +103,11 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponse> {
-    const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE];
+    const raw = readRefreshToken(req);
     try {
-      return this.respond(res, await this.auth.refresh(raw, clientInfo(req)));
+      return this.respond(req, res, await this.auth.refresh(raw, clientInfo(req)));
     } catch (err) {
-      res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
+      if (!isMobile(req)) res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
       throw err;
     }
   }
@@ -95,7 +117,7 @@ export class AuthController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Déconnexion : révoque le refresh token et efface le cookie' })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
-    const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE];
+    const raw = readRefreshToken(req);
     await this.auth.logout(raw, clientInfo(req));
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
   }
@@ -122,7 +144,7 @@ export class AuthController {
   ): Promise<MeResponse> {
     // Journalisé par AuthService (sans le corps de la requête).
     req.audit = { skip: true };
-    const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE];
+    const raw = readRefreshToken(req);
     return this.auth.changePassword(user.id, body, raw, clientInfo(req));
   }
 }
