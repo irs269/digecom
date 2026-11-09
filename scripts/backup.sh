@@ -14,8 +14,9 @@ set -eu
 cd "$(dirname "$0")/.."
 ENV_FILE=${ENV_FILE:-.env}
 [ -f "$ENV_FILE" ] || { echo "Fichier $ENV_FILE introuvable"; exit 1; }
+case "$ENV_FILE" in /* | [A-Za-z]:*) ;; *) ENV_FILE="./$ENV_FILE" ;; esac
 # shellcheck disable=SC1090
-set -a; . "./$ENV_FILE"; set +a
+set -a; . "$ENV_FILE"; set +a
 
 COMPOSE="docker compose -f compose.prod.yml --env-file $ENV_FILE"
 PROJECT=${COMPOSE_PROJECT_NAME:-digecom-prod}
@@ -51,7 +52,7 @@ echo "COMMIT;" >&3; exec 3>&-; wait
 grep '^COUNT:' "$W/out" | cut -d: -f2-
 rm -rf "$W"
 EOS
-$COMPOSE cp postgres:/tmp/digecom-backup.dump "$DEST/db.dump" > /dev/null
+$COMPOSE cp postgres:/tmp/digecom-backup.dump "$DEST/db.dump" > /dev/null 2>&1
 $COMPOSE exec -T postgres rm -f /tmp/digecom-backup.dump
 rm -f "$DEST/.pg.err"
 [ -s "$DEST/db.dump" ] || { log "ÉCHEC : dump vide"; exit 1; }
@@ -59,7 +60,7 @@ log "base : $(du -h "$DEST/db.dump" | cut -f1) ; $(tr '\n' ' ' < "$DEST/manifest
 
 # 2. Fichiers MinIO (client mc sur le réseau interne du projet, aucun port nécessaire).
 for b in products proofs documents; do
-  docker run --rm --network "${PROJECT}_default" --user "$(id -u):$(id -g)" \
+  docker run --rm --network "${PROJECT}_default" --user "$(id -u):$(id -g)" -e HOME=/tmp \
     -e "MC_HOST_local=http://${S3_ACCESS_KEY}:${S3_SECRET_KEY}@minio:9000" \
     -v "$DEST/files:/out" "$MC_IMAGE" mirror --quiet "local/$b" "/out/$b" > /dev/null
 done
