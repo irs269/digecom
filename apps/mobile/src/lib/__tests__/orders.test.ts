@@ -1,5 +1,5 @@
 import type { OrderView } from '@digecom/shared';
-import { receiveLabel, sellerNet, timeline, todoOf } from '../orders';
+import { receiveLabel, sellerNet, statusHint, timeline, todoOf } from '../orders';
 
 const order = (patch: Partial<OrderView>): OrderView =>
   ({
@@ -42,4 +42,22 @@ test('frise : étapes franchies et étape courante', () => {
   expect(steps.map((s) => s.done)).toEqual([true, true, true, false, false]);
   expect(steps.findIndex((s) => s.current)).toBe(3);
   expect(timeline(order({ status: 'REFUSED' })).every((s) => !s.done)).toBe(true);
+});
+
+test('explication du statut pour l’e-commerçant', () => {
+  const o = (p: Partial<OrderView>) =>
+    order({ site: { id: 's', name: 'Moroni' }, courier: null, ...p } as Partial<OrderView>);
+  expect(statusHint(o({ status: 'PREPARING' }))).toBe('Le site de Moroni prépare ta commande.');
+  expect(
+    statusHint(
+      o({
+        status: 'OUT_FOR_DELIVERY',
+        deliveryMode: 'TO_CUSTOMER',
+        courier: { id: 'c', fullName: 'Karim Bacar', phone: '+269' },
+      }),
+    ),
+  ).toBe('Karim Bacar est en route vers ton client.');
+  expect(statusHint(o({ status: 'HANDED_OVER', actions: ['sellerConfirm'] }))).toBe(
+    'Le produit t’a été remis : confirme la réception.',
+  );
 });

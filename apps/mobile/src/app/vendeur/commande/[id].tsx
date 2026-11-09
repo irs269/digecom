@@ -1,8 +1,13 @@
-import { DELIVERY_MODE_LABELS, formatKmf, type OrderView } from '@digecom/shared';
+import {
+  DELIVERY_MODE_LABELS,
+  formatKmf,
+  ORDER_STATUS_LABELS,
+  type OrderView,
+} from '@digecom/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { PendingBanner } from '@/components/pending';
 import {
   Badge,
@@ -18,7 +23,7 @@ import {
 } from '@/components/ui';
 import { keys, useMyOrders } from '@/lib/hooks';
 import { submitAction } from '@/lib/offline';
-import { receiveLabel, REFUSE_REASONS, sellerNet, timeline } from '@/lib/orders';
+import { receiveLabel, REFUSE_REASONS, sellerNet, statusHint, timeline } from '@/lib/orders';
 import { colors } from '@/theme';
 
 type Feedback = { tone: 'green' | 'red' | 'orange'; text: string };
@@ -121,6 +126,9 @@ export default function Commande() {
         {order.customerName} · {DELIVERY_MODE_LABELS[order.deliveryMode]}
       </T>
       <Badge status={order.status} />
+      <T style={{ marginTop: 8 }} testID="statut-explication">
+        {statusHint(order)}
+      </T>
 
       {feedback ? (
         <View style={{ marginTop: 12 }}>
@@ -136,8 +144,48 @@ export default function Commande() {
         <Row label="Total client" value={formatKmf(order.total)} />
         <Row label="Net pour toi" value={formatKmf(sellerNet(order))} strong />
         {order.refuseReason ? <Row label="Motif du refus" value={order.refuseReason} /> : null}
+        {order.failReason ? <Row label="Motif de l’échec" value={order.failReason} /> : null}
+        {order.cancelReason ? <Row label="Motif d’annulation" value={order.cancelReason} /> : null}
+        <Row label="Site" value={order.site.name} />
         {order.courier ? <Row label="Livreur" value={order.courier.fullName} /> : null}
+        {order.courier ? (
+          <Button
+            label={`Appeler ${order.courier.fullName}`}
+            variant="outline"
+            onPress={() => void Linking.openURL(`tel:${order.courier!.phone}`)}
+          />
+        ) : null}
       </Card>
+
+      {order.events.length ? (
+        <Card>
+          <T weight="semibold" style={{ marginBottom: 6 }}>
+            Historique
+          </T>
+          {[...order.events].reverse().map((e) => (
+            <View key={e.id} style={{ paddingVertical: 6 }} testID="evenement">
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                <T weight="medium" style={{ flex: 1 }}>
+                  {ORDER_STATUS_LABELS[e.toStatus]}
+                </T>
+                <T style={{ color: colors.muted, fontSize: 12 }}>
+                  {new Date(e.at).toLocaleString('fr-FR', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </T>
+              </View>
+              {e.by || e.note ? (
+                <T style={{ color: colors.muted, fontSize: 12 }}>
+                  {[e.by?.fullName, e.note].filter(Boolean).join(' · ')}
+                </T>
+              ) : null}
+            </View>
+          ))}
+        </Card>
+      ) : null}
 
       {can('sellerConfirm') ? (
         <Button

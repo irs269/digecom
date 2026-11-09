@@ -42,6 +42,8 @@ export const useMyOrders = () =>
   useQuery({
     queryKey: keys.myOrders,
     queryFn: () => api<Page<OrderView>>('/me/orders?pageSize=100'),
+    // Statuts à jour sans geste : toutes les 30 s quand l'app est ouverte (et à chaque push).
+    refetchInterval: 30_000,
   });
 
 export const useBalance = () =>
