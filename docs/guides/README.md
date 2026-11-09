@@ -33,3 +33,10 @@ Régénérer les captures (développement, données de démonstration) :
 ```bash
 docker compose --profile e2e run --rm -e GUIDES=1 e2e sh -c 'corepack enable && pnpm --filter web exec playwright test e2e/guides --project=desktop'
 ```
+
+
+## Guide complet de l’administrateur (PDF)
+
+[Guide-Administrateur-DigeCom.pdf](administrateur/Guide-Administrateur-DigeCom.pdf) : tous les modules du back-office, avec captures d’écran (47 pages).
+
+Régénérer : `node scripts/guide-admin/capture.mjs` (captures, back-office local lancé, `SEED_DEFAULT_PASSWORD` et `CHROMIUM_PATH` définis), puis `node scripts/guide-admin/build-pdf.mjs`. Le texte est dans `administrateur/guide.html`.

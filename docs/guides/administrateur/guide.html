@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Guide de l’administrateur – Dig’eCom</title>
+<style>
+  :root {
+    --blue: #0B2FE0; --blue-dark: #071C99; --blue-soft: #DCE3FF; --orange: #FFA500;
+    --orange-soft: #FFF1D6; --green: #12A150; --green-soft: #DDF5E7; --red: #B42318;
+    --red-soft: #FDE4E2; --ink: #0F1530; --muted: #5B6385; --line: #E1E5F2; --bg: #F4F6FC;
+  }
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1, h2, h3 { color: var(--ink); line-height: 1.25; }
+  h1 { font-size: 22pt; margin: 0 0 4mm; padding-bottom: 3mm; border-bottom: 3px solid var(--orange); break-before: page; }
+  h1 .num { color: var(--blue); margin-right: 3mm; }
+  h2 { font-size: 14pt; margin: 7mm 0 2mm; color: var(--blue-dark); break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0.8mm 0; }
+  .lead { font-size: 11.5pt; color: var(--muted); margin-bottom: 4mm; }
+  figure { margin: 4mm 0 5mm; break-inside: avoid; }
+  figure img { max-width: 100%; max-height: 205mm; width: auto; margin: 0 auto; border: 1px solid var(--line); border-radius: 2mm; display: block; }
+  figure.half img { width: 70%; margin: 0 auto; }
+  figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.5pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: var(--blue-soft); color: var(--blue-dark); font-weight: 600; }
+  .box { border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; break-inside: avoid; }
+  .tip { background: var(--blue-soft); border-left: 4px solid var(--blue); }
+  .warn { background: var(--orange-soft); border-left: 4px solid var(--orange); }
+  .rule { background: var(--red-soft); border-left: 4px solid var(--red); }
+  .ok { background: var(--green-soft); border-left: 4px solid var(--green); }
+  .box > strong:first-child { display: block; margin-bottom: 1mm; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: s; position: relative; padding-left: 9mm; margin: 2mm 0; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 6mm; height: 6mm;
+    border-radius: 50%; background: var(--blue); color: #fff; font-size: 8.5pt; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; }
+  .kbd { background: var(--bg); border: 1px solid var(--line); border-radius: 1mm; padding: 0 1.5mm; font-weight: 600; white-space: nowrap; }
+  .flow { display: flex; flex-wrap: wrap; gap: 1.5mm; align-items: center; margin: 2mm 0 4mm; font-size: 9pt; }
+  .flow span { background: var(--blue-soft); color: var(--blue-dark); border-radius: 10mm; padding: 1mm 3mm; font-weight: 600; }
+  .flow b { color: var(--muted); }
+  /* Couverture */
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between;
+    background: linear-gradient(160deg, var(--blue) 0%, var(--blue-dark) 100%); color: #fff;
+    border-radius: 4mm; padding: 18mm 16mm; }
+  .cover h1 { color: #fff; border: 0; font-size: 34pt; margin: 0; break-before: avoid; }
+  .cover .sub { font-size: 15pt; color: var(--blue-soft); margin-top: 4mm; }
+  .cover .tag { display: inline-block; background: var(--orange); color: var(--ink); font-weight: 700;
+    border-radius: 10mm; padding: 1.5mm 5mm; font-size: 11pt; }
+  .cover .meta { font-size: 10pt; color: var(--blue-soft); }
+  .cover img { width: 34mm; height: 34mm; border-radius: 6mm; }
+  /* Sommaire */
+  .toc { break-before: page; }
+  .toc h1 { break-before: avoid; }
+  .toc ol { list-style: none; padding: 0; columns: 2; column-gap: 10mm; }
+  .toc li { margin: 1.6mm 0; break-inside: avoid; }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a .n { color: var(--blue); font-weight: 700; display: inline-block; width: 9mm; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .grid2 figure { margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================== COUVERTURE ============================== -->
+<section class="cover">
+  <div>
+    <img src="../../../apps/mobile/assets/logo.jpg" alt="Logo Dig’eCom">
+  </div>
+  <div>
+    <span class="tag">Back-office web</span>
+    <h1>Guide de l’administrateur</h1>
+    <p class="sub">Plateforme de gestion commerciale, logistique et financière Dig’eCom<br>
+      Grande Comore · Anjouan · Mohéli</p>
+  </div>
+  <div class="meta">
+    Profil couvert : <strong>Administrateur général</strong> — accès complet à tous les modules.<br>
+    Captures réalisées sur les données de démonstration. Les montants sont en francs comoriens (KMF).
+  </div>
+</section>
+
+<!-- ============================== SOMMAIRE ============================== -->
+<section class="toc">
+  <h1>Sommaire</h1>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Présentation et principes</a></li>
+    <li><a href="#s2"><span class="n">2</span>Connexion et sécurité</a></li>
+    <li><a href="#s3"><span class="n">3</span>L’interface : menu, île, notifications, appels</a></li>
+    <li><a href="#s4"><span class="n">4</span>Tableau de bord</a></li>
+    <li><a href="#s5"><span class="n">5</span>Commandes</a></li>
+    <li><a href="#s6"><span class="n">6</span>Livraisons</a></li>
+    <li><a href="#s7"><span class="n">7</span>Stock</a></li>
+    <li><a href="#s8"><span class="n">8</span>Achats Chine</a></li>
+    <li><a href="#s9"><span class="n">9</span>Réseau commercial</a></li>
+    <li><a href="#s10"><span class="n">10</span>Catalogues leaders</a></li>
+    <li><a href="#s11"><span class="n">11</span>Campagnes</a></li>
+    <li><a href="#s12"><span class="n">12</span>Prospects</a></li>
+    <li><a href="#s13"><span class="n">13</span>Ventes et gains TCI</a></li>
+    <li><a href="#s14"><span class="n">14</span>Règlements</a></li>
+    <li><a href="#s15"><span class="n">15</span>Caisse</a></li>
+    <li><a href="#s16"><span class="n">16</span>Dépenses</a></li>
+    <li><a href="#s17"><span class="n">17</span>Rapports</a></li>
+    <li><a href="#s18"><span class="n">18</span>Utilisateurs et droits</a></li>
+    <li><a href="#s19"><span class="n">19</span>Paramètres</a></li>
+    <li><a href="#s20"><span class="n">20</span>Préférences de notification</a></li>
+    <li><a href="#s21"><span class="n">21</span>Appels Dig’eCom</a></li>
+    <li><a href="#s22"><span class="n">22</span>Simulateur (environnement de test)</a></li>
+    <li><a href="#s23"><span class="n">23</span>Circuits complets pas à pas</a></li>
+    <li><a href="#s24"><span class="n">24</span>Règles de gestion à connaître</a></li>
+    <li><a href="#s25"><span class="n">25</span>Questions fréquentes et dépannage</a></li>
+    <li><a href="#s26"><span class="n">26</span>Glossaire</a></li>
+  </ol>
+</section>
+
+<!-- ============================== 1 ============================== -->
+<h1 id="s1"><span class="num">1</span>Présentation et principes</h1>
+<p class="lead">Dig’eCom importe des produits de Chine et les fait vendre aux Comores par un réseau de leaders, d’e-commerçants, de téléconseillers et de livreurs. Le back-office web centralise toute l’activité : catalogues, stock, commandes, livraisons, finance et rapports.</p>
+
+<h2>Les acteurs</h2>
+<table>
+  <tr><th>Rôle</th><th>Où il travaille</th><th>Ce qu’il fait</th></tr>
+  <tr><td><strong>Administrateur général</strong></td><td>Web</td><td>Voit tout sur les trois îles, gère les comptes, les droits et les paramètres. C’est l’objet de ce guide.</td></tr>
+  <tr><td>Responsable financier, comptable, assistant comptable</td><td>Web</td><td>Vérifient et valident les règlements, les dépenses, suivent les marges.</td></tr>
+  <tr><td>Caissier</td><td>Web</td><td>Tient la caisse de son site, paie les règlements, encaisse l’argent des livreurs.</td></tr>
+  <tr><td>Gestionnaire de stock</td><td>Web</td><td>Entrées, transferts, inventaires, réception des lots.</td></tr>
+  <tr><td>Assistant logistique</td><td>Web</td><td>Prépare les commandes de son île et affecte les livreurs.</td></tr>
+  <tr><td>Leader Senior</td><td>Web (+ mobile)</td><td>Publie son catalogue ; ses e-commerçants trouvent les clients.</td></tr>
+  <tr><td>Leader Junior</td><td>Web</td><td>Publie son catalogue, lance des campagnes publicitaires ; ses téléconseillers appellent les prospects.</td></tr>
+  <tr><td>Téléconseiller (TCI)</td><td>Web</td><td>Appelle les prospects et enregistre les commandes ; touche une prime fixe par produit vendu.</td></tr>
+  <tr><td>E-commerçant</td><td>Application mobile</td><td>Vend le catalogue de son leader, confirme la réception, déclare si le client a pris.</td></tr>
+  <tr><td>Livreur</td><td>Application mobile</td><td>Accepte les courses de son île, retire, livre, encaisse.</td></tr>
+</table>
+
+<h2>Les principes qui guident toute la plateforme</h2>
+<div class="box rule"><strong>À retenir</strong>
+<ul>
+  <li><strong>Argent en francs comoriens entiers</strong>, affiché sous la forme « 12 500 KMF ».</li>
+  <li><strong>Aucune écriture financière ne se modifie ni ne se supprime</strong> : une erreur se corrige par une écriture inverse justifiée.</li>
+  <li><strong>Instantanés</strong> : prix, part vendeur, prime TCI, taxes et coût d’achat sont figés sur la commande au moment où elle est créée. Changer un prix ou un paramètre ne modifie jamais les ventes passées.</li>
+  <li><strong>Commission définitive</strong> seulement quand la vente est livrée, acceptée et encaissée (statut « Vendue »).</li>
+  <li><strong>Cloisonnement par île</strong> pour les rôles de terrain, et <strong>par leader</strong> pour les équipes commerciales.</li>
+  <li><strong>Tout est journalisé</strong> : qui a fait quoi, quand, avec l’avant et l’après.</li>
+</ul></div>
+
+<!-- ============================== 2 ============================== -->
+<h1 id="s2"><span class="num">2</span>Connexion et sécurité</h1>
+<figure class="half"><img src="img/00-connexion.png" alt=""><figcaption>Écran de connexion du back-office.</figcaption></figure>
+<ol class="steps">
+  <li>Ouvre l’adresse du back-office dans un navigateur récent (Chrome, Edge ou Firefox).</li>
+  <li>Saisis ton <strong>téléphone</strong> (avec ou sans indicatif +269, espaces acceptés) et ton <strong>mot de passe</strong>.</li>
+  <li>Clique sur <span class="kbd">Se connecter</span>. Tu arrives sur le tableau de bord.</li>
+</ol>
+<div class="box warn"><strong>Sécurité de la connexion</strong>
+<ul>
+  <li>Après <strong>5 essais manqués</strong>, le compte est verrouillé <strong>15 minutes</strong>, même depuis un autre appareil.</li>
+  <li>Un compte créé par l’administrateur reçoit un <strong>mot de passe temporaire</strong> : la personne doit le changer à sa première connexion, rien d’autre n’est accessible avant.</li>
+  <li>La session est conservée de manière sécurisée ; utilise <strong>Déconnexion</strong> (bas du menu) sur un poste partagé.</li>
+  <li>Changer son mot de passe ferme toutes ses autres sessions.</li>
+</ul></div>
+
+<!-- ============================== 3 ============================== -->
+<h1 id="s3"><span class="num">3</span>L’interface : menu, île, notifications, appels</h1>
+<figure><img src="img/01-tableau-de-bord.png" alt=""><figcaption>Le cadre commun : menu à gauche, en-tête avec filtre île, appels et notifications.</figcaption></figure>
+<h2>Le menu</h2>
+<p>Le menu de gauche liste les seize modules. L’administrateur les voit tous ; les autres rôles ne voient que ceux que leur ouvre la matrice des droits (section 18). Un module invisible est aussi refusé par le serveur : masquer un lien n’est jamais la seule protection.</p>
+<h2>Le filtre « Île »</h2>
+<p>En haut à droite, le sélecteur <span class="kbd">Île</span> restreint tous les écrans à une île (Grande Comore, Anjouan, Mohéli) ou affiche <em>Toutes les îles</em>. Il s’applique aux tableaux de bord, listes et rapports.</p>
+<figure><img src="img/19-filtre-ile-anjouan.png" alt=""><figcaption>Tableau de bord filtré sur Anjouan.</figcaption></figure>
+<h2>Les notifications</h2>
+<div class="grid2">
+  <figure><img src="img/01c-notifications.png" alt=""><figcaption>La cloche : dernières notifications.</figcaption></figure>
+  <div>
+    <p>La <strong>cloche</strong> affiche le nombre de notifications non lues. Elles arrivent en temps réel (nouvelle commande, stock faible, remise effectuée, vente validée, dépense à valider, export prêt…).</p>
+    <ul>
+      <li>Cliquer une notification ouvre l’objet concerné.</li>
+      <li><span class="kbd">Tout marquer comme lu</span> vide le compteur.</li>
+      <li><span class="kbd">Préférences</span> mène au réglage des canaux (section 20).</li>
+    </ul>
+  </div>
+</div>
+<h2>Les appels Dig’eCom</h2>
+<p>Le bouton <span class="kbd">📞 Appels</span> ouvre l’annuaire d’appel par Internet (section 21).</p>
+
+<!-- ============================== 4 ============================== -->
+<h1 id="s4"><span class="num">4</span>Tableau de bord</h1>
+<p class="lead">La vue « direction » : l’activité du cycle de règlement en cours, ce qui attend une action, et les meilleures performances.</p>
+<figure><img src="img/01b-tableau-de-bord-complet.png" alt=""><figcaption>Tableau de bord complet de l’administrateur.</figcaption></figure>
+<h2>Les indicateurs</h2>
+<table>
+  <tr><th>Indicateur</th><th>Signification</th></tr>
+  <tr><td>Chiffre d’affaires du cycle</td><td>Total des ventes « Vendue » du cycle en cours, et nombre de produits vendus.</td></tr>
+  <tr><td>Ventes</td><td>Nombre de commandes vendues sur le cycle.</td></tr>
+  <tr><td>Marge après coût et taxe</td><td>Part Dig’eCom − coût d’achat réel du lot − taxe Dig’eCom.</td></tr>
+  <tr><td>Sommes dues aux vendeurs</td><td>Relevés non payés + commissions du cycle en cours.</td></tr>
+  <tr><td>Taux de refus</td><td>Part des commandes refusées par les clients sur le cycle.</td></tr>
+  <tr><td>Livraisons sans livreur</td><td>Commandes prêtes qu’aucun livreur n’a encore acceptées.</td></tr>
+</table>
+<h2>Les blocs</h2>
+<ul>
+  <li><strong>À traiter</strong> : relevés à vérifier, règlements à valider, dépenses à valider, refus et échecs. Chaque ligne est un lien vers la liste filtrée.</li>
+  <li><strong>Meilleurs vendeurs du cycle</strong> et <strong>chiffre d’affaires par île</strong>.</li>
+  <li><strong>Commandes récentes</strong> : les cinq dernières, cliquables.</li>
+  <li><strong>Calcul d’une vente de référence</strong> : choisis une vente pour voir son calcul exact (prix, part vendeur, coût FIFO, taxes, marge), avec les valeurs figées sur la commande.</li>
+</ul>
+<div class="box tip"><strong>Astuce</strong>Chaque chiffre est un lien vers le rapport ou la liste correspondante. Les données sont mises en cache 60 secondes et rafraîchies à chaque nouvelle écriture.</div>
+
+<!-- ============================== 5 ============================== -->
+<h1 id="s5"><span class="num">5</span>Commandes</h1>
+<p class="lead">Toutes les commandes : création, préparation, remise, vente, refus et retours.</p>
+<figure><img src="img/02-commandes.png" alt=""><figcaption>Liste des commandes.</figcaption></figure>
+<h2>Rechercher et filtrer</h2>
+<ul>
+  <li><strong>Recherche</strong> : numéro (CMD-…), nom ou téléphone du client.</li>
+  <li><strong>Statut</strong> : Nouvelle, Confirmée, En préparation, Prête, Livreur affecté, En livraison, Remise effectuée, Vendue, Livraison échouée, Refusée par le client, Retour à contrôler, Remise en stock, Endommagée, Annulée.</li>
+  <li>Le filtre <strong>Île</strong> de l’en-tête s’applique aussi.</li>
+</ul>
+<h2>Les modes de remise</h2>
+<table>
+  <tr><th>Mode</th><th>Déroulement</th></tr>
+  <tr><td>À l’e-commerçant</td><td>Un livreur apporte le produit à l’e-commerçant, qui le remet à son client puis déclare « client a pris » ou « refusé ».</td></tr>
+  <tr><td>Au client (livraison directe)</td><td>Le livreur livre le client, encaisse le montant et ajoute une photo de preuve.</td></tr>
+  <tr><td>Retrait au site</td><td>L’e-commerçant vient chercher le produit au site.</td></tr>
+</table>
+<h2>Créer une commande pour le compte d’un vendeur</h2>
+<figure><img src="img/02b-nouvelle-commande.png" alt=""><figcaption>« Nouvelle commande pour le compte de » : vendeur, client, produits, mode.</figcaption></figure>
+<ol class="steps">
+  <li>Clique sur <span class="kbd">+ Nouvelle commande pour le compte de</span>.</li>
+  <li>Choisis l’<strong>e-commerçant ou le TCI</strong> : seuls les produits publiés par son leader, avec du stock sur son île, sont proposés.</li>
+  <li>Renseigne le client (nom, téléphone, adresse ou quartier), les produits (jusqu’à 10, avec quantités) et le mode de remise.</li>
+  <li>Valide : <strong>le stock est réservé immédiatement</strong> et les prix, parts et taxes sont figés sur la commande.</li>
+</ol>
+<h2>Le détail d’une commande</h2>
+<figure><img src="img/02c-detail-commande.png" alt=""><figcaption>Panneau de détail : frise des étapes, personnes, montants et actions possibles.</figcaption></figure>
+<p>Clique sur le numéro d’une commande pour ouvrir son panneau :</p>
+<ul>
+  <li><strong>Frise</strong> des étapes, avec la date et l’auteur de chaque changement.</li>
+  <li><strong>Client, vendeur, leader, site, livreur</strong> (avec un bouton <span class="kbd">Appeler</span> par Internet quand c’est possible).</li>
+  <li><strong>Produits</strong> et montants figés (prix, part vendeur, taxes, prime TCI).</li>
+  <li><strong>Boutons d’action</strong> calculés selon le statut et tes droits : confirmer, préparer, prête, affecter, changer de mode, annuler, marquer vendue/refusée, remettre en stock, déclarer endommagé…</li>
+</ul>
+<div class="box warn"><strong>Retour après vente (administrateur uniquement)</strong>Une commande déjà « Vendue » peut être reprise avec un <strong>motif obligatoire</strong>. Le stock revient et des <strong>écritures inverses</strong> annulent commission, taxes et chiffre d’affaires : rien n’est supprimé.</div>
+
+<!-- ============================== 6 ============================== -->
+<h1 id="s6"><span class="num">6</span>Livraisons</h1>
+<p class="lead">Le suivi des courses par île, en temps réel.</p>
+<figure><img src="img/03b-livraisons-complet.png" alt=""><figcaption>Tableau des livraisons et liste des livreurs.</figcaption></figure>
+<h2>Les colonnes</h2>
+<ul>
+  <li><strong>En attente d’un livreur</strong> : commandes prêtes, proposées aux livreurs <em>disponibles de l’île</em>. Le premier qui accepte la prend.</li>
+  <li><strong>En cours</strong> : livreur affecté ou en livraison.</li>
+  <li><strong>Prêtes au retrait</strong> : l’e-commerçant passe au site chercher le produit.</li>
+  <li><strong>Refus et échecs</strong> : retours à contrôler, avec le motif (refus du client, échec de livraison) puis remise en stock ou casse.</li>
+</ul>
+<h2>Affecter un livreur à la main</h2>
+<ol class="steps">
+  <li>Sur une carte, clique <span class="kbd">Affecter un livreur de l’île</span>.</li>
+  <li>Choisis un livreur : seuls ceux de l’île de la commande sont proposés.</li>
+  <li>Le livreur est notifié, la course apparaît dans son application.</li>
+</ol>
+<h2>La liste des livreurs</h2>
+<p>Pour chaque livreur : île, livraisons du jour et état (<em>Disponible</em>, <em>En course</em>, <em>Indisponible</em>). Le bouton <span class="kbd">Appeler</span> lance un appel Dig’eCom.</p>
+<div class="box tip"><strong>Alerte « sans livreur »</strong>Si aucune course n’est acceptée après le délai réglé dans les paramètres (10 minutes par défaut), l’assistant logistique de l’île est alerté.</div>
+
+<!-- ============================== 7 ============================== -->
+<h1 id="s7"><span class="num">7</span>Stock</h1>
+<p class="lead">Le stock par site : disponible, réservé, coût rendu et alertes.</p>
+<figure><img src="img/04-stock.png" alt=""><figcaption>Vue du stock avec indicateurs et alertes.</figcaption></figure>
+<h2>Lire l’écran</h2>
+<ul>
+  <li><strong>Valeur au coût rendu</strong> : unités physiques × coût réel des lots (achat + transport + douane + frais).</li>
+  <li><strong>Unités en stock</strong>, dont réservées par des commandes en cours.</li>
+  <li><strong>Ruptures</strong> et <strong>stock faible</strong> (seuil des paramètres ou du produit), <strong>invendus</strong> et <strong>écarts</strong> d’inventaire.</li>
+  <li>Filtres par recherche, site et type d’alerte.</li>
+</ul>
+<h2>Les quatre mouvements</h2>
+<div class="grid2">
+  <figure><img src="img/04b-stock-entree.png" alt=""><figcaption>Entrée de marchandises.</figcaption></figure>
+  <figure><img src="img/04c-stock-transfert.png" alt=""><figcaption>Transfert entre sites.</figcaption></figure>
+  <figure><img src="img/04d-stock-inventaire.png" alt=""><figcaption>Inventaire.</figcaption></figure>
+  <figure><img src="img/04e-stock-ajustement.png" alt=""><figcaption>Ajustement, casse ou perte.</figcaption></figure>
+</div>
+<table>
+  <tr><th>Action</th><th>Usage</th></tr>
+  <tr><td><span class="kbd">Entrée</span></td><td>Achat local ou reprise, avec son <strong>coût unitaire réel</strong>. Pour un lot importé, utilise plutôt la réception dans « Achats Chine ».</td></tr>
+  <tr><td><span class="kbd">Transfert</span></td><td>Déplacer des unités d’un site à un autre (y compris entre îles).</td></tr>
+  <tr><td><span class="kbd">Inventaire</span></td><td>Ouvrir un inventaire d’un site, saisir les quantités comptées : les écarts sont calculés et tracés.</td></tr>
+  <tr><td><span class="kbd">Ajustement</span></td><td>Correction (+ ou −), casse ou perte.</td></tr>
+</table>
+<div class="box rule"><strong>Chaque mouvement est tracé</strong>Le motif est obligatoire ; l’historique indique qui, quand et pourquoi. Le stock ne passe jamais sous zéro.</div>
+
+<!-- ============================== 8 ============================== -->
+<h1 id="s8"><span class="num">8</span>Achats Chine</h1>
+<p class="lead">Commandes fournisseurs, lots et coût d’approvisionnement réel.</p>
+<figure><img src="img/05-achats.png" alt=""><figcaption>Liste des lots et indicateurs d’achat.</figcaption></figure>
+<h2>Créer une commande fournisseur</h2>
+<figure><img src="img/05b-nouvel-achat.png" alt=""><figcaption>Nouvelle commande fournisseur : devise, taux, montants et frais.</figcaption></figure>
+<ol class="steps">
+  <li><span class="kbd">+ Commande fournisseur</span> : fournisseur, produit (catalogue d’un leader), site de destination.</li>
+  <li>Quantité, prix d’achat (avec devise et taux de change), frais d’expédition, douane et autres frais.</li>
+  <li>Le <strong>coût unitaire</strong> est calculé automatiquement : (achat + frais) ÷ quantité.</li>
+</ol>
+<h2>Suivre un lot</h2>
+<div class="flow"><span>En préparation</span><b>→</b><span>Passée</span><b>→</b><span>En transport</span><b>→</b><span>Arrivée aux Comores</span><b>→</b><span>En dédouanement</span><b>→</b><span>Réceptionnée</span><b>→</b><span>Clôturée</span></div>
+<figure><img src="img/05c-detail-achat.png" alt=""><figcaption>Détail d’un lot : étapes, achat, frais, coût total et unitaire.</figcaption></figure>
+<p>Clique sur le numéro du lot (LOT-…) pour voir son détail, ou sur <span class="kbd">Étape suivante</span> pour le faire avancer.</p>
+<h2>Réceptionner un lot</h2>
+<figure><img src="img/05d-reception-lot.png" alt=""><figcaption>Réception : quantité réellement reçue et paiement du fournisseur.</figcaption></figure>
+<p>À l’étape « En dédouanement », <span class="kbd">Réceptionner</span> fait entrer le lot en stock au <strong>coût réel divisé par la quantité réellement reçue</strong>. Ce coût est utilisé, lot par lot (premier entré, premier sorti), pour calculer la marge de chaque vente.</p>
+<div class="box rule"><strong>Coût d’approvisionnement</strong>Il est rattaché au lot et n’est jamais compté deux fois ni enregistré comme une dépense à chaque vente.</div>
+
+<!-- ============================== 9 ============================== -->
+<h1 id="s9"><span class="num">9</span>Réseau commercial</h1>
+<p class="lead">Leaders, équipes, quantités attribuées et objectifs, sur le cycle en cours.</p>
+<figure><img src="img/06b-reseau-complet.png" alt=""><figcaption>Vue du réseau : équipes, comparaison, membres.</figcaption></figure>
+<ul>
+  <li><strong>Indicateurs</strong> : nombre d’équipes et de membres, produits vendus, chiffre d’affaires, meilleure équipe.</li>
+  <li><strong>Comparaison des équipes</strong> par chiffre d’affaires.</li>
+  <li><strong>Par équipe</strong> : marge, objectif de la semaine et sa progression, puis chaque membre avec ses ventes, son CA, les quantités attribuées et le restant.</li>
+  <li><span class="kbd">Attribuer</span> : répartir des quantités de produits entre les membres d’une équipe (Leader Senior).</li>
+  <li><strong>Objectif hebdomadaire</strong> : une notification part une seule fois par semaine quand il est atteint.</li>
+</ul>
+
+<!-- ============================== 10 ============================== -->
+<h1 id="s10"><span class="num">10</span>Catalogues leaders</h1>
+<p class="lead">Les produits publiés par chaque leader, cloisonnés par équipe.</p>
+<figure><img src="img/07-catalogues.png" alt=""><figcaption>Catalogues de tous les leaders.</figcaption></figure>
+<h2>Publier ou modifier un produit</h2>
+<div class="grid2">
+  <figure><img src="img/07b-nouveau-produit.png" alt=""><figcaption>Publier un produit.</figcaption></figure>
+  <figure><img src="img/07c-fiche-produit.png" alt=""><figcaption>Modifier un produit.</figcaption></figure>
+</div>
+<ul>
+  <li><strong>Leader propriétaire</strong>, nom, qualité, catégorie, description, <strong>prix de vente</strong>, photos (5 au maximum, 5 Mo chacune, compressées automatiquement).</li>
+  <li><strong>Part vendeur</strong> (Leader Senior : montant ou pourcentage revenant à l’e-commerçant) ou <strong>prime TCI</strong> (Leader Junior : montant fixe entre les bornes des paramètres).</li>
+  <li><strong>Seuil de stock faible</strong> propre au produit (sinon celui des paramètres).</li>
+  <li>Actions par ligne : <span class="kbd">Stock +</span>, <span class="kbd">Stock −</span>, <span class="kbd">Retirer</span> (dépublier), <span class="kbd">Modifier</span>.</li>
+</ul>
+<div class="box tip"><strong>Cloisonnement</strong>Un e-commerçant ou un TCI ne voit que les produits publiés par son leader, avec du stock sur son île. Un produit en rupture ne peut pas être vendu.</div>
+
+<!-- ============================== 11 ============================== -->
+<h1 id="s11"><span class="num">11</span>Campagnes</h1>
+<p class="lead">Les publicités des Leaders Junior : budget, contacts reçus, confirmations, ventes et coût par vente.</p>
+<figure><img src="img/08-campagnes.png" alt=""><figcaption>Liste des campagnes et indicateurs.</figcaption></figure>
+<div class="grid2">
+  <figure><img src="img/08b-nouvelle-campagne.png" alt=""><figcaption>Nouvelle campagne.</figcaption></figure>
+  <div>
+    <h3>Lancer une campagne</h3>
+    <ol class="steps">
+      <li><span class="kbd">+ Nouvelle campagne</span> : nom, produit du catalogue, canal (Facebook, TikTok, WhatsApp, Instagram, autre).</li>
+      <li>Budget, dates de début et de fin.</li>
+      <li>Le budget est enregistré comme <strong>dépense publicitaire</strong>, à valider par le responsable financier.</li>
+    </ol>
+    <p>Chaque campagne peut être mise en <span class="kbd">Pause</span> puis reprise.</p>
+  </div>
+</div>
+<h2>Indicateurs</h2>
+<p>Budget engagé, contacts reçus, taux de confirmation, ventes et <strong>coût par vente</strong> (budget ÷ ventes).</p>
+
+<!-- ============================== 12 ============================== -->
+<h1 id="s12"><span class="num">12</span>Prospects</h1>
+<p class="lead">Les contacts issus des campagnes et leur répartition entre les téléconseillers.</p>
+<figure><img src="img/09-prospects.png" alt=""><figcaption>Liste des prospects et suivi des appels.</figcaption></figure>
+<h2>Importer des contacts</h2>
+<figure><img src="img/09b-import-prospects.png" alt=""><figcaption>Import CSV ou Excel avec aperçu.</figcaption></figure>
+<ol class="steps">
+  <li><span class="kbd">Importer des contacts</span> : choisis la campagne et un fichier CSV ou Excel (nom, téléphone, note).</li>
+  <li><span class="kbd">Aperçu</span> : doublons et numéros invalides sont signalés avant l’import.</li>
+  <li>Coche <em>Répartir équitablement entre les TCI</em> pour distribuer les contacts à l’équipe.</li>
+</ol>
+<h2>Statuts d’un prospect</h2>
+<p>À appeler · Injoignable – à rappeler · Commande confirmée · Pas intéressé. Les indicateurs montrent les contacts à appeler, les commandes confirmées, les ventes et les primes de la semaine.</p>
+
+<!-- ============================== 13 ============================== -->
+<h1 id="s13"><span class="num">13</span>Ventes et gains TCI</h1>
+<p class="lead">Les gains des téléconseillers, calculés automatiquement à partir des ventes clôturées « Vendue ».</p>
+<figure><img src="img/10-ventes-tci.png" alt=""><figcaption>Ventes et primes des TCI par semaine.</figcaption></figure>
+<ul>
+  <li>Choisis la semaine (lundi → dimanche) : montant vendu, primes de la semaine, primes globales depuis le début, commandes livrées à clôturer.</li>
+  <li>Tableau par téléconseiller, puis les commandes de la semaine.</li>
+  <li>Pour une commande livrée : <span class="kbd">Vendu</span> (la prime est acquise) ou <span class="kbd">Client a refusé</span> (aucune prime).</li>
+</ul>
+<div class="box tip"><strong>Prime figée</strong>La prime est copiée sur la commande à sa création : la modifier ensuite dans le catalogue ne change pas les ventes passées.</div>
+
+<!-- ============================== 14 ============================== -->
+<h1 id="s14"><span class="num">14</span>Règlements</h1>
+<p class="lead">Les relevés des e-commerçants, générés automatiquement tous les 14 jours, puis vérifiés, validés et payés.</p>
+<figure><img src="img/11-reglements.png" alt=""><figcaption>Circuit des règlements et liste des relevés.</figcaption></figure>
+<h2>Le circuit en quatre étapes</h2>
+<div class="flow"><span>1 · Généré (automatique)</span><b>→</b><span>2 · Vérifié (comptable)</span><b>→</b><span>3 · Validé (responsable financier)</span><b>→</b><span>4 · Payé (caissier de l’île)</span></div>
+<figure><img src="img/11b-detail-releve.png" alt=""><figcaption>Détail d’un relevé : ventes, taxes, abonnement, net à payer.</figcaption></figure>
+<ul>
+  <li>Un relevé reprend les <strong>commissions</strong> des ventes du cycle, moins la <strong>taxe e-commerçant</strong>, l’<strong>abonnement</strong> et les autres retenues, plus un éventuel report négatif du cycle précédent.</li>
+  <li>Seul le bouton de l’étape correspondant à ton rôle est actif ; sinon un message indique qui doit agir.</li>
+  <li>Le paiement demande le <strong>moyen</strong> (espèces, Huri Money, MVola, virement) et une référence ou une preuve. Chaque relevé s’exporte en PDF.</li>
+</ul>
+<div class="box rule"><strong>Séparation des tâches</strong>Même l’administrateur ne peut pas <strong>vérifier puis valider le même relevé</strong>.</div>
+
+<!-- ============================== 15 ============================== -->
+<h1 id="s15"><span class="num">15</span>Caisse</h1>
+<p class="lead">Une caisse par site : ouverture avec fond, mouvements, clôture avec écart.</p>
+<figure><img src="img/12-caisse.png" alt=""><figcaption>Les caisses des trois sites et le solde bancaire.</figcaption></figure>
+<ol class="steps">
+  <li><span class="kbd">Ouvrir la caisse</span> avec le <strong>fond de caisse</strong> compté.</li>
+  <li>Enregistrer les <strong>encaissements</strong> : vente au comptoir, <strong>remise d’un livreur</strong> (en choisissant les commandes concernées), abonnement payé en espèces.</li>
+  <li>Enregistrer les <strong>décaissements</strong> : paiement d’un règlement, dépense validée.</li>
+  <li><strong>Clôturer</strong> en saisissant le montant compté : l’écart est calculé et une alerte part s’il n’est pas nul.</li>
+</ol>
+<p><strong>Solde bancaire</strong> : saisis le nouveau solde et sa source (relevé de banque) ; l’historique est conservé.</p>
+
+<!-- ============================== 16 ============================== -->
+<h1 id="s16"><span class="num">16</span>Dépenses</h1>
+<p class="lead">Les charges opérationnelles et le résultat net.</p>
+<figure><img src="img/13-depenses.png" alt=""><figcaption>Dépenses, marge, charges et résultat net.</figcaption></figure>
+<div class="grid2">
+  <figure><img src="img/13b-nouvelle-depense.png" alt=""><figcaption>Nouvelle dépense.</figcaption></figure>
+  <div>
+    <ul>
+      <li><span class="kbd">+ Nouvelle dépense</span> : catégorie (salaires, loyer, publicité, livraison, communication, frais administratifs, frais bancaires, autres), libellé, montant, île, date.</li>
+      <li>Le responsable financier la <span class="kbd">Valide</span> ou la <span class="kbd">Rejette</span>.</li>
+      <li>Les indicateurs donnent la <strong>marge après coût et taxes</strong>, les <strong>charges validées</strong> (dont frais de course), le <strong>résultat net</strong> et ce qui attend une validation.</li>
+    </ul>
+  </div>
+</div>
+<div class="box rule"><strong>Une dépense validée ne se modifie plus</strong>On l’annule par une écriture inverse justifiée, puis on saisit la bonne.</div>
+
+<!-- ============================== 17 ============================== -->
+<h1 id="s17"><span class="num">17</span>Rapports</h1>
+<p class="lead">Tous les rapports de la plateforme, à l’écran, en Excel et en PDF.</p>
+<figure><img src="img/14a-rapport-journalier.png" alt=""><figcaption>Choix du rapport, période, filtres et exports.</figcaption></figure>
+<table>
+  <tr><th>Rapport</th><th>Contenu</th></tr>
+  <tr><td>Journalier, hebdomadaire, mensuel</td><td>Commandes, ventes, refus et marge ; résultat du mois avec les dépenses validées.</td></tr>
+  <tr><td>Par produit, par lot</td><td>Quantités, CA, marge ; coût de revient, reçus, vendus, restants.</td></tr>
+  <tr><td>Par vendeur, par leader, par île</td><td>Classements et performances des équipes et des îles.</td></tr>
+  <tr><td>Dépenses, marges, règlements, stocks</td><td>Détail financier et stock valorisé au coût rendu.</td></tr>
+  <tr><td>Campagnes, gains TCI, livreurs</td><td>Coût par vente, primes, courses et frais.</td></tr>
+  <tr><td>Simulation 100 produits</td><td>Le tableau de référence de la spécification, sur les paramètres actuels.</td></tr>
+</table>
+<figure><img src="img/14b-rapport-marges.png" alt=""><figcaption>Rapport des marges : filtres, exports Excel et PDF, puis le calcul complet (CA, coût FIFO, parts, primes, taxes, résultat net).</figcaption></figure>
+<ul>
+  <li>Filtres : période (du/au), île, site, leader.</li>
+  <li><span class="kbd">Excel</span> : en-têtes en gras, montants formatés, formules de total et un onglet « Paramètres du rapport ».</li>
+  <li><span class="kbd">PDF</span> : en-tête avec logo, tableau, totaux, pagination.</li>
+  <li>Au-delà de <strong>5 000 lignes</strong>, l’export est préparé en arrière-plan : un lien arrive dans les notifications (« Export prêt »).</li>
+</ul>
+
+<!-- ============================== 18 ============================== -->
+<h1 id="s18"><span class="num">18</span>Utilisateurs et droits</h1>
+<p class="lead">Comptes, rôles, équipes, matrice des droits et journal d’activité.</p>
+<figure><img src="img/15-utilisateurs.png" alt=""><figcaption>Onglet Comptes.</figcaption></figure>
+<h2>Créer un compte</h2>
+<figure class="half"><img src="img/15b-nouveau-compte.png" alt=""><figcaption>Nouveau compte.</figcaption></figure>
+<ol class="steps">
+  <li><span class="kbd">Nouveau compte</span> : nom complet, téléphone, e-mail facultatif, <strong>rôle</strong>.</li>
+  <li>Selon le rôle : île ou site de rattachement, <strong>leader</strong> pour un e-commerçant ou un TCI.</li>
+  <li>Un <strong>mot de passe temporaire</strong> est généré et affiché <strong>une seule fois</strong> : transmets-le, puis coche « J’ai noté le mot de passe ».</li>
+</ol>
+<h2>Gérer un compte</h2>
+<ul>
+  <li><span class="kbd">Gérer</span> : modifier les informations, réinitialiser le mot de passe, <strong>désactiver</strong> (plutôt que supprimer : l’historique reste ; la personne est déconnectée de partout).</li>
+  <li><strong>Réaffecter</strong> un e-commerçant ou un TCI à un autre leader : motif obligatoire, historique des équipes conservé.</li>
+  <li>Filtres par recherche, rôle, île ; date de dernière connexion et état actif.</li>
+</ul>
+<h2>Matrice des droits</h2>
+<figure><img src="img/15c-matrice-droits.png" alt=""><figcaption>Ce que chaque rôle voit (Lecture) et peut faire (Complet), module par module.</figcaption></figure>
+<p>La matrice est générée depuis la même source que les contrôles du serveur : ce qu’elle affiche est exactement ce qui est appliqué.</p>
+<h2>Équipes et journal d’activité</h2>
+<div class="grid2">
+  <figure><img src="img/15e-equipes.png" alt=""><figcaption>Équipes des leaders.</figcaption></figure>
+  <figure><img src="img/15d-journal-activite.png" alt=""><figcaption>Journal d’activité.</figcaption></figure>
+</div>
+<p>Le <strong>journal</strong> enregistre chaque action sensible (connexions réussies ou échouées, prix, parts, primes, validations, paiements, réaffectations, exports) avec l’auteur, la date, l’objet, l’adresse IP et les valeurs avant et après. Il est filtrable par action, entité et période, et <strong>ne peut être ni modifié ni effacé</strong>.</p>
+
+<!-- ============================== 19 ============================== -->
+<h1 id="s19"><span class="num">19</span>Paramètres</h1>
+<p class="lead">Les règles de calcul et de fonctionnement. Chaque changement a une date d’effet : les ventes passées ne sont jamais recalculées.</p>
+<figure><img src="img/16-parametres.png" alt=""><figcaption>Paramètres : valeur actuelle, date d’effet, nouvelle valeur.</figcaption></figure>
+<table>
+  <tr><th>Groupe</th><th>Paramètres</th><th>Valeur de démonstration</th></tr>
+  <tr><td>Taxes</td><td>Taxe Dig’eCom par vente (montant fixe ou %) ; taxe e-commerçant par vente</td><td>500 KMF ; 500 KMF</td></tr>
+  <tr><td>Abonnement</td><td>Abonnement e-commerçant, déduit à chaque règlement</td><td>10 000 KMF / semaine</td></tr>
+  <tr><td>Règlements</td><td>Durée du cycle ; date d’ancrage (un lundi) ; moyens de paiement acceptés</td><td>14 jours ; 05/01/2026 ; espèces, Huri Money, MVola, virement</td></tr>
+  <tr><td>Primes TCI</td><td>Bornes minimale et maximale de la prime fixée par le Leader Junior</td><td>2 000 et 3 500 KMF / produit</td></tr>
+  <tr><td>Livraisons</td><td>Délai avant alerte « sans livreur » ; frais par course livrée</td><td>10 minutes ; 1 000 KMF</td></tr>
+  <tr><td>Stock</td><td>Seuil de stock faible par défaut</td><td>selon le paramétrage</td></tr>
+</table>
+<ol class="steps">
+  <li>Saisis la <strong>nouvelle valeur</strong> (et son type : montant fixe ou pourcentage pour les taxes).</li>
+  <li>Choisis la <strong>date d’effet</strong>.</li>
+  <li><span class="kbd">Enregistrer</span> : la modification est journalisée ; elle s’applique aux commandes créées à partir de cette date.</li>
+</ol>
+
+<!-- ============================== 20 ============================== -->
+<h1 id="s20"><span class="num">20</span>Préférences de notification</h1>
+<figure><img src="img/17-preferences.png" alt=""><figcaption>Choix des canaux par type d’événement.</figcaption></figure>
+<p>Pour chaque événement (nouvelle commande, prête à livrer, course acceptée, aucun livreur, remise, échec, client a pris ou refusé, stock faible, rupture, relevé disponible, règlement validé ou payé, abonnement, prospect attribué, vente clôturée, objectif atteint, dépense à valider, export prêt), choisis les canaux :</p>
+<ul>
+  <li><strong>Application</strong> : toujours active.</li>
+  <li><strong>Push mobile</strong> : sur l’application Android.</li>
+  <li><strong>SMS</strong> et <strong>WhatsApp</strong> : prévus pour plus tard.</li>
+</ul>
+<p>Les choix sont enregistrés immédiatement.</p>
+
+<!-- ============================== 21 ============================== -->
+<h1 id="s21"><span class="num">21</span>Appels Dig’eCom</h1>
+<p class="lead">Des appels audio par Internet, sans crédit téléphonique, numéro masqué, chiffrés et jamais enregistrés.</p>
+<figure><img src="img/01d-appels.png" alt=""><figcaption>L’annuaire d’appel ouvert depuis l’en-tête.</figcaption></figure>
+<h2>Qui peut appeler qui</h2>
+<table>
+  <tr><th>Qui</th><th>Peut appeler (et être appelé par)</th></tr>
+  <tr><td>Administrateur</td><td>Tout utilisateur actif</td></tr>
+  <tr><td>Assistant logistique</td><td>Livreurs et e-commerçants de son île</td></tr>
+  <tr><td>Leader Senior</td><td>Ses e-commerçants</td></tr>
+  <tr><td>Leader Junior</td><td>Ses téléconseillers</td></tr>
+  <tr><td>E-commerçant ↔ livreur</td><td>Depuis une commande, dès qu’un livreur l’a prise (application mobile)</td></tr>
+</table>
+<h2>Passer un appel</h2>
+<ol class="steps">
+  <li>Clique <span class="kbd">📞 Appels</span>, cherche un contact (nom, rôle, île), puis <span class="kbd">Appeler</span>. Ou bien, dans le détail d’une commande ou la liste des livreurs, clique <span class="kbd">Appeler</span>.</li>
+  <li>À la première utilisation, <strong>autorise le micro</strong> dans le navigateur.</li>
+  <li>Un bandeau en bas à droite indique « Ça sonne… », puis le chrono une fois décroché. Tu peux couper le micro ou raccrocher.</li>
+</ol>
+<h2>Recevoir un appel</h2>
+<p>Le bandeau affiche « Appel Dig’eCom entrant » avec une sonnerie : <span class="kbd">Décrocher</span> ou <span class="kbd">Refuser</span>. La page du back-office doit être ouverte. Sans réponse en 45 secondes, l’appel passe en <strong>manqué</strong> et une notification l’indique. L’annuaire liste aussi les <strong>derniers appels</strong> avec leur durée.</p>
+
+<!-- ============================== 22 ============================== -->
+<h1 id="s22"><span class="num">22</span>Simulateur (environnement de test)</h1>
+<figure><img src="img/18-simulateur.png" alt=""><figcaption>Simulateur livreur / vendeur.</figcaption></figure>
+<p>Disponible uniquement en environnement de développement ou de test, <strong>jamais en production</strong>. Il permet à l’administrateur de jouer les actions de l’application mobile au nom d’un livreur ou d’un vendeur (accepter une course, confirmer une remise, déclarer « client a pris »…), pour former les équipes ou vérifier un circuit. Chaque action faite « au nom de » est journalisée.</p>
+
+<!-- ============================== 23 ============================== -->
+<h1 id="s23"><span class="num">23</span>Circuits complets pas à pas</h1>
+<h2>Une vente livrée à l’e-commerçant</h2>
+<div class="flow"><span>Nouvelle</span><b>→</b><span>Confirmée</span><b>→</b><span>En préparation</span><b>→</b><span>Prête</span><b>→</b><span>Livreur affecté</span><b>→</b><span>En livraison</span><b>→</b><span>Remise effectuée</span><b>→</b><span>Vendue</span></div>
+<ol class="steps">
+  <li>L’e-commerçant enregistre la vente sur son téléphone (ou la logistique la crée « pour le compte de »). Le stock est réservé.</li>
+  <li>La logistique de l’île confirme, prépare, puis déclare la commande <strong>prête</strong>.</li>
+  <li>La course est proposée aux livreurs disponibles de l’île ; le premier qui accepte la prend.</li>
+  <li>Le livreur retire le produit au site, puis le remet à l’e-commerçant.</li>
+  <li>L’e-commerçant confirme la réception, remet le produit au client et déclare <strong>« le client a pris »</strong>.</li>
+  <li>La vente passe « Vendue » : commission, taxes, marge et frais de course sont enregistrés.</li>
+</ol>
+<h2>Un refus ou un échec</h2>
+<ul>
+  <li><strong>Refusée par le client</strong> (avec motif) ou <strong>livraison échouée</strong> : aucune commission ; les propriétaires sont notifiés.</li>
+  <li>Le produit revient au site (<em>Retour à contrôler</em>), puis <em>Remise en stock</em> ou <em>Endommagée</em>.</li>
+</ul>
+<h2>Un lot importé de Chine</h2>
+<div class="flow"><span>Commande fournisseur</span><b>→</b><span>Transport</span><b>→</b><span>Dédouanement</span><b>→</b><span>Réception (coût réel)</span><b>→</b><span>Stock vendable</span><b>→</b><span>Coût FIFO sur chaque vente</span></div>
+<h2>Le règlement d’un e-commerçant</h2>
+<div class="flow"><span>Ventes « Vendue » du cycle</span><b>→</b><span>Relevé généré (14 jours)</span><b>→</b><span>Vérifié</span><b>→</b><span>Validé</span><b>→</b><span>Payé à la caisse</span></div>
+<h2>Une campagne de Leader Junior</h2>
+<div class="flow"><span>Campagne + budget</span><b>→</b><span>Dépense validée</span><b>→</b><span>Import des contacts</span><b>→</b><span>Répartition aux TCI</span><b>→</b><span>Appels</span><b>→</b><span>Commandes</span><b>→</b><span>Vendu = prime TCI</span></div>
+
+<!-- ============================== 24 ============================== -->
+<h1 id="s24"><span class="num">24</span>Règles de gestion à connaître</h1>
+<table>
+  <tr><th>Règle</th><th>Conséquence pratique</th></tr>
+  <tr><td>Montants en KMF entiers</td><td>Aucun centime ; les pourcentages sont arrondis à l’unité, produit par produit.</td></tr>
+  <tr><td>Écritures immuables</td><td>Corriger = écriture inverse liée et justifiée. Le journal et le grand livre refusent toute modification, même en base de données.</td></tr>
+  <tr><td>Instantanés sur la commande</td><td>Un changement de prix, de part, de prime ou de taxe n’affecte que les nouvelles commandes.</td></tr>
+  <tr><td>Commission à la vente</td><td>Seulement au statut « Vendue » ; jamais en cas de refus, d’échec ou d’annulation.</td></tr>
+  <tr><td>Cloisonnement par île</td><td>Une course n’est proposée qu’aux livreurs de l’île du site ; les rôles d’île ne voient que leur île.</td></tr>
+  <tr><td>Cloisonnement par leader</td><td>Un vendeur ne voit que le catalogue et le stock de son leader ; un leader ne voit que son équipe.</td></tr>
+  <tr><td>Séparation des tâches</td><td>La même personne ne vérifie pas et ne valide pas le même relevé.</td></tr>
+  <tr><td>Traçabilité</td><td>Chaque action sensible est journalisée avec l’avant et l’après.</td></tr>
+</table>
+
+<!-- ============================== 25 ============================== -->
+<h1 id="s25"><span class="num">25</span>Questions fréquentes et dépannage</h1>
+<h3>Un utilisateur n’arrive plus à se connecter</h3>
+<p>Après 5 essais manqués, le compte est verrouillé 15 minutes. Sinon, réinitialise son mot de passe depuis <em>Utilisateurs → Gérer</em> : il recevra un mot de passe temporaire à changer.</p>
+<h3>Une commande reste « Prête » sans livreur</h3>
+<p>Vérifie dans <em>Livraisons</em> qu’au moins un livreur de l’île est « Disponible ». Sinon, affecte un livreur à la main. L’alerte « sans livreur » part après le délai paramétré.</p>
+<h3>Un vendeur ne voit pas un produit</h3>
+<p>Le produit doit être publié par <em>son</em> leader et avoir du stock sur <em>son</em> île. Vérifie le catalogue et le stock du site.</p>
+<h3>Un chiffre du tableau de bord semble ancien</h3>
+<p>Les indicateurs sont recalculés au plus tard après 60 secondes ; recharge la page.</p>
+<h3>Un export n’arrive pas</h3>
+<p>Au-delà de 5 000 lignes, l’export est préparé en arrière-plan ; le lien arrive dans les notifications et reste valable une heure après le clic.</p>
+<h3>Le micro est refusé pendant un appel</h3>
+<p>Autorise le micro pour le site dans le navigateur (icône à gauche de l’adresse), puis rappelle.</p>
+<h3>Je me suis trompé dans une dépense ou une vente</h3>
+<p>Rien ne se supprime : annule par une écriture inverse justifiée (dépense) ou par un retour après vente (commande vendue), puis saisis la bonne opération.</p>
+
+<!-- ============================== 26 ============================== -->
+<h1 id="s26"><span class="num">26</span>Glossaire</h1>
+<table>
+  <tr><th>Terme</th><th>Définition</th></tr>
+  <tr><td>KMF</td><td>Franc comorien.</td></tr>
+  <tr><td>Cycle de règlement</td><td>Période (14 jours par défaut) à la fin de laquelle un relevé est généré pour chaque e-commerçant.</td></tr>
+  <tr><td>Relevé</td><td>Décompte d’un e-commerçant sur un cycle : commissions, taxes, abonnement, net à payer.</td></tr>
+  <tr><td>Part vendeur</td><td>Ce que touche l’e-commerçant sur un produit vendu (montant ou pourcentage fixé par le Leader Senior).</td></tr>
+  <tr><td>Prime TCI</td><td>Montant fixe par produit vendu, versé au téléconseiller (fixé par le Leader Junior).</td></tr>
+  <tr><td>Lot</td><td>Une commande fournisseur reçue : elle porte le coût réel d’approvisionnement.</td></tr>
+  <tr><td>Coût rendu</td><td>Coût d’un produit arrivé aux Comores : achat + transport + douane + frais, divisé par la quantité reçue.</td></tr>
+  <tr><td>FIFO</td><td>« Premier entré, premier sorti » : une vente consomme d’abord le lot le plus ancien.</td></tr>
+  <tr><td>Marge après coût et taxe</td><td>Part Dig’eCom − coût rendu − taxe Dig’eCom.</td></tr>
+  <tr><td>Instantané</td><td>Copie des prix, parts, primes, taxes et coûts sur la commande au moment de sa création.</td></tr>
+  <tr><td>Écriture inverse</td><td>Écriture de correction qui annule une écriture erronée, avec justification.</td></tr>
+  <tr><td>TCI</td><td>Téléconseiller.</td></tr>
+  <tr><td>TURN</td><td>Serveur relais qui permet les appels Dig’eCom sur les réseaux mobiles.</td></tr>
+</table>
+
+</body>
+</html>
