@@ -1,4 +1,4 @@
-import { FAIL_REASONS, formatKmf, type OrderView } from '@digecom/shared';
+import { directionsUrl, FAIL_REASONS, formatKmf, type OrderView } from '@digecom/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
@@ -70,6 +70,21 @@ export default function Course() {
 
   const direct = run.deliveryMode === 'TO_CUSTOMER';
   const dest = direct ? run.customerName : run.seller.fullName;
+  // Itinéraires Google Maps (sans clé d'API) depuis la position actuelle du téléphone.
+  const siteRoute =
+    run.site.latitude !== null && run.site.longitude !== null
+      ? directionsUrl({ latitude: run.site.latitude, longitude: run.site.longitude })
+      : null;
+  const customerAddress = [run.customerAddress, run.zone, run.island.name]
+    .filter(Boolean)
+    .join(', ');
+  const destRoute = direct
+    ? run.customerAddress || run.zone
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(customerAddress)}&travelmode=driving`
+      : null
+    : run.sellerLocation
+      ? directionsUrl(run.sellerLocation)
+      : null;
   const destPhone = direct ? run.customerPhone : run.seller.phone;
   const can = (a: Action) => run.actions.includes(a);
 
@@ -166,6 +181,18 @@ export default function Course() {
       {can('pickup') ? (
         <>
           <Notice tone="blue">Rends-toi à {run.site.name} et récupère le colis.</Notice>
+          {siteRoute ? (
+            <Button
+              testID="itineraire-site"
+              label={`🧭 Itinéraire vers le site ${run.site.name}`}
+              variant="outline"
+              onPress={() => void Linking.openURL(siteRoute)}
+            />
+          ) : (
+            <T style={{ color: colors.muted, fontSize: 12 }}>
+              Position du site non renseignée : demande l’adresse à la logistique.
+            </T>
+          )}
           <Button
             testID="recupere"
             label="J’ai récupéré le produit"
@@ -183,6 +210,29 @@ export default function Course() {
         <T style={{ color: colors.muted }}>
           {[run.zone, run.customerAddress].filter(Boolean).join(' · ') || '—'} · {destPhone}
         </T>
+        {destRoute ? (
+          <Button
+            testID="itineraire-destination"
+            label={direct ? '🧭 Itinéraire vers le client' : `🧭 Itinéraire vers ${dest}`}
+            variant={run.status === 'OUT_FOR_DELIVERY' ? 'orange' : 'outline'}
+            onPress={() => void Linking.openURL(destRoute)}
+          />
+        ) : !direct ? (
+          <T style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>
+            Position de l’e-commerçant inconnue (il doit ouvrir l’application) : appelle-le.
+          </T>
+        ) : null}
+        {!direct && run.sellerLocation ? (
+          <T style={{ color: colors.muted, fontSize: 12 }}>
+            Position partagée{' '}
+            {new Date(run.sellerLocation.at).toLocaleString('fr-FR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </T>
+        ) : null}
         {direct ? (
           // Le client n'a pas l'application : appel téléphonique.
           <Button

@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import {
+  distanceKm,
+  LOCATION_FRESH_MINUTES,
+  rankCouriers,
+  type CourierCandidate,
   ROLE_SCOPE,
   startOfBusinessDay,
   businessToday,
@@ -10,6 +14,7 @@ import {
 } from '@digecom/shared';
 import type { Prisma } from '@prisma/client';
 import type { AuthUser } from '../auth/auth.types';
+import { AppException } from '../common/app-exception';
 import { PrismaService } from '../prisma/prisma.service';
 import { ORDER_INCLUDE, OrderService } from './order.service';
 
@@ -59,6 +64,66 @@ export class DeliveriesService {
         'RETURNED_TO_STOCK',
       ]),
     };
+  }
+
+  /**
+   * Livreurs proposés pour une commande prête : ceux de l'île du site, classés par disponibilité
+   * puis par distance (à vol d'oiseau) entre leur dernière position et le site de retrait.
+   */
+  async candidates(orderId: string, actor: AuthUser): Promise<CourierCandidate[]> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        islandId: true,
+        site: { select: { latitude: true, longitude: true } },
+      },
+    });
+    if (!order || (ROLE_SCOPE[actor.role] !== 'GLOBAL' && actor.islandId !== order.islandId)) {
+      throw new AppException('NOT_FOUND', 'Commande introuvable', HttpStatus.NOT_FOUND);
+    }
+    const site =
+      order.site.latitude !== null && order.site.longitude !== null
+        ? { latitude: order.site.latitude, longitude: order.site.longitude }
+        : null;
+    const freshSince = Date.now() - LOCATION_FRESH_MINUTES * 60_000;
+    const rows = await this.prisma.user.findMany({
+      where: { role: 'COURIER', isActive: true, islandId: order.islandId },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        isAvailable: true,
+        lastLatitude: true,
+        lastLongitude: true,
+        lastLocationAt: true,
+        _count: {
+          select: {
+            ordersAsCourier: { where: { status: { in: ['ASSIGNED', 'OUT_FOR_DELIVERY'] } } },
+          },
+        },
+      },
+    });
+    return rankCouriers(
+      rows.map((c) => {
+        const known = c.lastLatitude !== null && c.lastLongitude !== null && c.lastLocationAt;
+        return {
+          id: c.id,
+          fullName: c.fullName,
+          phone: c.phone,
+          isAvailable: c.isAvailable,
+          activeRuns: c._count.ordersAsCourier,
+          distanceKm:
+            site && known
+              ? Math.round(
+                  distanceKm(site, { latitude: c.lastLatitude!, longitude: c.lastLongitude! }) *
+                    100,
+                ) / 100
+              : null,
+          locationAt: c.lastLocationAt?.toISOString() ?? null,
+          locationFresh: !!c.lastLocationAt && c.lastLocationAt.getTime() >= freshSince,
+        };
+      }),
+    );
   }
 
   async couriers(actor: AuthUser, islandId?: string): Promise<CourierView[]> {

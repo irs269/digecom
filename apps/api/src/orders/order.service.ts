@@ -40,11 +40,30 @@ import { LedgerService } from '../finance/ledger.service';
 type Tx = Prisma.TransactionClient;
 
 export const ORDER_INCLUDE = {
-  seller: { select: { id: true, fullName: true, phone: true, role: true } },
+  seller: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      role: true,
+      lastLatitude: true,
+      lastLongitude: true,
+      lastLocationAt: true,
+    },
+  },
   leader: { select: { id: true, fullName: true } },
   island: { select: { id: true, code: true, name: true } },
-  site: { select: { id: true, name: true } },
-  courier: { select: { id: true, fullName: true, phone: true } },
+  site: { select: { id: true, name: true, address: true, latitude: true, longitude: true } },
+  courier: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      lastLatitude: true,
+      lastLongitude: true,
+      lastLocationAt: true,
+    },
+  },
   createdOnBehalf: { select: { id: true, fullName: true } },
   items: { include: { product: { select: { id: true, sku: true, name: true, quality: true } } } },
   confirmations: { select: { kind: true } },
@@ -800,22 +819,22 @@ export class OrderService {
     }
   }
 
-  /** Offre la course aux livreurs actifs, disponibles, de l'île du site (et seulement eux). */
+  /**
+   * Commande prête à livrer : plus d'offre automatique aux livreurs. La personne qui prépare le
+   * colis (assistant logistique de l'île) choisit le livreur, guidée par la disponibilité et la
+   * distance au site (`GET /deliveries/couriers?orderId=`). Alerte si personne n'est affecté.
+   */
   private async offerToCouriers(tx: Tx, order: OrderRow, after: AfterCommit) {
-    const couriers = await tx.user.findMany({
-      where: { role: 'COURIER', isActive: true, isAvailable: true, islandId: order.islandId },
+    const logistics = await tx.user.findMany({
+      where: { role: 'LOGISTICS_ASSISTANT', isActive: true, islandId: order.islandId },
       select: { id: true },
     });
-    if (couriers.length) {
-      await tx.deliveryOffer.createMany({
-        data: couriers.map((c) => ({ orderId: order.id, courierId: c.id })),
-        skipDuplicates: true,
-      });
+    if (logistics.length) {
       after.notify.push({
-        users: couriers.map((c) => c.id),
-        type: 'DELIVERY_OFFER',
-        title: `Course disponible ${order.number}`,
-        body: `${order.site.name} → ${order.zone ?? order.customerAddress ?? 'adresse du client'}`,
+        users: logistics.map((u) => u.id),
+        type: 'ORDER_TO_ASSIGN',
+        title: `${order.number} prête : choisis un livreur`,
+        body: `Retrait au site ${order.site.name} · ${order.zone ?? order.customerAddress ?? 'adresse du client'}`,
       });
     }
     after.scheduleNoCourier = true;
@@ -927,12 +946,37 @@ export class OrderService {
 
   async toView(r: OrderRow, actor: AuthUser): Promise<OrderView> {
     const confirmations = r.confirmations.map((c) => c.kind);
+    const loc = (u: {
+      lastLatitude: number | null;
+      lastLongitude: number | null;
+      lastLocationAt: Date | null;
+    }): OrderView['sellerLocation'] =>
+      u.lastLatitude !== null && u.lastLongitude !== null && u.lastLocationAt
+        ? {
+            latitude: u.lastLatitude,
+            longitude: u.lastLongitude,
+            at: u.lastLocationAt.toISOString(),
+          }
+        : null;
+    // Positions : visibles seulement pendant la course, et seulement de l'autre partie ou du
+    // back-office (jamais d'un vendeur ou d'un livreur étranger à la commande).
+    const inRun = ['ASSIGNED', 'OUT_FOR_DELIVERY', 'HANDED_OVER'].includes(r.status);
+    const field =
+      actor.role === 'SELLER' || actor.role === 'COURIER' || actor.role === 'TELECONSULTANT';
+    const canSeeSeller = inRun && (!field || actor.id === r.courierId);
+    const canSeeCourier = inRun && (!field || actor.id === r.sellerId);
     return {
       id: r.id,
       number: r.number,
       status: r.status,
       deliveryMode: r.deliveryMode,
-      seller: r.seller,
+      seller: {
+        id: r.seller.id,
+        fullName: r.seller.fullName,
+        phone: r.seller.phone,
+        role: r.seller.role,
+      },
+      sellerLocation: canSeeSeller ? loc(r.seller) : null,
       sellerType: r.sellerType,
       leader: r.leader,
       island: r.island,
@@ -941,7 +985,10 @@ export class OrderService {
       customerPhone: r.customerPhone,
       customerAddress: r.customerAddress,
       zone: r.zone,
-      courier: r.courier,
+      courier: r.courier
+        ? { id: r.courier.id, fullName: r.courier.fullName, phone: r.courier.phone }
+        : null,
+      courierLocation: canSeeCourier && r.courier ? loc(r.courier) : null,
       items: r.items.map((i) => ({
         id: i.id,
         product: i.product,

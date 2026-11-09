@@ -13,3 +13,4 @@ export * from './tci';
 export * from './reports';
 export * from './calls';
 export * from './call-machine';
+export * from './geo';

@@ -11,12 +11,14 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_TONE,
   timelineSteps,
-  type CourierView,
+  formatDistance,
+  mapPointUrl,
+  type CourierCandidate,
   type OrderAction,
   type OrderView,
 } from '@digecom/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -94,11 +96,16 @@ function ActionDialog({
   const [courierId, setCourierId] = useState('');
   const [mode, setMode] = useState('');
   const [amount, setAmount] = useState(String(order.total));
-  const couriers = useQuery({
-    queryKey: ['deliveries', 'couriers', order.island.id],
+  // Livreurs de l'île classés : disponibles d'abord, puis du plus proche au plus loin du site.
+  const candidates = useQuery({
+    queryKey: ['deliveries', 'candidates', order.id],
     enabled: action === 'assign',
-    queryFn: () => apiFetch<CourierView[]>(`/deliveries/couriers?islandId=${order.island.id}`),
+    queryFn: () => apiFetch<CourierCandidate[]>(`/deliveries/${order.id}/candidates`),
   });
+  const best = candidates.data?.find((c) => c.isAvailable && c.id !== order.courier?.id);
+  useEffect(() => {
+    if (action === 'assign' && !courierId && best) setCourierId(best.id);
+  }, [action, best, courierId]);
   if (!action) return null;
   const body: Record<string, unknown> =
     action === 'assign'
@@ -133,15 +140,13 @@ function ActionDialog({
           }}
         >
           {action === 'assign' ? (
-            <SelectField
-              label={`Livreur (${order.island.name})`}
+            <CourierPicker
+              order={order}
+              list={candidates.data}
+              loading={candidates.isLoading}
+              bestId={best?.id ?? null}
               value={courierId}
-              onChange={(e) => setCourierId(e.target.value)}
-              placeholder="Choisir un livreur"
-              options={(couriers.data ?? []).map((c) => ({
-                value: c.id,
-                label: `${c.fullName} · ${c.isAvailable ? 'disponible' : 'indisponible'} · ${c.activeRuns} en cours`,
-              }))}
+              onChange={setCourierId}
             />
           ) : action === 'changeMode' ? (
             <SelectField
@@ -392,5 +397,113 @@ export function OrderDetail({ order }: { order: OrderView }) {
 
       <OrderActions order={order} />
     </div>
+  );
+}
+
+/** Âge d'une position : « il y a 4 min », « il y a 2 h ». */
+function ago(iso: string): string {
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (min < 1) return 'à l’instant';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  return h < 48 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
+}
+
+/**
+ * Choix du livreur par la personne qui prépare le colis : livreurs de l'île classés par
+ * disponibilité puis par distance au site de retrait (dernière position envoyée par l'application).
+ */
+function CourierPicker({
+  order,
+  list,
+  loading,
+  bestId,
+  value,
+  onChange,
+}: {
+  order: OrderView;
+  list: CourierCandidate[] | undefined;
+  loading: boolean;
+  bestId: string | null;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const site = order.site;
+  const located = site.latitude !== null && site.longitude !== null;
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-semibold text-ink">
+        Livreurs de {order.island.name} · distance au site {site.name}
+      </legend>
+      {!located ? (
+        <p className="rounded-md bg-status-orange-bg p-2 text-xs text-status-orange-fg">
+          Position GPS du site non renseignée : distances indisponibles. Ajoute-la dans Utilisateurs
+          → Sites.
+        </p>
+      ) : (
+        <a
+          className="text-xs font-semibold text-brand-blue hover:underline"
+          href={mapPointUrl({ latitude: site.latitude!, longitude: site.longitude! })}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Voir le site sur Google Maps
+        </a>
+      )}
+      {loading ? <p className="text-sm text-ink-muted">Calcul des distances…</p> : null}
+      {list && list.length === 0 ? (
+        <p className="text-sm text-ink-muted">Aucun livreur actif sur cette île.</p>
+      ) : null}
+      <ul className="flex max-h-[45vh] flex-col gap-2 overflow-y-auto" data-testid="courier-picker">
+        {(list ?? []).map((c) => {
+          const selected = value === c.id;
+          const current = order.courier?.id === c.id;
+          return (
+            <li key={c.id}>
+              <label
+                className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 ${
+                  selected ? 'border-brand-blue ring-2 ring-brand-blue/30' : 'border-surface-border'
+                } ${c.isAvailable ? '' : 'opacity-70'}`}
+              >
+                <input
+                  type="radio"
+                  name="courier"
+                  value={c.id}
+                  checked={selected}
+                  disabled={current}
+                  onChange={() => onChange(c.id)}
+                />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
+                    {c.fullName}
+                    {c.id === bestId ? (
+                      <Badge tone="green">
+                        {c.distanceKm !== null
+                          ? 'Plus proche disponible'
+                          : 'Disponible, sans position'}
+                      </Badge>
+                    ) : null}
+                    {current ? <Badge tone="blue">Déjà affecté</Badge> : null}
+                  </span>
+                  <span className="text-xs text-ink-muted">
+                    {c.isAvailable ? 'Disponible' : 'Indisponible'} · {c.activeRuns} course(s) en
+                    cours
+                    {c.locationAt ? ` · position ${ago(c.locationAt)}` : ' · position inconnue'}
+                    {c.locationAt && !c.locationFresh ? ' (ancienne)' : ''}
+                  </span>
+                </span>
+                <span className="whitespace-nowrap text-sm font-bold text-ink">
+                  {c.distanceKm !== null ? formatDistance(c.distanceKm) : '—'}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs text-ink-muted">
+        Distance à vol d’oiseau entre la dernière position du livreur et le site. Le livreur est
+        notifié dès l’affectation.
+      </p>
+    </fieldset>
   );
 }

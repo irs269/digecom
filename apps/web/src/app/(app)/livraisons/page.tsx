@@ -31,7 +31,7 @@ interface Board {
 }
 
 const COLUMNS: { key: keyof Board; title: string; hint: string }[] = [
-  { key: 'waiting', title: 'En attente d’un livreur', hint: 'Proposées aux livreurs de l’île' },
+  { key: 'waiting', title: 'À affecter', hint: 'Prêtes : choisis le livreur le plus proche' },
   { key: 'inProgress', title: 'En cours', hint: 'Affectées ou en livraison' },
   { key: 'pickupReady', title: 'Prêtes au retrait', hint: 'L’e-commerçant passe au site' },
   { key: 'issues', title: 'Refus et échecs', hint: 'Retours à contrôler' },

@@ -57,6 +57,9 @@ model Site {
   type      SiteType
   islandId  String
   address   String?
+  /// Position GPS du site (point de retrait des colis) : distance des livreurs, itinéraires.
+  latitude  Float?
+  longitude Float?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,6 +93,10 @@ model User {
   isActive           Boolean   @default(true)
   /// Disponibilité (COURIER)
   isAvailable        Boolean   @default(false)
+  /// Dernière position GPS envoyée par l'application mobile (livreur, e-commerçant).
+  lastLatitude       Float?
+  lastLongitude      Float?
+  lastLocationAt     DateTime?
   mustChangePassword Boolean   @default(false)
   /// Préférences de notification par type et canal (l'in-app est toujours actif)
   notificationPrefs  Json      @default("{}")

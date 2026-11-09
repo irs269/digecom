@@ -70,6 +70,15 @@ describe('Commandes et livraisons (e2e)', () => {
     }
   }
 
+  /** Affectation par la personne qui prépare le colis (assistant logistique de l'île). */
+  async function assign(id: string, phone: string, who = 'LOGISTICS_GC') {
+    return http()
+      .post(`/deliveries/${id}/assign`)
+      .set(as(who))
+      .send({ courierId: await userId(phone) });
+  }
+  const at = (who: string, latitude: number, longitude: number) =>
+    http().post('/me/location').set(as(who)).send({ latitude, longitude });
   const offersOf = (orderId: string) =>
     ctx.prisma.deliveryOffer.findMany({ where: { orderId }, include: { courier: true } });
   const notified = (phone: string, type: string) =>
@@ -217,32 +226,83 @@ describe('Commandes et livraisons (e2e)', () => {
   describe('livraison directe au client', () => {
     let order: OrderView;
 
-    it('prête → offre aux seuls livreurs disponibles de l’île du site', async () => {
+    it('prête : aucune offre automatique ; la logistique de l’île est prévenue', async () => {
       order = await createOrder('TO_CUSTOMER');
       await toReady(order.id);
-      const offers = await offersOf(order.id);
-      expect(offers.map((o) => o.courier.fullName).sort()).toEqual(['Karim Bacar', 'Youssouf Ali']);
-      expect(offers.some((o) => o.courier.phone === PHONES.DJAMAL)).toBe(false);
-      const djamalOffers = (await http().get('/courier/offers').set(as('DJAMAL')))
-        .body as unknown[];
-      expect(djamalOffers.some((o) => (o as { orderId: string }).orderId === order.id)).toBe(false);
-      const karimOffers = (await http().get('/courier/offers').set(as('KARIM'))).body as {
-        orderId: string;
-      }[];
-      expect(karimOffers.map((o) => o.orderId)).toContain(order.id);
+      expect(await offersOf(order.id)).toHaveLength(0);
+      expect(
+        await ctx.prisma.notification.count({
+          where: { type: 'DELIVERY_OFFER', title: { contains: order.number } },
+        }),
+      ).toBe(0);
+      expect(await notified(PHONES.LOGISTICS_GC, 'ORDER_TO_ASSIGN')).toBeGreaterThan(0);
+      const karimOffers = (await http().get('/courier/offers').set(as('KARIM'))).body as unknown[];
+      expect(karimOffers).toHaveLength(0);
+      // Un livreur ne peut pas se servir lui-même.
+      expect(
+        (await http().post(`/courier/offers/${order.id}/accept`).set(as('KARIM'))).status,
+      ).toBe(404);
     });
 
-    it('le premier qui accepte gagne ; l’offre disparaît pour les autres', async () => {
-      const r = await http().post(`/courier/offers/${order.id}/accept`).set(as('KARIM'));
+    it('livreurs proposés : île du site seulement, disponibles puis du plus proche au plus loin', async () => {
+      // Site de Moroni et positions des livreurs.
+      await ctx.prisma.site.update({
+        where: { id: moroniId },
+        data: { latitude: -11.7022, longitude: 43.2551 },
+      });
+      expect((await at('KARIM', -11.7, 43.26)).status).toBe(204); // ≈ 0,6 km
+      expect((await at('YOUSSOUF', -11.65, 43.27)).status).toBe(204); // ≈ 6 km
+      expect((await at('DJAMAL', -11.7, 43.255)).status).toBe(204); // tout près, mais Anjouan
+      expect((await at('FINANCE', -11.7, 43.25)).status).toBe(403);
+
+      const res = await http().get(`/deliveries/${order.id}/candidates`).set(as('LOGISTICS_GC'));
+      expect(res.status).toBe(200);
+      const list = res.body as {
+        fullName: string;
+        distanceKm: number | null;
+        isAvailable: boolean;
+      }[];
+      expect(list.map((c) => c.fullName).slice(0, 2)).toEqual(['Karim Bacar', 'Youssouf Ali']);
+      expect(list.some((c) => c.fullName === 'Djamal Said')).toBe(false);
+      expect(list[0]!.distanceKm).toBeLessThan(1);
+      expect(list[1]!.distanceKm).toBeGreaterThan(5);
+
+      // Indisponible : passe derrière, même s'il est le plus proche.
+      await ctx.prisma.user.update({
+        where: { phone: PHONES.KARIM },
+        data: { isAvailable: false },
+      });
+      const again = (await http().get(`/deliveries/${order.id}/candidates`).set(as('LOGISTICS_GC')))
+        .body as { fullName: string }[];
+      expect(again[0]!.fullName).toBe('Youssouf Ali');
+      await ctx.prisma.user.update({ where: { phone: PHONES.KARIM }, data: { isAvailable: true } });
+
+      // Autre île et rôles sans affectation : refusés.
+      expect(
+        (await http().get(`/deliveries/${order.id}/candidates`).set(as('STOCK_AN'))).status,
+      ).toBe(403);
+      expect(
+        (await http().get(`/deliveries/${order.id}/candidates`).set(as('FINANCE'))).status,
+      ).toBe(403);
+    });
+
+    it('affectation par la logistique ; itinéraire : site et position de l’e-commerçant', async () => {
+      await at('FATIMA', -11.71, 43.24);
+      const r = await assign(order.id, PHONES.KARIM);
       expect(r.status).toBe(200);
       expect(r.body).toMatchObject({ status: 'ASSIGNED', courier: { fullName: 'Karim Bacar' } });
-      const late = await http().post(`/courier/offers/${order.id}/accept`).set(as('YOUSSOUF'));
-      expect(late.status).toBe(404); // l'offre n'existe plus pour lui
-      const youssouf = await ctx.prisma.deliveryOffer.findFirstOrThrow({
-        where: { orderId: order.id, courier: { phone: PHONES.YOUSSOUF } },
-      });
-      expect(youssouf.response).toBe('TAKEN_BY_OTHER');
       expect(await notified(PHONES.FATIMA, 'ORDER_ASSIGNED')).toBeGreaterThan(0);
+      const run = ((await http().get('/courier/runs').set(as('KARIM'))).body as OrderView[]).find(
+        (o) => o.id === order.id,
+      )!;
+      expect(run.site).toMatchObject({ latitude: -11.7022, longitude: 43.2551 });
+      expect(run.sellerLocation).toMatchObject({ latitude: -11.71, longitude: 43.24 });
+      // L'e-commerçant voit la position du livreur ; un autre livreur ne voit rien.
+      const mine = (
+        (await http().get('/me/orders').set(as('FATIMA'))).body as { items: OrderView[] }
+      ).items.find((o) => o.id === order.id)!;
+      expect(mine.courierLocation).toMatchObject({ latitude: -11.7, longitude: 43.26 });
+      expect(mine.sellerLocation).toBeNull();
     });
 
     it('retrait au site : sortie FIFO, coût figé sur la ligne', async () => {
@@ -300,7 +360,7 @@ describe('Commandes et livraisons (e2e)', () => {
       const start = await level();
       const order = await createOrder('TO_SELLER');
       await toReady(order.id);
-      await http().post(`/courier/offers/${order.id}/accept`).set(as('YOUSSOUF')).expect(200);
+      expect((await assign(order.id, PHONES.YOUSSOUF)).status).toBe(200);
       await http().post(`/courier/runs/${order.id}/pickup`).set(as('YOUSSOUF')).expect(200);
       const h = await http()
         .post(`/courier/runs/${order.id}/handover`)
@@ -466,57 +526,28 @@ describe('Commandes et livraisons (e2e)', () => {
       expect(res.status).toBe(201);
       for (const a of ['confirm', 'prepare', 'ready'])
         expect((await act('ADMIN', res.body.id, a)).status).toBe(200);
-      const offers = await offersOf(res.body.id);
-      expect(offers.map((o) => o.courier.fullName)).toEqual(['Livreur Mohéli']);
-      const offerNotifs = await ctx.prisma.notification.findMany({
-        where: { type: 'DELIVERY_OFFER', title: { contains: res.body.number } },
-        include: { user: true },
-      });
-      expect(offerNotifs.map((n) => n.user.fullName)).toEqual(['Livreur Mohéli']);
+      // Aucune offre ni notification aux livreurs ; seuls ceux de Mohéli sont proposés.
+      expect(await offersOf(res.body.id)).toHaveLength(0);
+      const proposed = (await http().get(`/deliveries/${res.body.id}/candidates`).set(as('ADMIN')))
+        .body as { fullName: string }[];
+      expect(proposed.map((c) => c.fullName)).toEqual(['Livreur Mohéli']);
+      expect((await assign(res.body.id, PHONES.KARIM, 'ADMIN')).status).toBe(422);
       // La logistique de Grande Comore ne voit pas cette commande ; la caisse de Mohéli n'a pas le module.
       expect((await http().get(`/orders/${res.body.id}`).set(as('LOGISTICS_GC'))).status).toBe(404);
     });
 
-    it('10 acceptations simultanées → une seule réussit', async () => {
-      const gc = await ctx.prisma.island.findUniqueOrThrow({ where: { code: 'GC' } });
-      const hash = await hashPassword(PASSWORD);
-      for (let i = 0; i < 8; i++) {
-        await ctx.prisma.user.create({
-          data: {
-            fullName: `Livreur GC ${i}`,
-            phone: `+26933098${String(i).padStart(2, '0')}`,
-            role: 'COURIER',
-            islandId: gc.id,
-            isAvailable: true,
-            passwordHash: hash,
-          },
-        });
-      }
-      const couriers = await ctx.prisma.user.findMany({
-        where: { role: 'COURIER', islandId: gc.id, isAvailable: true },
-      });
-      expect(couriers.length).toBeGreaterThanOrEqual(10);
-      for (const c of couriers) await signIn(`C-${c.id}`, c.phone);
-
+    it('réaffectation : le nouveau livreur prend la course, l’ancien ne la voit plus', async () => {
       const order = await createOrder('TO_CUSTOMER');
       await toReady(order.id);
-      const results = await Promise.all(
-        couriers.slice(0, 10).map((c) =>
-          http()
-            .post(`/courier/offers/${order.id}/accept`)
-            .set(as(`C-${c.id}`)),
-        ),
+      expect((await assign(order.id, PHONES.KARIM)).status).toBe(200);
+      const r = await assign(order.id, PHONES.YOUSSOUF);
+      expect(r.body).toMatchObject({ status: 'ASSIGNED', courier: { fullName: 'Youssouf Ali' } });
+      const karim = (await http().get('/courier/runs').set(as('KARIM'))).body as OrderView[];
+      expect(karim.some((o) => o.id === order.id)).toBe(false);
+      expect((await http().post(`/courier/runs/${order.id}/pickup`).set(as('KARIM'))).status).toBe(
+        404,
       );
-      const statuses = results
-        .map((r) => `${r.status}:${(r.body as { code?: string }).code ?? ''}`)
-        .sort();
-      expect(statuses.filter((s) => s.startsWith('200'))).toHaveLength(1);
-      expect(statuses.filter((s) => s.startsWith('409') || s.startsWith('404'))).toEqual(
-        statuses.filter((s) => !s.startsWith('200')),
-      );
-      const offers = await offersOf(order.id);
-      expect(offers.filter((o) => o.response === 'ACCEPTED')).toHaveLength(1);
-      expect(offers.filter((o) => o.response === 'PENDING')).toHaveLength(0);
+      await act('LOGISTICS_GC', order.id, 'cancel', { reason: 'Fin du test' });
     });
 
     it('alerte « aucun livreur » après le délai (horloge simulée)', async () => {

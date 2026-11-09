@@ -21,7 +21,7 @@ Les autres profils se connectent mais sont renvoyés vers le back-office web.
   - Chaque action porte une **clé unique** (`Idempotency-Key`) : un renvoi après une coupure n'est jamais exécuté deux fois par l'API.
   - Une photo de preuve prise hors ligne est envoyée juste avant l'action.
   - Si le serveur refuse l'action au renvoi (statut déjà changé par quelqu'un d'autre), un bandeau rouge le signale.
-- **Exigent le réseau** : enregistrer une vente (vérification du stock en direct) et accepter une course (le premier qui accepte la prend).
+- **Exige le réseau** : enregistrer une vente (vérification du stock en direct).
 
 ## 3. Développer
 
@@ -120,3 +120,12 @@ Capacité du relais tel que configuré : 40 ports, soit environ **20 appels simu
 - API : `POST /calls` (appeler : `{ orderId }` ou `{ userId }`), `GET /calls/contacts` (annuaire), `GET /calls/mine` (mes derniers appels), `POST /calls/:id/accept`, `POST /calls/:id/end`, `POST /calls/:id/signal` (relais WebRTC), `GET /calls?orderId=` (journal), `GET /calls/ringing`, `GET /calls/stream` (flux SSE de l'application : appels et statuts des commandes en temps réel).
 - Droits : seuls l'e-commerçant et le livreur de la commande ; logistique et administration lisent le journal (cloisonnement par île).
 - Identifiants TURN temporaires (1 h) signés par l'API avec `TURN_SECRET` : aucun compte TURN stocké.
+
+## 8. Affectation au plus proche et itinéraires
+
+- **Plus d'offre automatique** : une commande prête est affectée par la personne qui prépare le colis (assistant logistique de l'île). Le back-office lui propose les livreurs de l'île, **disponibles d'abord, puis du plus proche au plus loin du site** (`GET /deliveries/:orderId/candidates`).
+- **Positions** : l'application envoie la position du téléphone (`POST /me/location`) : livreur toutes les 2 minutes quand l'application est ouverte et quand il passe « disponible » ; e-commerçant à l'ouverture et à chaque vente. Aucun suivi en arrière-plan. Une position de plus de 30 minutes est « ancienne ».
+- **Sites** : position GPS saisie dans Utilisateurs → Sites (coordonnées collées depuis Google Maps ou « Ma position actuelle »).
+- **Itinéraires** (Google Maps, sans clé d'API ni facturation) : dans la course, *Itinéraire vers le site* (retrait), puis *Itinéraire vers l'e-commerçant* (sa dernière position) ou vers l'adresse du client en livraison directe. L'e-commerçant peut ouvrir *Voir où est le livreur*.
+- **Confidentialité** : la position d'un e-commerçant n'est visible que du livreur affecté à sa commande et du back-office, pendant la course ; celle d'un livreur, que de l'e-commerçant concerné et du back-office.
+- Distances à vol d'oiseau (formule de haversine), calculées par l'API.
