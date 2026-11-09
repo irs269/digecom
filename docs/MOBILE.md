@@ -80,3 +80,32 @@ eas build -p android --profile production   # AAB pour le Play Store
 5. Après les 14 jours, demander l'accès à la production depuis la console, puis publier.
 
 Comptes de test pour l'examen Google : un e-commerçant et un livreur **dédiés**, avec un mot de passe à renseigner dans « Accès à l'application ».
+
+## 7. Appels Dig'eCom (dans l'application)
+
+L'e-commerçant et le livreur d'une même commande peuvent s'appeler **par Internet**, depuis la commande ou la course, sans crédit téléphonique et **sans voir le numéro de l'autre**. L'appel est chiffré de bout en bout (WebRTC) et **n'est jamais enregistré** ; seul un journal (qui, quand, durée, manqué) est gardé sur la commande.
+
+| Situation | Bouton |
+| --- | --- |
+| Livreur affecté, en route, remise faite ou livraison échouée | **Appel Dig'eCom** (orange) + « Appeler par téléphone » en secours |
+| Client final (sans l'application) | Appel téléphonique classique |
+| Expo Go, ou téléphone sans le module natif | Appel téléphonique classique (le bouton Dig'eCom est masqué) |
+
+**Déroulement** : l'appelant touche « Appel Dig'eCom » ; le téléphone de l'autre **sonne** (écran d'appel si l'application est ouverte, notification « Appel de … » sinon) ; il décroche ou refuse ; sans réponse en 45 s, l'appel passe en **manqué** et une notification l'indique. Pendant l'appel : micro coupé, haut-parleur, raccrocher. Un seul appel à la fois par personne.
+
+### Ce qu'il faut pour l'activer
+
+1. **Build natif** (WebRTC ne fonctionne pas dans Expo Go) : `eas build -p android --profile development` pour les essais, puis `preview` / `production`.
+2. **Relais TURN** sur le VPS (indispensable en 4G : les deux téléphones ne peuvent pas se joindre directement) :
+   - dans `.env` : `TURN_SECRET` (généré, voir DEPLOY.md §3), `TURN_EXTERNAL_IP=<IP publique du VPS>`, `TURN_URLS=turn:<domaine>:3478?transport=udp,turn:<domaine>:3478?transport=tcp` ;
+   - pare-feu : `sudo ufw allow 3478/udp && sudo ufw allow 3478/tcp && sudo ufw allow 49160:49200/udp` ;
+   - démarrage : `docker compose -f compose.prod.yml --profile appels up -d coturn`, puis `up -d api` pour que l'API prenne les nouvelles variables.
+3. **Push** (§4) pour que le téléphone sonne application fermée.
+
+Capacité du relais tel que configuré : 40 ports, soit environ **20 appels simultanés relayés** (`--min-port` / `--max-port` à élargir au besoin, avec la règle du pare-feu). Une heure d'appel relayé consomme environ 30 à 50 Mo de bande passante sur le VPS.
+
+### Points techniques
+
+- API : `POST /calls` (appeler), `POST /calls/:id/accept`, `POST /calls/:id/end`, `POST /calls/:id/signal` (relais WebRTC), `GET /calls?orderId=` (journal), `GET /calls/ringing`, `GET /calls/stream` (flux SSE de l'application : appels et statuts des commandes en temps réel).
+- Droits : seuls l'e-commerçant et le livreur de la commande ; logistique et administration lisent le journal (cloisonnement par île).
+- Identifiants TURN temporaires (1 h) signés par l'API avec `TURN_SECRET` : aucun compte TURN stocké.

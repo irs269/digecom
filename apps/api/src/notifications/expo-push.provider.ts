@@ -10,6 +10,8 @@ const BATCH = 100;
 
 /** Types qui demandent l'attention immédiate du livreur : canal « courses » (son + vibration). */
 export const URGENT_TYPES = new Set(['DELIVERY_OFFER', 'DELIVERY_ASSIGNED']);
+/** Appel entrant : canal « appels » (sonnerie), priorité haute, non enregistré en base. */
+export const CALL_TYPES = new Set(['CALL_INCOMING']);
 
 export interface ExpoMessage {
   to: string;
@@ -17,19 +19,23 @@ export interface ExpoMessage {
   body: string;
   sound: 'default';
   priority: 'high' | 'default';
-  channelId: 'courses' | 'default';
+  channelId: 'appels' | 'courses' | 'default';
+  /** Durée de vie : un appel entrant périmé ne doit pas sonner plus tard. */
+  ttl?: number;
   data: Record<string, unknown>;
 }
 
 export function buildMessages(tokens: string[], n: NotificationInput): ExpoMessage[] {
-  const urgent = URGENT_TYPES.has(n.type);
+  const call = CALL_TYPES.has(n.type);
+  const urgent = call || URGENT_TYPES.has(n.type);
   return tokens.map((to) => ({
     to,
     title: n.title,
     body: n.body,
     sound: 'default',
     priority: urgent ? 'high' : 'default',
-    channelId: urgent ? 'courses' : 'default',
+    channelId: call ? 'appels' : urgent ? 'courses' : 'default',
+    ...(call ? { ttl: 45 } : {}),
     data: { type: n.type, link: n.link ?? null, payload: n.payload ?? null },
   }));
 }

@@ -161,6 +161,7 @@ Lancée avant le déploiement du web, à la demande. Le code tourne contre l'API
 - **Livreur** : disponible / indisponible, offres de l'île (accepter / ignorer, retirées quand un autre accepte : push + rafraîchissement 15 s), course en cours (retrait, appel, remise avec montant encaissé et photo de preuve compressée 1280 px JPEG 70 %, client a pris / refusé, signaler un problème), historique, gains et argent à remettre à la caisse.
 - **Push** : `POST/DELETE /me/devices` (table `Device`), `ExpoPushProvider` (service Expo → FCM, lots de 100, jetons périmés supprimés, un échec n'interrompt jamais l'action), canal Android `courses` (priorité max, son, vibration) pour `DELIVERY_OFFER` / `DELIVERY_ASSIGNED`. Désactivé par défaut (`PUSH_ENABLED`).
 - **Hors ligne** : file d'actions sur le téléphone (AsyncStorage), rejouée dans l'ordre au retour du réseau ; `Idempotency-Key` fixée à la création de l'action ; intercepteur API (Redis, 24 h) qui renvoie la réponse déjà donnée sans refaire l'action ; une erreur libère la clé ; photo prise hors ligne envoyée juste avant l'action. Vente et acceptation d'une course exigent le réseau.
+- **Appels Dig'eCom** (VoIP WebRTC, à la demande) : e-commerçant ↔ livreur d'une même commande, numéro masqué, chiffré, non enregistré ; table `Call` (journal : sonne, en cours, terminé, refusé, manqué, annulé, échec), sonnerie 45 s puis « manqué » + notification, un appel à la fois, relais des messages WebRTC par Redis, flux SSE mobile `/calls/stream` (appels et statuts en direct), push « appel entrant » sur un canal Android dédié, relais `coturn` (profil Compose `appels`, identifiants temporaires HMAC). Écran d'appel (décrocher, refuser, micro, haut-parleur, chrono), journal sur la commande, repli sur l'appel téléphonique (Expo Go, client final).
 - **Publication préparée** : `eas.json` (development, preview APK, production AAB, signature gérée par EAS), fiche Play Store et politique de confidentialité (docs/store).
 
 ### Reste à faire
@@ -169,6 +170,7 @@ Lancée avant le déploiement du web, à la demande. Le code tourne contre l'API
 - Firebase (`google-services.json`), clé FCM V1 dans EAS, `eas init` (projectId), `PUSH_ENABLED=true` en production ; mesurer le délai de notification sur téléphone réel.
 - Construire l'APK `preview` et l'AAB `production`, jouer les parcours Maestro sur téléphone ou émulateur.
 - Play Store : compte développeur, fiche, captures, URL de la politique de confidentialité, test fermé 12 testeurs × 14 jours, puis production.
+- Appels Dig'eCom : premier essai réel entre deux téléphones (build natif + coturn sur le VPS), mesure de la qualité en 4G.
 - Facultatif : écran « Mon catalogue » du Leader Senior.
 
 ### Critères d'acceptation
@@ -184,7 +186,9 @@ Lancée avant le déploiement du web, à la demande. Le code tourne contre l'API
 - API e2e : `mobile.e2e-spec.ts` (8 tests : appareils, canal des offres, solde, `Idempotency-Key` rejoué / libéré / invalide) et refresh token mobile dans `auth.e2e-spec.ts`.
 - Mobile (Jest) : 10 tests, dont action hors ligne envoyée une seule fois, réponse perdue puis renvoi avec la même clé (une seule exécution), ordre conservé, refus définitif signalé, photo envoyée une fois.
 - Maestro (`apps/mobile/.maestro`) : vente → livraison → client a pris ; offre acceptée par un livreur et retirée chez l'autre (deux appareils). Écrits, **pas encore joués** (pas d'émulateur ni de build ici).
-- `expo export --platform android` : bundle produit (3,4 Mo).
+- API e2e `calls.e2e-spec.ts` (7 tests : droits, sonnerie, décroché, relais WebRTC, refus, annulation → manqué notifié, sonnerie expirée, un appel à la fois, journal et cloisonnement, identifiants TURN).
+- Mobile : 7 tests de la machine d'état de l'appel. **Aucun appel réel testé** (WebRTC demande un build natif).
+- `expo export --platform android` : bundle produit (3,6 Mo).
 
 ## Phase 7 – Mise en production sur le VPS (Docker, sécurité, sauvegardes)
 

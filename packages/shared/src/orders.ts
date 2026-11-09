@@ -1,3 +1,4 @@
+import type { CallEvent } from './calls';
 import { z } from 'zod';
 import { hasPermission, type Permission } from './permissions';
 import type { Role } from './roles';
@@ -531,4 +532,5 @@ export interface NotificationView {
 /** Événements envoyés sur le flux SSE. */
 export type LiveEvent =
   | { kind: 'notification'; notification: NotificationView }
-  | { kind: 'order'; orderId: string; status: OrderStatus; islandId: string };
+  | { kind: 'order'; orderId: string; status: OrderStatus; islandId: string }
+  | { kind: 'call'; event: CallEvent };

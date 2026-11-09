@@ -29,6 +29,11 @@ export class ApiError extends Error {
 type Listener = (user: MeResponse | null) => void;
 
 let accessToken: string | null = null;
+
+/** Jeton d'accès courant (flux temps réel ouvert à part, hors `api`). */
+export function getAccessToken(): string | null {
+  return accessToken;
+}
 let refreshing: Promise<boolean> | null = null;
 const listeners = new Set<Listener>();
 

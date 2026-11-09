@@ -11,7 +11,11 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { CallScreen } from '@/components/CallScreen';
+import { CallProvider, useCalls } from '@/lib/calls/CallProvider';
+import { startLive, stopLive, wakeLive } from '@/lib/live';
 import { setOnSynced, startAutoFlush } from '@/lib/offline';
 import { persister, queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
@@ -20,6 +24,24 @@ void SplashScreen.preventAutoHideAsync();
 
 function Root() {
   const { loading, user } = useSession();
+  const { checkRinging } = useCalls();
+
+  // Flux temps réel (appels, statuts) ouvert tant qu'un compte est connecté.
+  useEffect(() => {
+    if (!user) return;
+    startLive();
+    void checkRinging();
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') {
+        wakeLive();
+        void checkRinging();
+      }
+    });
+    return () => {
+      sub.remove();
+      stopLive();
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     setOnSynced(() => void queryClient.invalidateQueries());
@@ -34,6 +56,8 @@ function Root() {
     const opened = Notifications.addNotificationResponseReceivedListener((r) => {
       const data = r.notification.request.content.data as { type?: string } | undefined;
       void queryClient.invalidateQueries();
+      // Appel entrant touché depuis la notification : l'écran d'appel s'ouvre s'il sonne encore.
+      if (data?.type === 'CALL_INCOMING') void checkRinging();
       if (data?.type === 'DELIVERY_OFFER' || data?.type === 'DELIVERY_ASSIGNED') {
         router.navigate('/livreur');
       }
@@ -42,7 +66,7 @@ function Root() {
       received.remove();
       opened.remove();
     };
-  }, []);
+  }, [checkRinging]);
 
   useEffect(() => {
     if (!loading) void SplashScreen.hideAsync();
@@ -53,6 +77,7 @@ function Root() {
     <>
       <StatusBar style={user ? 'dark' : 'light'} />
       <Stack screenOptions={{ headerShown: false }} />
+      <CallScreen />
     </>
   );
 }
@@ -72,7 +97,9 @@ export default function Layout() {
         persistOptions={{ persister, maxAge: 24 * 3600_000 }}
       >
         <SessionProvider>
-          <Root />
+          <CallProvider>
+            <Root />
+          </CallProvider>
         </SessionProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>

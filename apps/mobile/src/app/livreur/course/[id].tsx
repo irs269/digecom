@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Linking, Pressable, View } from 'react-native';
+import { CallButtons, CallLog } from '@/components/CallButtons';
 import { PendingBanner } from '@/components/pending';
 import {
   Badge,
@@ -182,12 +183,39 @@ export default function Course() {
         <T style={{ color: colors.muted }}>
           {[run.zone, run.customerAddress].filter(Boolean).join(' · ') || '—'} · {destPhone}
         </T>
-        <Button
-          label={`Appeler ${dest}`}
-          variant="outline"
-          onPress={() => void Linking.openURL(`tel:${destPhone}`)}
-        />
+        {direct ? (
+          // Le client n'a pas l'application : appel téléphonique.
+          <Button
+            label={`Appeler ${dest}`}
+            variant="outline"
+            onPress={() => void Linking.openURL(`tel:${destPhone}`)}
+          />
+        ) : (
+          <CallButtons
+            orderId={run.id}
+            orderStatus={run.status}
+            peerName={dest}
+            peerPhone={destPhone}
+            primary={false}
+          />
+        )}
       </Card>
+
+      {direct ? (
+        <Card>
+          <T style={{ color: colors.muted, fontSize: 12 }}>E-COMMERÇANT</T>
+          <T weight="semibold">{run.seller.fullName}</T>
+          <CallButtons
+            orderId={run.id}
+            orderStatus={run.status}
+            peerName={run.seller.fullName}
+            peerPhone={run.seller.phone}
+            primary={false}
+          />
+        </Card>
+      ) : null}
+
+      <CallLog orderId={run.id} />
 
       {can('handover') ? (
         <Card>

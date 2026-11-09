@@ -133,6 +133,6 @@ export class NotificationsController {
     NotificationService,
     { provide: PushProvider, useClass: ExpoPushProvider },
   ],
-  exports: [LiveService, NotificationService],
+  exports: [LiveService, NotificationService, PushProvider],
 })
 export class NotificationsModule {}

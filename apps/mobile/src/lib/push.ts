@@ -25,6 +25,15 @@ async function ensureChannels() {
     vibrationPattern: [0, 400, 200, 400, 200, 400],
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });
+  // Appels entrants : sonnerie longue et vibration, visibles sur l'écran verrouillé.
+  await Notifications.setNotificationChannelAsync('appels', {
+    name: 'Appels Dig’eCom',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: 'default',
+    vibrationPattern: [0, 800, 600, 800, 600, 800],
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    bypassDnd: false,
+  });
   await Notifications.setNotificationChannelAsync('default', {
     name: 'Notifications',
     importance: Notifications.AndroidImportance.DEFAULT,

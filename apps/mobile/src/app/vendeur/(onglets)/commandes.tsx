@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Linking, Pressable, View } from 'react-native';
 import { PendingBanner } from '@/components/pending';
 import { Badge, Card, Empty, Loading, Screen, T, Title } from '@/components/ui';
+import { useCalls } from '@/lib/calls/CallProvider';
 import { useMyOrders } from '@/lib/hooks';
 import { colors } from '@/theme';
 
@@ -11,6 +12,7 @@ const COURIER_ACTIVE = ['ASSIGNED', 'OUT_FOR_DELIVERY', 'HANDED_OVER'];
 
 export default function Commandes() {
   const orders = useMyOrders();
+  const calls = useCalls();
   return (
     <Screen onRefresh={() => void orders.refetch()} refreshing={orders.isRefetching}>
       <Title>Mes commandes</Title>
@@ -40,7 +42,11 @@ export default function Commandes() {
               <Pressable
                 testID={`appeler-livreur-${o.number}`}
                 accessibilityRole="button"
-                onPress={() => void Linking.openURL(`tel:${o.courier!.phone}`)}
+                onPress={() =>
+                  calls.available
+                    ? void calls.start(o.id)
+                    : void Linking.openURL(`tel:${o.courier!.phone}`)
+                }
                 style={{
                   marginTop: 10,
                   flexDirection: 'row',

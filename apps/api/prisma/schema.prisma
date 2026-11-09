@@ -128,6 +128,8 @@ model User {
   handovers       HandoverConfirmation[] @relation("HandoverBy")
   notifications   Notification[]
   devices         Device[]
+  callsMade       Call[]                 @relation("CallCaller")
+  callsReceived   Call[]                 @relation("CallCallee")
 
   ledgerAsBeneficiary LedgerEntry[]   @relation("LedgerBeneficiary")
   ledgerBy            LedgerEntry[]   @relation("LedgerBy")
@@ -599,6 +601,7 @@ model Order {
   island          Island                 @relation(fields: [islandId], references: [id])
   site            Site                   @relation(fields: [siteId], references: [id])
   items           OrderItem[]
+  calls           Call[]
   events          OrderEvent[]
   offers          DeliveryOffer[]
   confirmations   HandoverConfirmation[]
@@ -1062,4 +1065,34 @@ model Device {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+enum CallStatus {
+  RINGING
+  ACCEPTED
+  ENDED
+  DECLINED
+  MISSED
+  CANCELLED
+  FAILED
+}
+
+/// Appel audio dans l'application (WebRTC) entre l'e-commerçant et le livreur d'une commande.
+/// Journal seulement : le son n'est jamais enregistré.
+model Call {
+  id         String     @id @default(cuid())
+  orderId    String
+  callerId   String
+  calleeId   String
+  status     CallStatus @default(RINGING)
+  createdAt  DateTime   @default(now())
+  answeredAt DateTime?
+  endedAt    DateTime?
+
+  order  Order @relation(fields: [orderId], references: [id])
+  caller User  @relation("CallCaller", fields: [callerId], references: [id])
+  callee User  @relation("CallCallee", fields: [calleeId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@index([calleeId, status])
 }

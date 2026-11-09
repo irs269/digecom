@@ -67,6 +67,7 @@ sed -i \
   -e "s/^JWT_ACCESS_SECRET=.*/JWT_ACCESS_SECRET=$(openssl rand -hex 48)/" \
   -e "s/^S3_ACCESS_KEY=.*/S3_ACCESS_KEY=$(openssl rand -hex 10)/" \
   -e "s/^S3_SECRET_KEY=.*/S3_SECRET_KEY=$(openssl rand -hex 24)/" \
+  -e "s/^TURN_SECRET=.*/TURN_SECRET=$(openssl rand -hex 32)/" \
   .env
 # Domaines :
 sed -i \

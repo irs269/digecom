@@ -7,7 +7,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { CallButtons, CallLog } from '@/components/CallButtons';
 import { PendingBanner } from '@/components/pending';
 import {
   Badge,
@@ -168,11 +169,12 @@ export default function Commande() {
                   : 'En route vers toi.'}
             </T>
           ) : null}
-          <Button
-            testID="appeler-livreur"
-            label={`Appeler ${order.courier.fullName}`}
-            variant={inDelivery ? 'orange' : 'outline'}
-            onPress={() => void Linking.openURL(`tel:${order.courier!.phone}`)}
+          <CallButtons
+            orderId={order.id}
+            orderStatus={order.status}
+            peerName={order.courier.fullName}
+            peerPhone={order.courier.phone}
+            primary={inDelivery}
           />
         </Card>
       ) : order.status === 'READY' && order.deliveryMode !== 'PICKUP' ? (
@@ -240,6 +242,8 @@ export default function Commande() {
       <Card style={{ marginTop: 12 }}>
         <Steps steps={timeline(order)} />
       </Card>
+
+      <CallLog orderId={order.id} />
 
       {order.events.length ? (
         <Card>
