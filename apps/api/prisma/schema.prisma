@@ -127,6 +127,7 @@ model User {
   deliveryOffers  DeliveryOffer[]        @relation("CourierOffers")
   handovers       HandoverConfirmation[] @relation("HandoverBy")
   notifications   Notification[]
+  devices         Device[]
 
   ledgerAsBeneficiary LedgerEntry[]   @relation("LedgerBeneficiary")
   ledgerBy            LedgerEntry[]   @relation("LedgerBy")
@@ -1047,4 +1048,18 @@ model SalesTarget {
   updatedAt       DateTime @updatedAt
 
   leader User @relation(fields: [leaderId], references: [id])
+}
+
+/// Téléphone enregistré pour le push mobile (jeton Expo, relayé par FCM sur Android).
+model Device {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  platform   String
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

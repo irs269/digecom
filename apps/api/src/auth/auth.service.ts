@@ -259,6 +259,7 @@ export class AuthService {
       site: user.site,
       mustChangePassword: user.mustChangePassword,
       modules: allowedModules(user.role),
+      ...(user.role === 'COURIER' ? { isAvailable: user.isAvailable } : {}),
     };
   }
 

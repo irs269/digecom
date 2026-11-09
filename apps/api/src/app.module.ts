@@ -1,3 +1,4 @@
+import { MobileModule } from './mobile/mobile.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
@@ -51,6 +52,7 @@ const isDev = process.env.NODE_ENV === 'development';
     SettingsModule,
     StorageModule,
     NotificationsModule,
+    MobileModule,
     LedgerModule,
     InsightsModule,
     AuditModule,

@@ -33,6 +33,10 @@ export const envSchema = z.object({
   LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   /** Outils de dev (simulateur livreur / vendeur). Jamais en production. */
   DEV_TOOLS_ENABLED: bool.default('false'),
+  /** Push mobile via le service Expo (FCM sur Android). Désactivé : aucun envoi, rien n'échoue. */
+  PUSH_ENABLED: bool.default('false'),
+  /** Jeton d'accès Expo (facultatif, recommandé en production : « Enhanced push security »). */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   S3_ENDPOINT: z.string().url().optional(),
   /** Adresse de MinIO vue par le navigateur (URL pré-signées). */

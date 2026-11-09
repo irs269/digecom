@@ -22,12 +22,8 @@ import { AnyAuthenticated, CurrentUser, Public } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveService } from './live.service';
-import {
-  NoopPushProvider,
-  NotificationService,
-  PushProvider,
-  toNotificationView,
-} from './notification.service';
+import { ExpoPushProvider } from './expo-push.provider';
+import { NotificationService, PushProvider, toNotificationView } from './notification.service';
 
 const listSchema = z.object({ unread: z.enum(['true', 'false']).optional() });
 
@@ -135,7 +131,7 @@ export class NotificationsController {
   providers: [
     LiveService,
     NotificationService,
-    { provide: PushProvider, useClass: NoopPushProvider },
+    { provide: PushProvider, useClass: ExpoPushProvider },
   ],
   exports: [LiveService, NotificationService],
 })
