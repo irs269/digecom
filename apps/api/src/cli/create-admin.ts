@@ -78,10 +78,25 @@ export async function createAdmin(
   return { user, reference };
 }
 
-/** Question simple, ou saisie masquée (« * ») pour un mot de passe. */
+/**
+ * Lecture ligne à ligne partagée (entrée non interactive, ex. `printf … | create-admin`) : une
+ * seule interface, sinon la première consommerait tout le tampon.
+ */
+let lines: AsyncIterableIterator<string> | null = null;
+async function nextLine(question: string): Promise<string> {
+  process.stdout.write(question);
+  lines ??= createInterface({ input: process.stdin, terminal: false })[Symbol.asyncIterator]();
+  const { value, done } = await lines.next();
+  if (done) throw new Error('Entrée terminée avant la fin des questions');
+  process.stdout.write('\n');
+  return value;
+}
+
+/** Question simple, ou saisie masquée (« * ») pour un mot de passe dans un terminal. */
 function ask(question: string, hidden = false): Promise<string> {
   const stdin = process.stdin;
-  if (!hidden || !stdin.isTTY) {
+  if (!stdin.isTTY) return nextLine(question);
+  if (!hidden) {
     const rl = createInterface({ input: stdin, output: process.stdout });
     return new Promise((resolve) =>
       rl.question(question, (a) => {
