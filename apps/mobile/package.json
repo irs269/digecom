@@ -47,7 +47,8 @@
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "eas-build-post-install": "pnpm --filter @digecom/shared build"
   },
   "private": true,
   "jest": {
