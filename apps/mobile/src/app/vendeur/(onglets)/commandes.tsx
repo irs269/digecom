@@ -19,7 +19,7 @@ export default function Commandes() {
       {orders.data?.items.map((o) => (
         <Pressable
           key={o.id}
-          onPress={() => router.navigate(`/vendeur/commande/${o.id}`)}
+          onPress={() => router.push(`/vendeur/commande/${o.id}`)}
           testID={`commande-${o.number}`}
         >
           <Card>

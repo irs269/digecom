@@ -101,7 +101,7 @@ export default function Accueil() {
         <Empty title="Rien à faire pour l’instant." text="Bonne vente !" />
       ) : (
         todo.map((o) => (
-          <Pressable key={o.id} onPress={() => router.navigate(`/vendeur/commande/${o.id}`)}>
+          <Pressable key={o.id} onPress={() => router.push(`/vendeur/commande/${o.id}`)}>
             <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.orange }}>
               <T weight="semibold">{todoOf(o)}</T>
               <T style={{ color: colors.muted, fontSize: 13 }}>

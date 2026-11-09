@@ -1,18 +1,9 @@
-import { Redirect } from 'expo-router';
-import { AppTabs } from '@/components/tabs';
+import { Redirect, Stack } from 'expo-router';
 import { useSession } from '@/lib/session';
 
+/** Pile du livreur : les onglets, puis le détail d'une course par-dessus. */
 export default function LivreurLayout() {
   const { user } = useSession();
   if (!user || user.role !== 'COURIER') return <Redirect href="/" />;
-  return (
-    <AppTabs
-      tabs={[
-        { name: 'index', title: 'Courses', icon: '➜' },
-        { name: 'historique', title: 'Historique', icon: '☰' },
-        { name: 'gains', title: 'Gains', icon: '◎' },
-      ]}
-      hidden={['course/[id]']}
-    />
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

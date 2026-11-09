@@ -52,7 +52,9 @@ export default function Commande() {
         <Button
           label="← Mes commandes"
           variant="outline"
-          onPress={() => router.navigate('/vendeur/commandes')}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace('/vendeur/commandes')
+          }
         />
       </Screen>
     );
@@ -121,7 +123,9 @@ export default function Commande() {
 
   return (
     <Screen onRefresh={() => void orders.refetch()} refreshing={orders.isRefetching}>
-      <Pressable onPress={() => router.navigate('/vendeur/commandes')}>
+      <Pressable
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/vendeur/commandes'))}
+      >
         <T style={{ color: colors.blue, marginBottom: 10 }}>← Mes commandes</T>
       </Pressable>
       <PendingBanner />

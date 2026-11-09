@@ -57,7 +57,7 @@ export default function Courses() {
       const order = await api<OrderView>(`/courier/offers/${o.orderId}/accept`, { method: 'POST' });
       void qc.invalidateQueries({ queryKey: keys.offers });
       await qc.invalidateQueries({ queryKey: keys.runs });
-      router.navigate(`/livreur/course/${order.id}`);
+      router.push(`/livreur/course/${order.id}`);
     } catch (err) {
       void qc.invalidateQueries({ queryKey: keys.offers });
       setMessage({
@@ -131,7 +131,7 @@ export default function Courses() {
           {runs.data.map((r) => (
             <Pressable
               key={r.id}
-              onPress={() => router.navigate(`/livreur/course/${r.id}`)}
+              onPress={() => router.push(`/livreur/course/${r.id}`)}
               testID={`course-${r.number}`}
             >
               <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.blue }}>

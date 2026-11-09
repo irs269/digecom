@@ -61,7 +61,7 @@ export default function Course() {
         <Button
           label="← Mes courses"
           variant="outline"
-          onPress={() => router.navigate('/livreur')}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/livreur'))}
         />
       </Screen>
     );
@@ -132,7 +132,7 @@ export default function Course() {
 
   return (
     <Screen onRefresh={() => void runs.refetch()} refreshing={runs.isRefetching}>
-      <Pressable onPress={() => router.navigate('/livreur')}>
+      <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/livreur'))}>
         <T style={{ color: colors.blue, marginBottom: 10 }}>← Mes courses</T>
       </Pressable>
       <PendingBanner />

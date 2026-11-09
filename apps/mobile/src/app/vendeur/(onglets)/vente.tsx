@@ -111,7 +111,7 @@ export default function NouvelleVente() {
         </Notice>
         <Button
           label="Voir la commande"
-          onPress={() => router.navigate(`/vendeur/commande/${done.id}`)}
+          onPress={() => router.push(`/vendeur/commande/${done.id}`)}
         />
         <Button label="Nouvelle vente" variant="outline" onPress={() => setDone(null)} />
       </Screen>

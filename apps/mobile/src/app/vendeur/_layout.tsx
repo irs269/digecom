@@ -1,19 +1,9 @@
-import { Redirect } from 'expo-router';
-import { AppTabs } from '@/components/tabs';
+import { Redirect, Stack } from 'expo-router';
 import { useSession } from '@/lib/session';
 
+/** Pile de l'e-commerçant : les onglets, puis le détail d'une commande par-dessus. */
 export default function VendeurLayout() {
   const { user } = useSession();
   if (!user || user.role !== 'SELLER') return <Redirect href="/" />;
-  return (
-    <AppTabs
-      tabs={[
-        { name: 'index', title: 'Accueil', icon: '⌂' },
-        { name: 'vente', title: 'Vendre', icon: '＋' },
-        { name: 'commandes', title: 'Commandes', icon: '☰' },
-        { name: 'solde', title: 'Solde', icon: '◎' },
-      ]}
-      hidden={['commande/[id]']}
-    />
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
