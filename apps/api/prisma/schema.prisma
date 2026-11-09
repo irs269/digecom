@@ -358,6 +358,7 @@ model StockMovement {
   product Product @relation(fields: [productId], references: [id])
   site    Site    @relation(fields: [siteId], references: [id])
   lot     Lot?    @relation(fields: [lotId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Restrict)
   by      User    @relation("StockMovementBy", fields: [byId], references: [id])
 
   @@index([productId, siteId, at])
@@ -601,6 +602,7 @@ model Order {
   offers          DeliveryOffer[]
   confirmations   HandoverConfirmation[]
   ledgerEntries   LedgerEntry[]
+  stockMovements  StockMovement[]
 
   @@index([status, islandId])
   @@index([sellerId])

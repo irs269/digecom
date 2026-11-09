@@ -54,6 +54,25 @@ describe('StockService', () => {
     const sites = await prisma.site.findMany({ orderBy: { name: 'asc' } });
     siteA = sites[0]!.id;
     siteB = sites[1]!.id;
+    // StockMovement.orderId référence Order (clé étrangère) : commandes minimales pour les tests.
+    const seller = await prisma.user.findUniqueOrThrow({ where: { phone: '+2693300011' } });
+    const site = sites[0]!;
+    const ids = ['CMD-1', 'CMD-2', 'x', 'CMD-FIFO', 'CMD-DIRECT', 'CMD-RET'];
+    for (let i = 0; i < 20; i++) ids.push(`CMD-C${i}`);
+    await prisma.order.createMany({
+      data: ids.map((id) => ({
+        id,
+        number: `TEST-${id}`,
+        sellerId: seller.id,
+        sellerType: 'SELLER' as const,
+        leaderId: seller.leaderId!,
+        islandId: site.islandId,
+        siteId: site.id,
+        customerName: 'Test stock',
+        customerPhone: '+2693999999',
+        deliveryMode: 'PICKUP' as const,
+      })),
+    });
   });
 
   afterAll(async () => {
