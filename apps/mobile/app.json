@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "km.digecom.app"
+      "bundleIdentifier": "km.digecom.app",
+      "bitcode": false
     },
     "android": {
       "package": "km.digecom.app",
@@ -25,7 +26,11 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.WAKE_LOCK"
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.BLUETOOTH"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -67,8 +72,14 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "8612eb14-cafe-4632-9cab-392d49851771"
+      },
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
       }
-    }
+    },
+    "owner": "irsoid269"
   }
 }
