@@ -13,12 +13,12 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://digecom.example.km/api" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://digecom.169-58-114-169.sslip.io/api" }
     },
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://digecom.example.km/api" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://digecom.169-58-114-169.sslip.io/api" }
     }
   },
   "submit": {
