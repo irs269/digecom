@@ -64,6 +64,14 @@
         {
           "microphonePermission": "Dig'eCom utilise le micro pour les appels entre e-commerçants et livreurs."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "# WebRTC (appels Dig’eCom) : classes natives chargées par JNI, à conserver.\n-keep class org.webrtc.** { *; }\n-dontwarn org.webrtc.**"
+          }
+        }
       ]
     ],
     "scheme": "digecom",
