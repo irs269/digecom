@@ -28,6 +28,7 @@ import {
   Title,
 } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
+import { cartEarnings, commonSites, type Cart } from '@/lib/cart';
 import { keys, useCatalog } from '@/lib/hooks';
 import { colors, radius } from '@/theme';
 
@@ -37,18 +38,14 @@ const MODE_DESC: Record<DeliveryMode, string> = {
   PICKUP: 'Tu récupères le produit au site.',
 };
 
-/** Ce que le vendeur gagne : part − taxe, par unité × quantité. */
-export function earnings(p: VisibleProduct, quantity: number) {
-  const part = (p.sellerAmount ?? 0) * quantity;
-  const tax = p.sellerTax * quantity;
-  return { price: p.salePrice * quantity, part, tax, net: part - tax };
-}
+/** Au plus 10 produits différents par commande (limite de l'API). */
+const MAX_LINES = 10;
 
 export default function NouvelleVente() {
   const qc = useQueryClient();
   const catalog = useCatalog();
-  const [product, setProduct] = useState<VisibleProduct | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  /** Panier : produit → quantité. Une seule commande, préparée sur un site, une seule course. */
+  const [cart, setCart] = useState<Cart>({});
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<OrderView | null>(null);
 
@@ -69,8 +66,7 @@ export default function NouvelleVente() {
     try {
       const order = await api<OrderView>('/me/orders', { method: 'POST', body: values });
       setDone(order);
-      setProduct(null);
-      setQuantity(1);
+      setCart({});
       form.reset();
       void qc.invalidateQueries({ queryKey: keys.myOrders });
       void qc.invalidateQueries({ queryKey: keys.catalog });
@@ -85,16 +81,26 @@ export default function NouvelleVente() {
     }
   });
 
-  const choose = (p: VisibleProduct) => {
-    setProduct(p);
-    setQuantity(1);
-    form.setValue('items', [{ productId: p.id, quantity: 1 }], { shouldValidate: false });
+  const updateCart = (next: Cart) => {
+    setCart(next);
+    form.setValue(
+      'items',
+      Object.entries(next).map(([productId, quantity]) => ({ productId, quantity })),
+    );
   };
-  const changeQty = (q: number) => {
-    if (!product) return;
-    const next = Math.max(1, Math.min(q, product.available));
-    setQuantity(next);
-    form.setValue('items', [{ productId: product.id, quantity: next }]);
+  /** Toucher un produit l'ajoute au panier, ou l'en retire s'il y est déjà. */
+  const toggle = (p: VisibleProduct) => {
+    if (cart[p.id]) {
+      const rest = { ...cart };
+      delete rest[p.id];
+      updateCart(rest);
+    } else if (Object.keys(cart).length < MAX_LINES) {
+      updateCart({ ...cart, [p.id]: 1 });
+    }
+  };
+  const changeQty = (p: VisibleProduct, q: number) => {
+    if (q < 1) return toggle(p);
+    updateCart({ ...cart, [p.id]: Math.min(q, p.available) });
   };
 
   if (done) {
@@ -112,7 +118,11 @@ export default function NouvelleVente() {
     );
   }
 
-  const calc = product ? earnings(product, quantity) : null;
+  const products = catalog.data?.products ?? [];
+  const lines = Object.keys(cart).length;
+  const calc = lines ? cartEarnings(products, cart) : null;
+  // L'API prépare toute la commande sur un seul site : il doit avoir tout le panier en stock.
+  const sitesOk = lines ? commonSites(products, cart) : [];
 
   return (
     <Screen onRefresh={() => void catalog.refetch()} refreshing={catalog.isRefetching}>
@@ -120,11 +130,12 @@ export default function NouvelleVente() {
       {error ? <Notice tone="red">{error}</Notice> : null}
 
       <T weight="semibold" style={{ fontSize: 16 }}>
-        1. Produit · catalogue de ton leader
+        1. Produits · catalogue de ton leader
       </T>
       <T style={{ color: colors.muted, fontSize: 13, marginBottom: 10 }}>
         Tu vois uniquement les produits et le stock publiés par{' '}
-        {catalog.data?.leader.fullName ?? 'ton leader'}.
+        {catalog.data?.leader.fullName ?? 'ton leader'}. Touche plusieurs produits : ils partent
+        ensemble, en une seule livraison.
       </T>
       {catalog.isLoading ? <Loading /> : null}
       {catalog.data && catalog.data.products.length === 0 ? (
@@ -134,49 +145,64 @@ export default function NouvelleVente() {
         />
       ) : null}
       {catalog.data?.products.map((p) => {
-        const selected = product?.id === p.id;
+        const qty = cart[p.id] ?? 0;
+        const selected = qty > 0;
         const out = p.available <= 0;
         return (
           <Pressable
             key={p.id}
             disabled={out}
-            onPress={() => choose(p)}
+            onPress={() => toggle(p)}
             testID={`produit-${p.sku}`}
           >
             <Card
               style={{
-                flexDirection: 'row',
-                gap: 12,
-                alignItems: 'center',
                 borderColor: selected ? colors.blue : colors.line,
                 borderWidth: selected ? 2 : 1,
                 opacity: out ? 0.5 : 1,
               }}
             >
-              {p.photos[0] ? (
-                <Image
-                  source={{ uri: p.photos[0].url }}
-                  style={{ width: 52, height: 52, borderRadius: radius.sm }}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: radius.sm,
-                    backgroundColor: colors.blueSoft,
-                  }}
-                />
-              )}
-              <View style={{ flex: 1 }}>
-                <T weight="semibold">{p.name}</T>
-                <T style={{ color: out ? colors.red : colors.muted, fontSize: 13 }}>
-                  {out
-                    ? 'Rupture chez ton leader – vente bloquée'
-                    : `${p.available} disponible${p.available > 1 ? 's' : ''}`}
-                </T>
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                {p.photos[0] ? (
+                  <Image
+                    source={{ uri: p.photos[0].url }}
+                    style={{ width: 52, height: 52, borderRadius: radius.sm }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: radius.sm,
+                      backgroundColor: colors.blueSoft,
+                    }}
+                  />
+                )}
+                <View style={{ flex: 1 }}>
+                  <T weight="semibold">{p.name}</T>
+                  <T style={{ color: out ? colors.red : colors.muted, fontSize: 13 }}>
+                    {out
+                      ? 'Rupture chez ton leader – vente bloquée'
+                      : `${p.available} disponible${p.available > 1 ? 's' : ''}`}
+                  </T>
+                </View>
+                <T weight="bold">{formatKmf(p.salePrice)}</T>
               </View>
-              <T weight="bold">{formatKmf(p.salePrice)}</T>
+              {selected ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                  <T style={{ flex: 1, color: colors.muted }}>Quantité</T>
+                  <Button label="−" variant="outline" onPress={() => changeQty(p, qty - 1)} />
+                  <T weight="bold" testID={`quantite-${p.sku}`}>
+                    {qty}
+                  </T>
+                  <Button
+                    label="+"
+                    variant="outline"
+                    disabled={qty >= p.available}
+                    onPress={() => changeQty(p, qty + 1)}
+                  />
+                </View>
+              ) : null}
             </Card>
           </Pressable>
         );
@@ -188,15 +214,14 @@ export default function NouvelleVente() {
         </T>
       ) : null}
 
-      {product ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <T>Quantité</T>
-          <Button label="−" variant="outline" onPress={() => changeQty(quantity - 1)} />
-          <T weight="bold" testID="quantite">
-            {quantity}
-          </T>
-          <Button label="+" variant="outline" onPress={() => changeQty(quantity + 1)} />
-        </View>
+      {lines >= MAX_LINES ? (
+        <Notice tone="orange">10 produits différents au maximum par vente.</Notice>
+      ) : null}
+      {lines > 1 && sitesOk.length === 0 ? (
+        <Notice tone="orange">
+          Aucun site de ton île n’a tout ce panier en stock : fais deux ventes séparées, ou réduis
+          les quantités.
+        </Notice>
       ) : null}
 
       <T weight="semibold" style={{ fontSize: 16, marginTop: 12, marginBottom: 8 }}>
@@ -248,7 +273,10 @@ export default function NouvelleVente() {
           <T weight="semibold" style={{ marginBottom: 6 }}>
             Ce que tu gagnes sur cette vente
           </T>
-          <Row label="Prix de vente" value={formatKmf(calc.price)} />
+          <Row
+            label={`${calc.units} article${calc.units > 1 ? 's' : ''} · prix de vente`}
+            value={formatKmf(calc.price)}
+          />
           <Row label="Ta part" value={formatKmf(calc.part)} />
           <Row label="Taxe e-commerçant" value={`− ${formatKmf(calc.tax)}`} />
           <Row label="Net pour toi" value={formatKmf(calc.net)} strong />
@@ -258,11 +286,13 @@ export default function NouvelleVente() {
         </Card>
       ) : null}
 
-      {form.formState.errors.items ? <Notice tone="red">Choisis un produit.</Notice> : null}
+      {form.formState.errors.items ? (
+        <Notice tone="red">Choisis au moins un produit.</Notice>
+      ) : null}
       <Button
         testID="enregistrer-vente"
-        label="Enregistrer la vente"
-        disabled={!product}
+        label={lines > 1 ? `Enregistrer la vente (${lines} produits)` : 'Enregistrer la vente'}
+        disabled={!lines || (lines > 1 && sitesOk.length === 0)}
         loading={form.formState.isSubmitting}
         onPress={() => void submit()}
       />
