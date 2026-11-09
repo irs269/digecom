@@ -44,7 +44,7 @@ export default function Commandes() {
                 accessibilityRole="button"
                 onPress={() =>
                   calls.available
-                    ? void calls.start(o.id)
+                    ? void calls.start({ orderId: o.id })
                     : void Linking.openURL(`tel:${o.courier!.phone}`)
                 }
                 style={{

@@ -1081,7 +1081,8 @@ enum CallStatus {
 /// Journal seulement : le son n'est jamais enregistré.
 model Call {
   id         String     @id @default(cuid())
-  orderId    String
+  /// Null : appel direct depuis l'annuaire (logistique, leaders, administration).
+  orderId    String?
   callerId   String
   calleeId   String
   status     CallStatus @default(RINGING)
@@ -1089,10 +1090,11 @@ model Call {
   answeredAt DateTime?
   endedAt    DateTime?
 
-  order  Order @relation(fields: [orderId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
   caller User  @relation("CallCaller", fields: [callerId], references: [id])
   callee User  @relation("CallCallee", fields: [calleeId], references: [id])
 
   @@index([orderId, createdAt])
   @@index([calleeId, status])
+  @@index([callerId, createdAt])
 }

@@ -14,14 +14,15 @@ import { onLive } from '../live';
 import { queryClient } from '../query';
 import { useSession } from '../session';
 import { callAudio } from './audio';
-import { callReducer, initialCallState, type CallState } from './machine';
+import { callReducer, initialCallState, type CallState } from '@digecom/shared';
 import { AudioSession, voipAvailable } from './webrtc';
 
 interface CallContextValue {
   state: CallState;
   /** Appels dans l'application possibles sur ce téléphone (sinon : appel téléphonique). */
   available: boolean;
-  start: (orderId: string) => Promise<void>;
+  /** Appeler l'autre participant d'une commande (`orderId`) ou un contact (`userId`). */
+  start: (target: { orderId?: string; userId?: string }) => Promise<void>;
   accept: () => Promise<void>;
   hangup: () => Promise<void>;
   toggleMute: () => void;
@@ -160,13 +161,13 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }
   }, [user, closeSession]);
 
-  const start = useCallback(async (orderId: string) => {
+  const start = useCallback(async (target: { orderId?: string; userId?: string }) => {
     if (stateRef.current.phase !== 'idle' && stateRef.current.phase !== 'ended') return;
     dispatch({ type: 'dial', orderNumber: '', peerName: '' });
     try {
-      const res = await api<StartCallResponse>('/calls', { method: 'POST', body: { orderId } });
+      const res = await api<StartCallResponse>('/calls', { method: 'POST', body: target });
       dispatch({ type: 'dialed', call: res.call, iceServers: res.iceServers });
-      void queryClient.invalidateQueries({ queryKey: ['calls', orderId] });
+      void queryClient.invalidateQueries({ queryKey: ['calls'] });
     } catch (err) {
       dispatch({ type: 'dial-failed', message: dialError(err) });
     }

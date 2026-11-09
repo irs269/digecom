@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import type { OrderStatus } from './orders';
+import type { Role } from './roles';
 
 /**
- * Appels audio dans l'application (VoIP, WebRTC) entre l'e-commerçant et le livreur d'une même
- * commande. L'API met en relation et journalise ; le son passe de téléphone à téléphone (ou par
+ * Appels audio dans l'application et le back-office (VoIP, WebRTC) : e-commerçant ↔ livreur
+ * d'une même commande, et annuaire (logistique, leaders, administration). L'API met en relation et journalise ; le son passe de téléphone à téléphone (ou par
  * le relais TURN) et n'est jamais enregistré.
  */
 
@@ -39,7 +40,64 @@ export const CALLABLE_ORDER_STATUSES: readonly OrderStatus[] = [
 /** Durée maximale de sonnerie avant « manqué ». */
 export const CALL_RING_SECONDS = 45;
 
-export const startCallSchema = z.object({ orderId: z.string().min(1) });
+// --- Qui peut appeler qui -----------------------------------------------------------------------
+
+/** Ce que la règle d'appel connaît d'un utilisateur. */
+export interface CallPeer {
+  id: string;
+  role: Role;
+  islandId: string | null;
+  leaderId: string | null;
+}
+
+/**
+ * Appels hors commande (annuaire) :
+ * - administrateur ↔ tout utilisateur ;
+ * - assistant logistique ↔ livreurs et e-commerçants de son île ;
+ * - Leader Senior ↔ ses e-commerçants ; Leader Junior ↔ ses téléconseillers.
+ * Les deux sens sont autorisés (l'e-commerçant peut appeler la logistique de son île, etc.).
+ * L'e-commerçant et le livreur d'une même commande s'appellent via la commande (voir l'API).
+ */
+export function canCallDirectly(a: CallPeer, b: CallPeer): boolean {
+  if (a.id === b.id) return false;
+  const pair = (x: CallPeer, y: CallPeer): boolean => {
+    if (x.role === 'ADMIN') return true;
+    if (x.role === 'LOGISTICS_ASSISTANT') {
+      return (
+        (y.role === 'COURIER' || y.role === 'SELLER') && !!x.islandId && x.islandId === y.islandId
+      );
+    }
+    if (x.role === 'LEADER_SENIOR') return y.role === 'SELLER' && y.leaderId === x.id;
+    if (x.role === 'LEADER_JUNIOR') return y.role === 'TELECONSULTANT' && y.leaderId === x.id;
+    return false;
+  };
+  return pair(a, b) || pair(b, a);
+}
+
+/** Rôles qui peuvent passer ou recevoir des appels Dig'eCom. */
+export const CALL_ROLES: readonly Role[] = [
+  'ADMIN',
+  'LOGISTICS_ASSISTANT',
+  'LEADER_SENIOR',
+  'LEADER_JUNIOR',
+  'SELLER',
+  'COURIER',
+  'TELECONSULTANT',
+];
+
+/** Contact de l'annuaire d'appel (`GET /calls/contacts`). */
+export interface CallContact {
+  id: string;
+  fullName: string;
+  role: Role;
+  roleLabel: string;
+  island: string | null;
+}
+
+/** Appeler : depuis une commande (e-commerçant ↔ livreur) ou directement un contact. */
+export const startCallSchema = z
+  .object({ orderId: z.string().min(1).optional(), userId: z.string().min(1).optional() })
+  .refine((v) => !!v.orderId !== !!v.userId, 'Indique la commande ou le contact à appeler');
 export type StartCallInput = z.infer<typeof startCallSchema>;
 
 /** Message WebRTC relayé à l'autre participant (offre, réponse, candidat ICE). */
@@ -58,13 +116,14 @@ export type EndCallInput = z.infer<typeof endCallSchema>;
 export interface CallParty {
   id: string;
   fullName: string;
-  role: 'SELLER' | 'COURIER';
+  role: Role;
 }
 
 export interface CallView {
   id: string;
-  orderId: string;
-  orderNumber: string;
+  /** Commande concernée, ou null pour un appel direct (annuaire). */
+  orderId: string | null;
+  orderNumber: string | null;
   status: CallStatus;
   caller: CallParty;
   callee: CallParty;

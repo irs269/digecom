@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCalls } from '@/lib/calls/CallProvider';
-import { formatDuration } from '@/lib/calls/machine';
+import { formatDuration, ROLE_LABELS } from '@digecom/shared';
 import { useSession } from '@/lib/session';
 import { colors } from '@/theme';
 import { T } from './ui';
@@ -56,7 +56,7 @@ export function CallScreen() {
   if (state.phase === 'idle') return null;
   const call = state.call;
   const peer = call ? (call.caller.id === user?.id ? call.callee : call.caller) : null;
-  const peerRole = peer?.role === 'COURIER' ? 'Livreur' : 'E-commerçant';
+  const peerRole = peer ? (ROLE_LABELS[peer.role] ?? peer.role) : '';
 
   const status =
     state.phase === 'dialing'
@@ -85,7 +85,7 @@ export function CallScreen() {
           </T>
           {peer ? (
             <T style={{ color: colors.blueSoft }}>
-              {peerRole} · commande #{call?.orderNumber}
+              {call?.orderNumber ? `${peerRole} · commande #${call.orderNumber}` : peerRole}
             </T>
           ) : null}
           <T

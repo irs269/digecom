@@ -15,6 +15,7 @@ import {
   callSignalSchema,
   endCallSchema,
   startCallSchema,
+  type CallContact,
   type CallSignalInput,
   type CallView,
   type EndCallInput,
@@ -43,14 +44,14 @@ export class CallsController {
 
   @Post()
   @AnyAuthenticated()
-  @ApiOperation({ summary: 'Appeler l’autre participant d’une commande (e-commerçant ↔ livreur)' })
+  @ApiOperation({ summary: 'Appeler : depuis une commande (e-commerçant ↔ livreur) ou un contact' })
   start(
     @Body(new ZodValidationPipe(startCallSchema)) body: StartCallInput,
     @CurrentUser() actor: AuthUser,
     @Req() req: AuthenticatedRequest,
   ): Promise<StartCallResponse> {
     req.audit = { skip: true };
-    return this.calls.start(body.orderId, actor);
+    return this.calls.start(body, actor);
   }
 
   @Get()
@@ -61,6 +62,20 @@ export class CallsController {
     @CurrentUser() actor: AuthUser,
   ): Promise<CallView[]> {
     return this.calls.forOrder(q.orderId, actor);
+  }
+
+  @Get('contacts')
+  @AnyAuthenticated()
+  @ApiOperation({ summary: 'Annuaire : personnes que je peux appeler directement' })
+  contacts(@CurrentUser() actor: AuthUser): Promise<CallContact[]> {
+    return this.calls.contacts(actor);
+  }
+
+  @Get('mine')
+  @AnyAuthenticated()
+  @ApiOperation({ summary: 'Mes derniers appels (passés et reçus)' })
+  mine(@CurrentUser() actor: AuthUser): Promise<CallView[]> {
+    return this.calls.mine(actor);
   }
 
   @Get('ringing')

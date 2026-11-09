@@ -12,3 +12,4 @@ export * from './finance-api';
 export * from './tci';
 export * from './reports';
 export * from './calls';
+export * from './call-machine';

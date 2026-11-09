@@ -1,4 +1,4 @@
-import type { CallEvent, CallView, IceServer } from '@digecom/shared';
+import type { CallEvent, CallView, IceServer } from './calls';
 
 /**
  * État de l'écran d'appel. Fonction pure (testée) : le fournisseur d'appel y applique les

@@ -1,5 +1,6 @@
-import type { CallView } from '@digecom/shared';
-import { callReducer, endTextFor, formatDuration, initialCallState } from '../calls/machine';
+import { expect, test } from 'vitest';
+import type { CallView } from './calls';
+import { callReducer, endTextFor, formatDuration, initialCallState } from './call-machine';
 
 const ME = 'fatima';
 const call = (patch: Partial<CallView> = {}): CallView => ({

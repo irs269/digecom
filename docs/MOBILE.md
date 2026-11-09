@@ -81,7 +81,7 @@ eas build -p android --profile production   # AAB pour le Play Store
 
 Comptes de test pour l'examen Google : un e-commerçant et un livreur **dédiés**, avec un mot de passe à renseigner dans « Accès à l'application ».
 
-## 7. Appels Dig'eCom (dans l'application)
+## 7. Appels Dig'eCom (application et back-office)
 
 L'e-commerçant et le livreur d'une même commande peuvent s'appeler **par Internet**, depuis la commande ou la course, sans crédit téléphonique et **sans voir le numéro de l'autre**. L'appel est chiffré de bout en bout (WebRTC) et **n'est jamais enregistré** ; seul un journal (qui, quand, durée, manqué) est gardé sur la commande.
 
@@ -90,6 +90,17 @@ L'e-commerçant et le livreur d'une même commande peuvent s'appeler **par Inter
 | Livreur affecté, en route, remise faite ou livraison échouée | **Appel Dig'eCom** (orange) + « Appeler par téléphone » en secours |
 | Client final (sans l'application) | Appel téléphonique classique |
 | Expo Go, ou téléphone sans le module natif | Appel téléphonique classique (le bouton Dig'eCom est masqué) |
+
+**Annuaire (appels sans commande)**, dans l'application (« 📞 Appels » sur l'accueil) et sur le back-office (bouton « Appels » de l'en-tête, boutons « Appeler » dans le détail d'une commande et la liste des livreurs) :
+
+| Qui | Peut appeler (et être appelé par) |
+| --- | --- |
+| Administrateur | tout utilisateur actif |
+| Assistant logistique | livreurs et e-commerçants de son île |
+| Leader Senior | ses e-commerçants |
+| Leader Junior | ses téléconseillers |
+
+Sur le back-office, l'appel passe par le navigateur (Chrome, Edge, Firefox récents) : il faut autoriser le micro, et la page doit être ouverte pour recevoir un appel (pas de push sur ordinateur). La règle est dans `packages/shared` (`canCallDirectly`) : l'API, le web et le mobile appliquent la même.
 
 **Déroulement** : l'appelant touche « Appel Dig'eCom » ; le téléphone de l'autre **sonne** (écran d'appel si l'application est ouverte, notification « Appel de … » sinon) ; il décroche ou refuse ; sans réponse en 45 s, l'appel passe en **manqué** et une notification l'indique. Pendant l'appel : micro coupé, haut-parleur, raccrocher. Un seul appel à la fois par personne.
 
@@ -106,6 +117,6 @@ Capacité du relais tel que configuré : 40 ports, soit environ **20 appels simu
 
 ### Points techniques
 
-- API : `POST /calls` (appeler), `POST /calls/:id/accept`, `POST /calls/:id/end`, `POST /calls/:id/signal` (relais WebRTC), `GET /calls?orderId=` (journal), `GET /calls/ringing`, `GET /calls/stream` (flux SSE de l'application : appels et statuts des commandes en temps réel).
+- API : `POST /calls` (appeler : `{ orderId }` ou `{ userId }`), `GET /calls/contacts` (annuaire), `GET /calls/mine` (mes derniers appels), `POST /calls/:id/accept`, `POST /calls/:id/end`, `POST /calls/:id/signal` (relais WebRTC), `GET /calls?orderId=` (journal), `GET /calls/ringing`, `GET /calls/stream` (flux SSE de l'application : appels et statuts des commandes en temps réel).
 - Droits : seuls l'e-commerçant et le livreur de la commande ; logistique et administration lisent le journal (cloisonnement par île).
 - Identifiants TURN temporaires (1 h) signés par l'API avec `TURN_SECRET` : aucun compte TURN stocké.

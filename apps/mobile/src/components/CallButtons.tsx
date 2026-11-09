@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Linking, View } from 'react-native';
 import { api } from '@/lib/api';
 import { useCalls } from '@/lib/calls/CallProvider';
-import { formatDuration } from '@/lib/calls/machine';
+import { formatDuration } from '@digecom/shared';
 import { useSession } from '@/lib/session';
 import { colors, toneColors } from '@/theme';
 import { Button, Card, T } from './ui';
@@ -42,7 +42,7 @@ export function CallButtons({
           label={`Appel Dig’eCom · ${peerName}`}
           variant={primary ? 'orange' : 'primary'}
           disabled={busy}
-          onPress={() => void start(orderId)}
+          onPress={() => void start({ orderId })}
         />
       ) : null}
       <Button

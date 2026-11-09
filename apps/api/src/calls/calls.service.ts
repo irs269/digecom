@@ -1,7 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import {
   CALL_RING_SECONDS,
+  canCallDirectly,
+  CALL_ROLES,
   hasPermission,
+  ROLE_LABELS,
+  type CallContact,
+  type CallPeer,
   CALLABLE_ORDER_STATUSES,
   type CallEvent,
   type CallSignalInput,
@@ -37,7 +42,7 @@ export function toCallView(c: Row): CallView {
   return {
     id: c.id,
     orderId: c.orderId,
-    orderNumber: c.order.number,
+    orderNumber: c.order?.number ?? null,
     status: c.status,
     caller: c.caller as CallView['caller'],
     callee: c.callee as CallView['callee'],
@@ -125,29 +130,50 @@ export class CallsService implements OnModuleDestroy {
     });
   }
 
-  async start(orderId: string, actor: AuthUser): Promise<StartCallResponse> {
-    if (actor.role !== 'SELLER' && actor.role !== 'COURIER') {
-      throw forbidden('Les appels sont réservés aux e-commerçants et aux livreurs');
-    }
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: { id: true, number: true, status: true, sellerId: true, courierId: true },
+  private async peer(id: string): Promise<(CallPeer & { isActive: boolean }) | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, islandId: true, leaderId: true, isActive: true },
     });
-    // Seuls l'e-commerçant et le livreur de la commande la voient ici : sinon 404.
-    if (!order || (order.sellerId !== actor.id && order.courierId !== actor.id)) {
-      throw new AppException('NOT_FOUND', 'Commande introuvable', HttpStatus.NOT_FOUND);
-    }
-    if (!order.courierId || !CALLABLE_ORDER_STATUSES.includes(order.status)) {
-      throw conflict('Appel possible seulement quand un livreur a la commande');
-    }
-    const calleeId = actor.id === order.sellerId ? order.courierId : order.sellerId;
-    const callee = await this.prisma.user.findUnique({
-      where: { id: calleeId },
-      select: { isActive: true },
-    });
-    if (!callee?.isActive) throw conflict('Ce compte n’est plus actif');
+  }
 
-    await this.expireStale(order.id);
+  /**
+   * Appeler : depuis une commande (e-commerçant ↔ livreur affecté) ou directement un contact de
+   * l'annuaire (règle `canCallDirectly`).
+   */
+  async start(
+    target: { orderId?: string; userId?: string },
+    actor: AuthUser,
+  ): Promise<StartCallResponse> {
+    if (!CALL_ROLES.includes(actor.role)) {
+      throw forbidden('Les appels Dig’eCom ne sont pas ouverts à ton profil');
+    }
+    let orderId: string | null = null;
+    let calleeId: string;
+    if (target.orderId) {
+      const order = await this.prisma.order.findUnique({
+        where: { id: target.orderId },
+        select: { id: true, status: true, sellerId: true, courierId: true },
+      });
+      // Seuls l'e-commerçant et le livreur de la commande la voient ici : sinon 404.
+      if (!order || (order.sellerId !== actor.id && order.courierId !== actor.id)) {
+        throw new AppException('NOT_FOUND', 'Commande introuvable', HttpStatus.NOT_FOUND);
+      }
+      if (!order.courierId || !CALLABLE_ORDER_STATUSES.includes(order.status)) {
+        throw conflict('Appel possible seulement quand un livreur a la commande');
+      }
+      orderId = order.id;
+      calleeId = actor.id === order.sellerId ? order.courierId : order.sellerId;
+    } else {
+      const me = await this.peer(actor.id);
+      const other = await this.peer(target.userId!);
+      if (!me || !other || !canCallDirectly(me, other)) {
+        throw new AppException('NOT_FOUND', 'Contact introuvable', HttpStatus.NOT_FOUND);
+      }
+      calleeId = other.id;
+    }
+    if (!(await this.peer(calleeId))?.isActive) throw conflict('Ce compte n’est plus actif');
+    await this.expireStale();
     const busy = await this.prisma.call.findFirst({
       where: {
         status: { in: ['RINGING', 'ACCEPTED'] },
@@ -158,7 +184,7 @@ export class CallsService implements OnModuleDestroy {
     if (busy) throw conflict('Ton correspondant est déjà en ligne');
 
     const row = await this.prisma.call.create({
-      data: { orderId: order.id, callerId: actor.id, calleeId },
+      data: { orderId, callerId: actor.id, calleeId },
       include: INCLUDE,
     });
     const call = toCallView(row);
@@ -172,8 +198,8 @@ export class CallsService implements OnModuleDestroy {
     await this.push.send([calleeId], {
       type: 'CALL_INCOMING',
       title: `Appel de ${call.caller.fullName}`,
-      body: `Commande #${call.orderNumber}`,
-      payload: { callId: call.id, orderId: order.id },
+      body: call.orderNumber ? `Commande #${call.orderNumber}` : 'Appel Dig’eCom',
+      payload: { callId: call.id, orderId },
     });
     this.timers.set(
       row.id,
@@ -204,7 +230,9 @@ export class CallsService implements OnModuleDestroy {
     return this.notifications.send([row.calleeId], {
       type: 'CALL_MISSED',
       title: 'Appel manqué',
-      body: `${row.caller.fullName} a essayé de t’appeler (commande #${row.order.number}).`,
+      body: row.order
+        ? `${row.caller.fullName} a essayé de t’appeler (commande #${row.order.number}).`
+        : `${row.caller.fullName} a essayé de t’appeler.`,
       payload: { orderId: row.orderId, callId: row.id },
     });
   }
@@ -306,5 +334,44 @@ export class CallsService implements OnModuleDestroy {
       orderBy: { createdAt: 'desc' },
     });
     return row ? { call: toCallView(row), iceServers: this.iceServers(actor.id) } : null;
+  }
+
+  /** Annuaire : personnes que je peux appeler directement (actives), triées par nom. */
+  async contacts(actor: AuthUser): Promise<CallContact[]> {
+    const me = await this.peer(actor.id);
+    if (!me || !CALL_ROLES.includes(me.role)) return [];
+    const users = await this.prisma.user.findMany({
+      where: { isActive: true, role: { in: [...CALL_ROLES] }, id: { not: me.id } },
+      select: {
+        id: true,
+        fullName: true,
+        role: true,
+        islandId: true,
+        leaderId: true,
+        island: { select: { name: true } },
+      },
+      orderBy: { fullName: 'asc' },
+    });
+    return users
+      .filter((u) => canCallDirectly(me, u))
+      .map((u) => ({
+        id: u.id,
+        fullName: u.fullName,
+        role: u.role,
+        roleLabel: ROLE_LABELS[u.role],
+        island: u.island?.name ?? null,
+      }));
+  }
+
+  /** Mes derniers appels (passés et reçus), pour l'écran « Appels ». */
+  async mine(actor: AuthUser): Promise<CallView[]> {
+    await this.expireStale();
+    const rows = await this.prisma.call.findMany({
+      where: { OR: [{ callerId: actor.id }, { calleeId: actor.id }] },
+      include: INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map(toCallView);
   }
 }

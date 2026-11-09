@@ -1,11 +1,20 @@
 'use client';
 
-import type { LiveEvent, NotificationView } from '@digecom/shared';
+import type { CallEvent, LiveEvent, NotificationView } from '@digecom/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useToast } from '@/components/ui/toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api';
+
+/** Événements d'appel reçus sur le flux temps réel, remis au fournisseur d'appel. */
+const callListeners = new Set<(e: CallEvent) => void>();
+export function onCallEvent(fn: (e: CallEvent) => void): () => void {
+  callListeners.add(fn);
+  return () => {
+    callListeners.delete(fn);
+  };
+}
 
 /**
  * Connexion temps réel (SSE, authentifiée par le cookie de session) : nouvelles notifications
@@ -33,6 +42,13 @@ export function useLiveUpdates(enabled: boolean) {
       void queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       void queryClient.invalidateQueries({ queryKey: ['simulator'] });
       void queryClient.invalidateQueries({ queryKey: ['stock'] });
+    });
+    source.addEventListener('call', (e) => {
+      const event = JSON.parse((e as MessageEvent<string>).data) as Extract<
+        LiveEvent,
+        { kind: 'call' }
+      >;
+      callListeners.forEach((l) => l(event.event));
     });
     return () => source.close();
   }, [enabled, queryClient, toast]);

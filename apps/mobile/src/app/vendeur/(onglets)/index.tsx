@@ -49,9 +49,20 @@ export default function Accueil() {
             {catalog.data ? ` · Catalogue de ${catalog.data.leader.fullName}` : ''}
           </T>
         </View>
-        <Pressable onPress={() => void logout()} accessibilityRole="button">
-          <T style={{ color: colors.blue, fontSize: 13 }}>Déconnexion</T>
-        </Pressable>
+        <View style={{ alignItems: 'flex-end', gap: 10 }}>
+          <Pressable
+            onPress={() => router.push('/appels')}
+            accessibilityRole="button"
+            testID="ouvrir-appels"
+          >
+            <T weight="semibold" style={{ color: colors.blue, fontSize: 14 }}>
+              📞 Appels
+            </T>
+          </Pressable>
+          <Pressable onPress={() => void logout()} accessibilityRole="button">
+            <T style={{ color: colors.blue, fontSize: 13 }}>Déconnexion</T>
+          </Pressable>
+        </View>
       </View>
 
       <PendingBanner />
