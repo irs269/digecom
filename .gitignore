@@ -5,8 +5,13 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.log
 playwright-report/
 test-results/
 .turbo/
 *.tsbuildinfo
+
+# Sauvegardes locales et clés (production)
+backups/
+*.agekey

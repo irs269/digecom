@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { businessToday, weekStart } from '@digecom/shared';
-import { Queue, Worker } from 'bullmq';
+import { Queue, type Worker } from 'bullmq';
+import { createWorker, redisConnection, usesQueues } from '../common/jobs';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { NotificationService } from '../notifications/notification.service';
@@ -30,15 +31,8 @@ export class FinanceJobs implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    if (this.env.NODE_ENV === 'test') return;
-    const url = new URL(this.env.REDIS_URL);
-    const connection = {
-      host: url.hostname,
-      port: Number(url.port || 6379),
-      db: Number(url.pathname.slice(1) || 0),
-      password: url.password || undefined,
-      maxRetriesPerRequest: null,
-    };
+    if (!usesQueues(this.env)) return;
+    const connection = redisConnection(this.env);
     this.queue = new Queue(QUEUE, { connection });
     await this.queue.upsertJobScheduler(
       'weekly-subscriptions',
@@ -50,15 +44,11 @@ export class FinanceJobs implements OnModuleInit, OnModuleDestroy {
       { pattern: '30 21 * * *', tz: 'UTC' },
       { name: 'settlements' },
     );
-    this.worker = new Worker(
-      QUEUE,
-      async (job) => {
-        if (job.name === 'subscriptions') return this.runSubscriptions();
-        if (job.name === 'settlements') return this.runSettlements();
-        return null;
-      },
-      { connection },
-    );
+    this.worker = createWorker(this.env, QUEUE, async (job) => {
+      if (job.name === 'subscriptions') return this.runSubscriptions();
+      if (job.name === 'settlements') return this.runSettlements();
+      return null;
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

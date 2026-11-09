@@ -3,7 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 /** Parcours web par rôle. Lancement : `make e2e` (service Docker `e2e`, contre le service web). */
 export default defineConfig({
   testDir: './e2e',
-  globalSetup: './e2e/global-setup.ts',
+  // Recette SPEC §9 (préproduction) : RECETTE=1 ; captures des guides : GUIDES=1.
+  testIgnore: [
+    ...(process.env.RECETTE ? [] : ['**/recette/**']),
+    ...(process.env.GUIDES ? [] : ['**/guides/**']),
+  ],
+  globalSetup: process.env.RECETTE ? undefined : './e2e/global-setup.ts',
   timeout: 120_000,
   expect: { timeout: 30_000 },
   fullyParallel: false,

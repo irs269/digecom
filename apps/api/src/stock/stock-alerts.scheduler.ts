@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Queue, Worker } from 'bullmq';
+import { Queue, type Worker } from 'bullmq';
+import { createWorker, redisConnection, usesQueues } from '../common/jobs';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { StockQueryService } from './stock-query.service';
@@ -22,32 +23,21 @@ export class StockAlertsScheduler implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    if (this.env.NODE_ENV === 'test') return;
-    const url = new URL(this.env.REDIS_URL);
-    const connection = {
-      host: url.hostname,
-      port: Number(url.port || 6379),
-      db: Number(url.pathname.slice(1) || 0),
-      password: url.password || undefined,
-      maxRetriesPerRequest: null,
-    };
+    if (!usesQueues(this.env)) return;
+    const connection = redisConnection(this.env);
     this.queue = new Queue(QUEUE, { connection });
     await this.queue.upsertJobScheduler(
       'daily-unsold',
       { pattern: '0 3 * * *', tz: 'UTC' },
       { name: 'refresh-unsold', opts: { removeOnComplete: 30, removeOnFail: 30 } },
     );
-    this.worker = new Worker(
-      QUEUE,
-      async () => {
-        const result = await this.query.refreshUnsoldAlerts();
-        this.logger.log(
-          `Alertes invendus : ${result.opened} ouverte(s), ${result.resolved} close(s)`,
-        );
-        return result;
-      },
-      { connection },
-    );
+    this.worker = createWorker(this.env, QUEUE, async () => {
+      const result = await this.query.refreshUnsoldAlerts();
+      this.logger.log(
+        `Alertes invendus : ${result.opened} ouverte(s), ${result.resolved} close(s)`,
+      );
+      return result;
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

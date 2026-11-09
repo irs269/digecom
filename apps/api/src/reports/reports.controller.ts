@@ -35,13 +35,14 @@ import {
   type ReportType,
   type ReportView,
 } from '@digecom/shared';
-import { Queue, Worker } from 'bullmq';
+import { Queue, type Worker } from 'bullmq';
 import type { Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { AuthenticatedRequest, AuthUser } from '../auth/auth.types';
 import { AnyAuthenticated, CurrentUser, RequirePermission } from '../auth/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { createWorker, redisConnection, usesQueues } from '../common/jobs';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { NotificationService } from '../notifications/notification.service';
@@ -90,17 +91,10 @@ export class ReportJobs implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    if (this.env.NODE_ENV === 'test') return;
-    const url = new URL(this.env.REDIS_URL);
-    const connection = {
-      host: url.hostname,
-      port: Number(url.port || 6379),
-      db: Number(url.pathname.slice(1) || 0),
-      password: url.password || undefined,
-      maxRetriesPerRequest: null,
-    };
+    if (!usesQueues(this.env)) return;
+    const connection = redisConnection(this.env);
     this.queue = new Queue<ExportJob>('reports', { connection });
-    this.worker = new Worker<ExportJob>('reports', (job) => this.run(job.data), { connection });
+    this.worker = createWorker<ExportJob>(this.env, 'reports', (job) => this.run(job.data));
   }
 
   async onModuleDestroy(): Promise<void> {

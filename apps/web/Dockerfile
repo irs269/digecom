@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1.7
 # Web Dig'eCom (Next.js) – image multi-stage. Contexte de build : racine du monorepo.
+# Compatible avec le builder classique de Docker (sans buildx ni cache monté).
 
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat \
@@ -22,8 +22,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc* ./
 COPY packages/config/package.json packages/config/
 COPY packages/shared/package.json packages/shared/
 COPY apps/web/package.json apps/web/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile \
-    --filter web... --filter digecom-platform
+RUN pnpm install --frozen-lockfile --filter web... --filter digecom-platform
 COPY packages/config packages/config
 COPY packages/shared packages/shared
 COPY apps/web apps/web
@@ -33,13 +32,16 @@ RUN pnpm --filter @digecom/shared build && pnpm --filter web build
 
 # --- prod : serveur Node minimal, utilisateur non-root.
 FROM node:22-alpine AS prod
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini  && apk upgrade --no-cache
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
-COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./
-COPY --from=build --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build --chown=node:node /app/apps/web/public ./apps/web/public
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build /app/apps/web/public ./apps/web/public
+# Cache d'images Next.js : seul dossier inscriptible.
+RUN mkdir -p apps/web/.next/cache && chown node:node apps/web/.next/cache
 USER node
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3   CMD node -e "fetch('http://127.0.0.1:3000/connexion').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/web/server.js"]

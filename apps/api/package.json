@@ -15,7 +15,10 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
-    "load-test": "tsx prisma/load-test.ts"
+    "load-test": "tsx prisma/load-test.ts",
+    "start:worker": "node dist/worker.js",
+    "db:grants": "node dist/cli/db-grants.js",
+    "create-admin": "tsx src/cli/create-admin.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -34,6 +37,7 @@
     "bullmq": "^5.52.0",
     "cookie-parser": "^1.4.7",
     "exceljs": "^4.4.0",
+    "express": "4.22.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.6.1",
     "nestjs-pino": "^4.4.0",
