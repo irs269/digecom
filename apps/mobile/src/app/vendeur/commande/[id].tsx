@@ -108,6 +108,15 @@ export default function Commande() {
   };
 
   const refuseReason = reason === 'Autre' ? other.trim() : reason;
+  /** Un livreur a la commande en main ou va la chercher. */
+  const inDelivery = ['ASSIGNED', 'OUT_FOR_DELIVERY'].includes(order.status);
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   const can = (a: string) => order.actions.includes(a as never);
 
   return (
@@ -117,18 +126,106 @@ export default function Commande() {
       </Pressable>
       <PendingBanner />
       <T style={{ color: colors.muted, fontSize: 12 }}>COMMANDE #{order.number}</T>
-      <T weight="bold" style={{ fontSize: 20 }}>
-        {order.items
-          .map((i) => `${i.product.name}${i.quantity > 1 ? ` × ${i.quantity}` : ''}`)
-          .join(', ')}
-      </T>
       <T style={{ color: colors.muted, marginBottom: 8 }}>
-        {order.customerName} · {DELIVERY_MODE_LABELS[order.deliveryMode]}
+        Créée le {fmtDate(order.createdAt)} · {DELIVERY_MODE_LABELS[order.deliveryMode]}
       </T>
-      <Badge status={order.status} />
-      <T style={{ marginTop: 8 }} testID="statut-explication">
-        {statusHint(order)}
-      </T>
+
+      {/* Statut */}
+      <Card>
+        <T style={{ color: colors.muted, fontSize: 12, marginBottom: 6 }}>STATUT</T>
+        <Badge status={order.status} />
+        <T style={{ marginTop: 8 }} testID="statut-explication">
+          {statusHint(order)}
+        </T>
+      </Card>
+
+      {/* Livreur : mis en avant pendant la livraison */}
+      {order.courier ? (
+        <Card
+          style={
+            inDelivery
+              ? { borderColor: colors.orange, borderWidth: 2, backgroundColor: colors.orangeSoft }
+              : undefined
+          }
+        >
+          <T style={{ color: colors.muted, fontSize: 12 }}>
+            {inDelivery ? 'LIVREUR EN COURS' : 'LIVREUR'}
+          </T>
+          <T weight="semibold" style={{ fontSize: 17 }} testID="livreur-nom">
+            {order.courier.fullName}
+          </T>
+          <T style={{ color: colors.muted }}>{order.courier.phone}</T>
+          {inDelivery ? (
+            <T style={{ marginTop: 4 }}>
+              {order.status === 'ASSIGNED'
+                ? `Va récupérer la commande au site de ${order.site.name}.`
+                : order.deliveryMode === 'TO_CUSTOMER'
+                  ? 'En route vers ton client.'
+                  : 'En route vers toi.'}
+            </T>
+          ) : null}
+          <Button
+            testID="appeler-livreur"
+            label={`Appeler ${order.courier.fullName}`}
+            variant={inDelivery ? 'orange' : 'outline'}
+            onPress={() => void Linking.openURL(`tel:${order.courier!.phone}`)}
+          />
+        </Card>
+      ) : order.status === 'READY' && order.deliveryMode !== 'PICKUP' ? (
+        <Notice tone="orange">
+          Aucun livreur pour l’instant : la course est proposée aux livreurs de ton île.
+        </Notice>
+      ) : null}
+
+      {/* Produits */}
+      <Card>
+        <T style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>
+          PRODUITS ({order.items.reduce((s, i) => s + i.quantity, 0)})
+        </T>
+        {order.items.map((i) => (
+          <View
+            key={i.id}
+            testID="produit-ligne"
+            style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.line }}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+              <T weight="semibold" style={{ flex: 1 }}>
+                {i.product.name}
+              </T>
+              <T weight="semibold">{formatKmf(i.unitPrice * i.quantity)}</T>
+            </View>
+            <T style={{ color: colors.muted, fontSize: 13 }}>
+              {i.quantity} × {formatKmf(i.unitPrice)}
+              {i.product.quality ? ` · ${i.product.quality}` : ''} · réf. {i.product.sku}
+            </T>
+            <T style={{ color: colors.green, fontSize: 13 }}>
+              Ta part : {formatKmf(((i.sellerShare ?? 0) - i.sellerTax) * i.quantity)} net
+            </T>
+          </View>
+        ))}
+        <Row label="Total client" value={formatKmf(order.total)} strong />
+        <Row label="Net pour toi" value={formatKmf(sellerNet(order))} />
+        {order.amountCollected !== null ? (
+          <Row label="Encaissé par le livreur" value={formatKmf(order.amountCollected)} />
+        ) : null}
+      </Card>
+
+      {/* Client et remise */}
+      <Card>
+        <T style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>CLIENT</T>
+        <T weight="semibold">{order.customerName}</T>
+        <T style={{ color: colors.muted }}>{order.customerPhone}</T>
+        {order.customerAddress || order.zone ? (
+          <T style={{ color: colors.muted }}>
+            {[order.zone, order.customerAddress].filter(Boolean).join(' · ')}
+          </T>
+        ) : null}
+        <Row label="Mode de remise" value={DELIVERY_MODE_LABELS[order.deliveryMode]} />
+        <Row label="Site" value={order.site.name} />
+        {order.refuseReason ? <Row label="Motif du refus" value={order.refuseReason} /> : null}
+        {order.failReason ? <Row label="Motif de l’échec" value={order.failReason} /> : null}
+        {order.cancelReason ? <Row label="Motif d’annulation" value={order.cancelReason} /> : null}
+      </Card>
 
       {feedback ? (
         <View style={{ marginTop: 12 }}>
@@ -138,23 +235,6 @@ export default function Commande() {
 
       <Card style={{ marginTop: 12 }}>
         <Steps steps={timeline(order)} />
-      </Card>
-
-      <Card>
-        <Row label="Total client" value={formatKmf(order.total)} />
-        <Row label="Net pour toi" value={formatKmf(sellerNet(order))} strong />
-        {order.refuseReason ? <Row label="Motif du refus" value={order.refuseReason} /> : null}
-        {order.failReason ? <Row label="Motif de l’échec" value={order.failReason} /> : null}
-        {order.cancelReason ? <Row label="Motif d’annulation" value={order.cancelReason} /> : null}
-        <Row label="Site" value={order.site.name} />
-        {order.courier ? <Row label="Livreur" value={order.courier.fullName} /> : null}
-        {order.courier ? (
-          <Button
-            label={`Appeler ${order.courier.fullName}`}
-            variant="outline"
-            onPress={() => void Linking.openURL(`tel:${order.courier!.phone}`)}
-          />
-        ) : null}
       </Card>
 
       {order.events.length ? (
