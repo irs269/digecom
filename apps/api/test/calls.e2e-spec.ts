@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import type { CallEvent, CallView, LiveEvent, OrderView, StartCallResponse } from '@digecom/shared';
 import request from 'supertest';
 import { turnCredentials } from '../src/calls/calls.service';
@@ -239,8 +240,6 @@ describe('Appels dans l’application (e2e)', () => {
   it('identifiants TURN temporaires au format coturn (HMAC-SHA1)', () => {
     const { username, credential } = turnCredentials('secret', 'u1', 3600, 1_000_000_000);
     expect(username).toBe('1003600:u1');
-    expect(credential).toBe(
-      require('node:crypto').createHmac('sha1', 'secret').update(username).digest('base64'),
-    );
+    expect(credential).toBe(createHmac('sha1', 'secret').update(username).digest('base64'));
   });
 });
