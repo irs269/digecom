@@ -12,4 +12,4 @@ README-KIT.md
 apps/mobile/.expo
 apps/mobile/expo-env.d.ts
 apps/mobile/dist-web
-apps/web/public/app
+apps/web/public/pwa

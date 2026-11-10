@@ -174,13 +174,13 @@ server {
         proxy_set_header X-Forwarded-Host  $host;
         proxy_set_header Connection        "";
         proxy_read_timeout 120s;
-        # Gros fichiers JavaScript (application /app : plus de 1 Mo) : jamais de fichier
+        # Gros fichiers JavaScript (application /pwa : plus de 1 Mo) : jamais de fichier
         # temporaire Nginx. Sinon, si /var/lib/nginx n'est pas inscriptible, la réponse est
         # coupée en cours de route et l'application reste sur une page blanche.
         proxy_max_temp_file_size 0;
     }
 
-    # Compression : l'application /app passe de 1,1 Mo à environ 300 Ko.
+    # Compression : l'application /pwa passe de 1,1 Mo à environ 300 Ko.
     gzip on;
     gzip_proxied any;
     gzip_min_length 1024;

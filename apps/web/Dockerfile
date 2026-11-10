@@ -16,7 +16,7 @@ ENV NODE_ENV=development
 EXPOSE 3000
 CMD ["pnpm", "--filter", "web", "dev"]
 
-# --- pwa : application mobile (e-commerçants, livreurs) exportée pour le web, servie sous /app
+# --- pwa : application mobile (e-commerçants, livreurs) exportée pour le web, servie sous /pwa
 # (iPhone : installation depuis Safari, « Sur l'écran d'accueil »).
 FROM base AS pwa
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc* ./
@@ -51,7 +51,7 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /app/apps/web/public ./apps/web/public
-COPY --from=pwa /pwa ./apps/web/public/app
+COPY --from=pwa /pwa ./apps/web/public/pwa
 # Cache d'images Next.js : seul dossier inscriptible.
 RUN mkdir -p apps/web/.next/cache && chown node:node apps/web/.next/cache
 USER node

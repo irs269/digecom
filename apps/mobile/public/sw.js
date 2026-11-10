@@ -15,8 +15,8 @@ self.addEventListener('push', (event) => {
       await self.registration.showNotification(msg.title, {
         body: msg.body,
         data: msg.data,
-        icon: '/app/icons/icon-192.png',
-        badge: '/app/icons/icon-192.png',
+        icon: '/pwa/icons/icon-192.png',
+        badge: '/pwa/icons/icon-192.png',
         tag: call ? 'appel' : undefined,
         requireInteraction: call,
         vibrate: call ? [800, 600, 800, 600, 800] : [200],
@@ -32,11 +32,11 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
   const target =
-    data.type === 'DELIVERY_OFFER' || data.type === 'DELIVERY_ASSIGNED' ? '/app/livreur' : '/app/';
+    data.type === 'DELIVERY_OFFER' || data.type === 'DELIVERY_ASSIGNED' ? '/pwa/livreur' : '/pwa/';
   event.waitUntil(
     (async () => {
       const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      const win = wins.find((w) => w.url.includes('/app'));
+      const win = wins.find((w) => w.url.includes('/pwa'));
       if (win) {
         await win.focus();
         win.postMessage({ type: 'open', data });

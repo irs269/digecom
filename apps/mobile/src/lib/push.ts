@@ -108,7 +108,7 @@ export function webPushSupported(): boolean {
 export async function registerWebPush(ask = false): Promise<boolean> {
   try {
     if (!webPushSupported()) return false;
-    const reg = await navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' });
+    const reg = await navigator.serviceWorker.register('/pwa/sw.js', { scope: '/pwa/' });
     if (Notification.permission !== 'granted') {
       if (!ask || (await Notification.requestPermission()) !== 'granted') return false;
     }

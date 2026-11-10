@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/theme';
 
@@ -10,10 +10,23 @@ export interface TabDef {
   icon: string;
 }
 
+/**
+ * PWA sur iPhone installée : la barre d'accueil (trait en bas de l'écran) recouvre le menu, et la
+ * zone sûre n'est pas toujours connue au démarrage. On garde au moins 28 px dessous.
+ */
+function webBottomMin(): number {
+  if (Platform.OS !== 'web') return 0;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const installed =
+    nav.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches;
+  return ios && installed ? 28 : 8;
+}
+
 /** Barre d'onglets commune aux deux profils ; `hidden` : écrans de détail sans onglet. */
 export function AppTabs({ tabs, hidden = [] }: { tabs: TabDef[]; hidden?: string[] }): ReactNode {
   // Android bord à bord : on ajoute la hauteur des boutons du téléphone (retour, accueil).
-  const { bottom } = useSafeAreaInsets();
+  const bottom = Math.max(useSafeAreaInsets().bottom, webBottomMin());
   return (
     <Tabs
       screenOptions={{
