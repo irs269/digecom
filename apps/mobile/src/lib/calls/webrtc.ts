@@ -1,4 +1,5 @@
 import type { CallSignalInput, IceServer } from '@digecom/shared';
+import { Platform } from 'react-native';
 
 /**
  * Session audio WebRTC. Le module natif n'existe pas dans Expo Go : il est chargé à la demande
@@ -13,6 +14,21 @@ let mod: WebRTC | null | undefined;
 
 function load(): WebRTC | null {
   if (mod !== undefined) return mod;
+  if (Platform.OS === 'web') {
+    // PWA (iPhone, navigateur) : WebRTC natif du navigateur, même API.
+    const g = globalThis as unknown as Record<string, unknown> & { navigator?: Navigator };
+    mod =
+      g.RTCPeerConnection && g.navigator?.mediaDevices
+        ? ({
+            RTCPeerConnection: g.RTCPeerConnection,
+            RTCIceCandidate: g.RTCIceCandidate,
+            RTCSessionDescription: g.RTCSessionDescription,
+            MediaStream: g.MediaStream,
+            mediaDevices: g.navigator.mediaDevices,
+          } as unknown as WebRTC)
+        : null;
+    return mod;
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     mod = require('react-native-webrtc') as WebRTC;
@@ -46,6 +62,7 @@ export class AudioSession {
   private remoteSet = false;
   private connected = false;
   private closed = false;
+  private audioEl: HTMLAudioElement | null = null;
 
   constructor(
     private readonly iceServers: IceServer[],
@@ -73,6 +90,23 @@ export class AudioSession {
         });
       }
     });
+    if (Platform.OS === 'web') {
+      // Navigateur : le son distant doit passer par un élément <audio>.
+      (
+        pc as unknown as {
+          addEventListener: (t: string, fn: (e: { streams: MediaStream[] }) => void) => void;
+        }
+      ).addEventListener('track', (e) => {
+        if (!this.audioEl) {
+          this.audioEl = document.createElement('audio');
+          this.audioEl.autoplay = true;
+          this.audioEl.setAttribute('playsinline', '');
+          document.body.appendChild(this.audioEl);
+        }
+        this.audioEl.srcObject = e.streams[0] ?? null;
+        void this.audioEl.play().catch(() => undefined);
+      });
+    }
     events.addEventListener('connectionstatechange', () => {
       const state = pc.connectionState;
       if (state === 'connected' && !this.connected) {
@@ -132,5 +166,7 @@ export class AudioSession {
     this.local = null;
     this.pc?.close();
     this.pc = null;
+    this.audioEl?.remove();
+    this.audioEl = null;
   }
 }

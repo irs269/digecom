@@ -11,7 +11,18 @@ const nextConfig = {
   // Le navigateur appelle /api/... ; Next.js relaie vers le conteneur api (même origine → cookie
   // httpOnly du refresh token envoyé sans CORS).
   async rewrites() {
-    return [{ source: '/api/:path*', destination: `${apiInternalUrl}/:path*` }];
+    return {
+      // PWA (application mobile exportée dans public/app) : les écrans de l'application
+      // renvoient son index, qui gère sa propre navigation ; les fichiers statiques sont servis tels quels.
+      beforeFiles: [
+        { source: '/app', destination: '/app/index.html' },
+        {
+          source: '/app/:path((?!_expo/|assets/|icons/|sw\\.js|manifest\\.json|favicon).*)',
+          destination: '/app/index.html',
+        },
+      ],
+      afterFiles: [{ source: '/api/:path*', destination: `${apiInternalUrl}/:path*` }],
+    };
   },
   async headers() {
     return [

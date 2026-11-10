@@ -4,7 +4,15 @@ import globals from 'globals';
 
 export default [
   ...base,
-  { ignores: ['.next/**', 'playwright-report/**', 'test-results/**', 'next-env.d.ts'] },
+  {
+    ignores: [
+      '.next/**',
+      'playwright-report/**',
+      'test-results/**',
+      'next-env.d.ts',
+      'public/app/**',
+    ],
+  },
   {
     files: ['src/**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser } },

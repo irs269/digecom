@@ -1,7 +1,7 @@
 import type { GeoPoint } from '@digecom/shared';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { MapFrame } from './MapFrame';
 import { Button } from '@/components/ui';
 import { currentPosition } from '@/lib/location';
 import { colors } from '@/theme';
@@ -65,25 +65,7 @@ export function MapSection({
         {origin === undefined ? (
           <ActivityIndicator color={colors.blue} />
         ) : (
-          <WebView
-            source={{ html }}
-            originWhitelist={['*']}
-            javaScriptEnabled
-            domStorageEnabled
-            nestedScrollEnabled
-            // Les liens « Agrandir la carte » de Google ouvrent l'application Google Maps.
-            onShouldStartLoadWithRequest={(req) => {
-              if (
-                req.isTopFrame &&
-                req.url.startsWith('http') &&
-                !req.url.includes('output=embed')
-              ) {
-                void Linking.openURL(req.url);
-                return false;
-              }
-              return true;
-            }}
-          />
+          <MapFrame html={html} src={embedUrl(destination, origin)} />
         )}
       </View>
       {externalUrl ? (
