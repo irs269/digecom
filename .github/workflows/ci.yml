@@ -74,6 +74,9 @@ jobs:
         run: |
           cp .env.example .env
           sed -i "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=$(openssl rand -base64 48 | tr -d '\n')|" .env
+          # Les parcours reconnectent souvent les mêmes comptes (et les relances doublent) :
+          # pas de blocage à 5 essais en CI. La règle reste testée par les e2e de l'API.
+          sed -i "s|^LOGIN_MAX_ATTEMPTS=.*|LOGIN_MAX_ATTEMPTS=1000|" .env
       - name: Démarrer la stack
         run: docker compose up -d --build --wait api web
       - name: Migrations et seed
@@ -113,7 +116,7 @@ jobs:
       # Échec si une vulnérabilité CRITIQUE corrigeable est présente.
       - name: Trivy
         if: matrix.target != 'api-migrate'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: img:ci
           severity: CRITICAL

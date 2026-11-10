@@ -125,8 +125,18 @@ test('Leader Junior : campagne, import, répartition ; TCI : appel, confirmation
       ).ok(),
     ).toBe(true);
   }
+  // Plus d'offre « premier qui accepte » : la logistique affecte le livreur (liste classée).
+  const candidates = (await (
+    await request.get(`/api/deliveries/${orderId}/candidates`, { headers: auth(logistics) })
+  ).json()) as { id: string; phone: string }[];
+  const courierId = candidates.find((c) => c.phone === '+2693300023')!.id;
   expect(
-    (await request.post(`/api/courier/offers/${orderId}/accept`, { headers: auth(courier) })).ok(),
+    (
+      await request.post(`/api/deliveries/${orderId}/assign`, {
+        headers: auth(logistics),
+        data: { courierId },
+      })
+    ).ok(),
   ).toBe(true);
   expect(
     (

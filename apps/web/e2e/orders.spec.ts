@@ -58,7 +58,11 @@ test('logistique GC : commande pour Fatima Said, préparée, affectée, livrée 
   }
   await detail.getByRole('button', { name: 'Affecter un livreur de l’île' }).click();
   const dialog = page.getByRole('dialog', { name: /Affecter un livreur/ });
-  await pick(dialog.getByLabel(/^Livreur/), 'Karim Bacar');
+  // Livreurs de l'île classés (disponibilité, distance au site) : choix par bouton radio.
+  await dialog
+    .getByTestId('courier-picker')
+    .getByRole('radio', { name: /Karim Bacar/ })
+    .check();
   await dialog.getByRole('button', { name: 'Valider' }).click();
   await expect(detail).toContainText('Karim Bacar');
   await expect(detail.getByText('Livreur affecté', { exact: true }).first()).toBeVisible();
