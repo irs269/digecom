@@ -132,11 +132,22 @@ export class PurchasesService {
 
   async updateSupplier(id: string, input: Partial<SupplierInput> & { isActive?: boolean }) {
     if (!(await this.prisma.supplier.findUnique({ where: { id } }))) throw notFound('Fournisseur');
-    return this.prisma.supplier.update({
-      where: { id },
-      data: input,
-      select: { id: true, name: true, platform: true, contact: true, isActive: true },
-    });
+    try {
+      return await this.prisma.supplier.update({
+        where: { id },
+        data: input,
+        select: { id: true, name: true, platform: true, contact: true, isActive: true },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new AppException(
+          'SUPPLIER_EXISTS',
+          'Ce fournisseur existe déjà',
+          HttpStatus.CONFLICT,
+        );
+      }
+      throw err;
+    }
   }
 
   // --- Commandes fournisseurs ---------------------------------------------------------------
