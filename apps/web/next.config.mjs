@@ -34,6 +34,16 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
       },
+      // PWA : fichiers JavaScript et images au nom versionné (empreinte) → cache d'un an,
+      // l'application s'ouvre ensuite sans retélécharger 300 Ko en 4G.
+      {
+        source: '/app/_expo/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/app/assets/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
     ];
   },
 };
