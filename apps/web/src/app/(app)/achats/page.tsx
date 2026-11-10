@@ -30,6 +30,7 @@ import { useToast } from '@/components/ui/toast';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errorMessage, fieldErrors, useSites } from '@/lib/queries';
+import { SuppliersPanel } from './suppliers-panel';
 
 const STATUS_TONE: Record<PurchaseOrderStatus, 'blue' | 'orange' | 'green' | 'red'> = {
   DRAFT: 'blue',
@@ -149,6 +150,11 @@ function PurchaseForm({ onDone }: { onDone: () => void }) {
           .filter((s) => s.isActive)
           .map((s) => ({ value: s.id, label: `${s.name}${s.platform ? ` (${s.platform})` : ''}` }))}
         error={errors.supplierId}
+        hint={
+          suppliers.data && !suppliers.data.some((s) => s.isActive)
+            ? 'Aucun fournisseur actif : ajoute-en un avec le bouton « Fournisseurs ».'
+            : undefined
+        }
       />
       <SelectField
         label="Produit (catalogue du leader)"
@@ -355,7 +361,7 @@ export default function PurchasesPage() {
   const queryClient = useQueryClient();
   const island = useIslandFilter();
   const [panel, setPanel] = useState<
-    { mode: 'new' } | { mode: 'receive' | 'detail'; po: PurchaseOrderView } | null
+    { mode: 'new' | 'suppliers' } | { mode: 'receive' | 'detail'; po: PurchaseOrderView } | null
   >(null);
   const orders = useQuery({
     queryKey: ['purchase-orders'],
@@ -391,9 +397,14 @@ export default function PurchasesPage() {
           subtitle="Commandes fournisseurs, lots et coût d’approvisionnement réel"
         />
         {canCreate ? (
-          <Button variant="accent" onClick={() => setPanel({ mode: 'new' })}>
-            + Commande fournisseur
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPanel({ mode: 'suppliers' })}>
+              Fournisseurs
+            </Button>
+            <Button variant="accent" onClick={() => setPanel({ mode: 'new' })}>
+              + Commande fournisseur
+            </Button>
+          </div>
         ) : null}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -499,9 +510,17 @@ export default function PurchasesPage() {
         {panel?.mode === 'new' ? <PurchaseForm onDone={() => setPanel(null)} /> : null}
       </Sheet>
       <Sheet
+        open={panel?.mode === 'suppliers'}
+        onOpenChange={(o) => !o && setPanel(null)}
+        title="Fournisseurs"
+        description="Ajoute, modifie ou désactive les fournisseurs utilisés dans les commandes."
+      >
+        {panel?.mode === 'suppliers' ? <SuppliersPanel /> : null}
+      </Sheet>
+      <Sheet
         open={panel?.mode === 'receive'}
         onOpenChange={(o) => !o && setPanel(null)}
-        title={panel && panel.mode !== 'new' ? `Réception ${panel.po.number}` : ''}
+        title={panel && 'po' in panel ? `Réception ${panel.po.number}` : ''}
       >
         {panel?.mode === 'receive' ? (
           <ReceiveForm po={panel.po} onDone={() => setPanel(null)} />
@@ -510,9 +529,9 @@ export default function PurchasesPage() {
       <Sheet
         open={panel?.mode === 'detail'}
         onOpenChange={(o) => !o && setPanel(null)}
-        title={panel && panel.mode !== 'new' ? panel.po.number : ''}
+        title={panel && 'po' in panel ? panel.po.number : ''}
         description={
-          panel && panel.mode !== 'new'
+          panel && 'po' in panel
             ? `${panel.po.supplier.name} · ${panel.po.product.name}`
             : undefined
         }

@@ -576,6 +576,20 @@ describe('Catalogues, stock et achats (e2e)', () => {
       expect(
         (await http().post('/suppliers').set(as('ADMIN')).send({ name: 'Foshan Kitchen' })).status,
       ).toBe(409);
+      const other = await http().post('/suppliers').set(as('ADMIN')).send({ name: 'Yiwu Lamps' });
+      expect(
+        (
+          await http()
+            .patch(`/suppliers/${other.body.id}`)
+            .set(as('ADMIN'))
+            .send({ name: 'Foshan Kitchen' })
+        ).status,
+      ).toBe(409);
+      const off = await http()
+        .patch(`/suppliers/${created.body.id}`)
+        .set(as('ADMIN'))
+        .send({ isActive: false });
+      expect(off.body.isActive).toBe(false);
       expect((await http().get('/suppliers').set(as('CASHIER'))).status).toBe(403);
       expect((await http().get('/suppliers').set(as('FINANCE'))).status).toBe(200);
     });
