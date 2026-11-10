@@ -174,6 +174,30 @@ server {
         proxy_set_header X-Forwarded-Host  $host;
         proxy_set_header Connection        "";
         proxy_read_timeout 120s;
+        # Gros fichiers JavaScript (application /app : plus de 1 Mo) : jamais de fichier
+        # temporaire Nginx. Sinon, si /var/lib/nginx n'est pas inscriptible, la réponse est
+        # coupée en cours de route et l'application reste sur une page blanche.
+        proxy_max_temp_file_size 0;
+    }
+
+    # Compression : l'application /app passe de 1,1 Mo à environ 300 Ko.
+    gzip on;
+    gzip_proxied any;
+    gzip_min_length 1024;
+    gzip_types application/javascript text/css application/json image/svg+xml;
+
+    # Flux temps réel de l'application (appels, statuts) : comme les notifications.
+    location /api/calls/stream {
+        proxy_pass http://127.0.0.1:3100;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 1h;
     }
 
     # Notifications temps réel (SSE) : pas de mise en tampon, connexion longue.
