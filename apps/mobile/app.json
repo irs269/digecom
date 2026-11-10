@@ -84,7 +84,8 @@
     ],
     "scheme": "digecom",
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "baseUrl": "/app"
     },
     "extra": {
       "eas": {
@@ -96,6 +97,15 @@
         }
       }
     },
-    "owner": "irsoid269"
+    "owner": "irsoid269",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Dig'eCom",
+      "shortName": "Dig'eCom",
+      "themeColor": "#0B2FE0",
+      "backgroundColor": "#FFFFFF",
+      "lang": "fr"
+    }
   }
 }

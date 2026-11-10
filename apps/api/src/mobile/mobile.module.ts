@@ -1,4 +1,5 @@
 import {
+  Inject,
   Body,
   Controller,
   Delete,
@@ -23,6 +24,8 @@ import {
 } from '@digecom/shared';
 import type { AuthenticatedRequest, AuthUser } from '../auth/auth.types';
 import { AnyAuthenticated, CurrentUser } from '../auth/decorators';
+import { ENV } from '../config/config.module';
+import type { Env } from '../config/env';
 import { AppException } from '../common/app-exception';
 import { IdempotencyInterceptor } from '../common/idempotency.interceptor';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
@@ -40,6 +43,7 @@ export class MobileController {
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
     private readonly settlements: SettlementService,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   @Post('devices')
@@ -58,6 +62,13 @@ export class MobileController {
       create: { token: body.token, platform: body.platform, userId: actor.id },
       update: { userId: actor.id, platform: body.platform, lastSeenAt: new Date() },
     });
+  }
+
+  @Get('push/web-key')
+  @AnyAuthenticated()
+  @ApiOperation({ summary: 'Clé publique VAPID pour le push web (PWA iPhone)' })
+  webPushKey(): { publicKey: string | null } {
+    return { publicKey: this.env.VAPID_PUBLIC_KEY ?? null };
   }
 
   @Delete('devices/:token')

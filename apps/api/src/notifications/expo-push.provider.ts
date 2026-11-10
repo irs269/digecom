@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import webpush from 'web-push';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { PrismaService } from '../prisma/prisma.service';
@@ -56,13 +57,18 @@ export class ExpoPushProvider extends PushProvider {
   }
 
   async send(userIds: string[], notification: NotificationInput): Promise<void> {
-    if (!this.env.PUSH_ENABLED || !userIds.length) return;
+    if (!userIds.length) return;
     const devices = await this.prisma.device.findMany({
       where: { userId: { in: userIds } },
-      select: { token: true },
+      select: { token: true, platform: true },
     });
+    await this.sendWeb(
+      devices.filter((d) => d.platform === 'web').map((d) => d.token),
+      notification,
+    );
+    if (!this.env.PUSH_ENABLED) return;
     const messages = buildMessages(
-      devices.map((d) => d.token),
+      devices.filter((d) => d.platform !== 'web').map((d) => d.token),
       notification,
     );
     for (let i = 0; i < messages.length; i += BATCH) {
@@ -93,5 +99,38 @@ export class ExpoPushProvider extends PushProvider {
         this.logger.warn(`Push Expo indisponible : ${(err as Error).message}`);
       }
     }
+  }
+
+  /** Web Push (PWA) : abonnements du navigateur, signés avec les clés VAPID. */
+  private async sendWeb(subscriptions: string[], n: NotificationInput): Promise<void> {
+    const { VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, VAPID_SUBJECT: subject } = this.env;
+    if (!pub || !priv || !subscriptions.length) return;
+    const payload = JSON.stringify({
+      title: n.title,
+      body: n.body,
+      data: { type: n.type, link: n.link ?? null, payload: n.payload ?? null },
+    });
+    const ttl = CALL_TYPES.has(n.type) ? 45 : 24 * 3600;
+    const urgent = CALL_TYPES.has(n.type) || URGENT_TYPES.has(n.type);
+    await Promise.all(
+      subscriptions.map(async (token) => {
+        try {
+          await webpush.sendNotification(JSON.parse(token) as webpush.PushSubscription, payload, {
+            vapidDetails: { subject, publicKey: pub, privateKey: priv },
+            TTL: ttl,
+            urgency: urgent ? 'high' : 'normal',
+            timeout: 8000,
+          });
+        } catch (err) {
+          const status = (err as { statusCode?: number }).statusCode;
+          // Abonnement expiré ou révoqué (application supprimée de l'écran d'accueil) : on l'oublie.
+          if (status === 404 || status === 410) {
+            await this.prisma.device.deleteMany({ where: { token } });
+          } else {
+            this.logger.warn(`Push web indisponible : ${(err as Error).message}`);
+          }
+        }
+      }),
+    );
   }
 }

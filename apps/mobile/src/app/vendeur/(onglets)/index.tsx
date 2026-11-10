@@ -1,4 +1,5 @@
 import { formatKmf } from '@digecom/shared';
+import { PwaBanner } from '@/components/PwaBanner';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { PendingBanner } from '@/components/pending';
@@ -36,6 +37,7 @@ export default function Accueil() {
 
   return (
     <Screen onRefresh={refresh} refreshing={orders.isRefetching}>
+      <PwaBanner />
       <View
         style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}
       >

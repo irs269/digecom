@@ -1,14 +1,15 @@
+import { Platform } from 'react-native';
 import { MOBILE_CLIENT_VALUE, type LoginResponse, type MeResponse } from '@digecom/shared';
-import * as SecureStore from 'expo-secure-store';
+import { secure } from './secure';
 
 /**
  * Adresse de l'API : le back-office relaie `/api/*` vers l'API, en dev comme en production.
  * Émulateur Android : 10.0.2.2 désigne le PC. Production : https://<domaine>/api.
  */
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3100/api').replace(
-  /\/$/,
-  '',
-);
+// PWA : l'application est servie par le back-office, l'API est sur la même origine (/api).
+export const API_URL = (
+  Platform.OS === 'web' ? '/api' : (process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3100/api')
+).replace(/\/$/, '');
 
 const REFRESH_KEY = 'dc_refresh';
 
@@ -51,7 +52,7 @@ export function updateUser(user: MeResponse) {
 
 async function store(res: LoginResponse) {
   accessToken = res.accessToken;
-  if (res.refreshToken) await SecureStore.setItemAsync(REFRESH_KEY, res.refreshToken);
+  if (res.refreshToken) await secure.set(REFRESH_KEY, res.refreshToken);
   emit(res.user);
 }
 
@@ -92,7 +93,7 @@ export async function login(phone: string, password: string): Promise<MeResponse
 /** Renouvelle le jeton d'accès. Faux si la session est terminée (compte désactivé, révoquée…). */
 export function refresh(): Promise<boolean> {
   refreshing ??= (async () => {
-    const token = await SecureStore.getItemAsync(REFRESH_KEY);
+    const token = await secure.get(REFRESH_KEY);
     if (!token) return false;
     const res = await raw('/auth/refresh', {
       method: 'POST',
@@ -113,12 +114,12 @@ export function refresh(): Promise<boolean> {
 
 export async function clearSession() {
   accessToken = null;
-  await SecureStore.deleteItemAsync(REFRESH_KEY);
+  await secure.remove(REFRESH_KEY);
   emit(null);
 }
 
 export async function logout() {
-  const token = await SecureStore.getItemAsync(REFRESH_KEY);
+  const token = await secure.get(REFRESH_KEY);
   if (token) {
     await raw('/auth/logout', {
       method: 'POST',

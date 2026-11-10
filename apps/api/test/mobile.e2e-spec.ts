@@ -49,6 +49,34 @@ describe('API mobile (e2e)', () => {
       expect(await ctx.prisma.device.count({ where: { token: device.token } })).toBe(0);
     });
 
+    it('PWA (iPhone) : abonnement Web Push enregistré, clé publique VAPID exposée', async () => {
+      const seller = await token(SELLER);
+      const key = await http().get('/me/push/web-key').auth(seller, { type: 'bearer' });
+      expect(key.status).toBe(200);
+      expect(key.body).toHaveProperty('publicKey');
+      expect((await http().get('/me/push/web-key')).status).toBe(401);
+
+      const subscription = JSON.stringify({
+        endpoint: 'https://web.push.apple.com/QGxV-test-abonnement',
+        keys: {
+          p256dh:
+            'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM',
+          auth: 'tBHItJI5svbpez7KI4CCXg',
+        },
+      });
+      expect(
+        (
+          await http()
+            .post('/me/devices')
+            .auth(seller, { type: 'bearer' })
+            .send({ token: subscription, platform: 'web' })
+        ).status,
+      ).toBe(204);
+      const row = await ctx.prisma.device.findUniqueOrThrow({ where: { token: subscription } });
+      expect(row.platform).toBe('web');
+      await ctx.prisma.device.delete({ where: { token: subscription } });
+    });
+
     it('refuse un jeton invalide (422)', async () => {
       const res = await http()
         .post('/me/devices')
