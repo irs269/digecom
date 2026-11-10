@@ -594,6 +594,15 @@ export class OrderService {
             body: `+${formatKmf(bonus)} pour la vente à ${order.customerName}`,
           });
         }
+        // Émulation : les autres e-commerçants de l'île voient chaque vente conclue.
+        const peers = await this.notifications.usersWithRoles(['SELLER'], order.islandId);
+        const firstName = order.seller.fullName.trim().split(/\s+/)[0];
+        after.notify.push({
+          users: peers.filter((u) => u !== order.sellerId),
+          type: 'PEER_SALE',
+          title: `🎉 ${firstName} a conclu une vente de ${formatKmf(this.total(order))}`,
+          body: 'À toi la prochaine !',
+        });
         after.salesTarget = order.leaderId;
         return;
       }

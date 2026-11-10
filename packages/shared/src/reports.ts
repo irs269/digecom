@@ -344,6 +344,7 @@ export const NOTIFICATION_TYPES = {
   DELIVERY_FAILED: 'Livraison échouée',
   ORDER_SOLD: 'Client a pris',
   ORDER_REFUSED: 'Client a refusé',
+  PEER_SALE: 'Vente conclue par un autre e-commerçant de l’île',
   STOCK_LOW: 'Stock faible',
   STOCK_OUT: 'Rupture de stock',
   SETTLEMENT_AVAILABLE: 'Relevé disponible',

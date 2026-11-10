@@ -414,6 +414,18 @@ describe('Commandes et livraisons (e2e)', () => {
       });
       const sold = await http().post(`/me/orders/${order.id}/markSold`).set(as('FATIMA')).send({});
       expect(sold.body.status).toBe('SOLD');
+      // Émulation : les autres e-commerçants de l'île (et eux seuls) sont notifiés.
+      const peerSale = async (phone: string) =>
+        ctx.prisma.notification.count({
+          where: {
+            type: 'PEER_SALE',
+            userId: await userId(phone),
+            title: { startsWith: '🎉 Fatima a conclu une vente de' },
+          },
+        });
+      expect(await peerSale('+2693300016')).toBeGreaterThan(0); // Mouhidine, Grande Comore
+      expect(await peerSale('+2693300018')).toBe(0); // Anrifa, Anjouan
+      expect(await peerSale('+2693300011')).toBe(0); // Fatima elle-même
     });
   });
 
