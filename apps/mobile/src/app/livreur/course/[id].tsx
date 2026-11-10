@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Linking, Pressable, View } from 'react-native';
 import { CallButtons, CallLog } from '@/components/CallButtons';
+import { MapSection } from '@/components/MapSection';
 import { PendingBanner } from '@/components/pending';
 import {
   Badge,
@@ -182,11 +183,11 @@ export default function Course() {
         <>
           <Notice tone="blue">Rends-toi à {run.site.name} et récupère le colis.</Notice>
           {siteRoute ? (
-            <Button
+            <MapSection
               testID="itineraire-site"
-              label={`🧭 Itinéraire vers le site ${run.site.name}`}
-              variant="outline"
-              onPress={() => void Linking.openURL(siteRoute)}
+              route
+              destination={{ latitude: run.site.latitude!, longitude: run.site.longitude! }}
+              externalUrl={siteRoute}
             />
           ) : (
             <T style={{ color: colors.muted, fontSize: 12 }}>
@@ -211,11 +212,11 @@ export default function Course() {
           {[run.zone, run.customerAddress].filter(Boolean).join(' · ') || '—'} · {destPhone}
         </T>
         {destRoute ? (
-          <Button
+          <MapSection
             testID="itineraire-destination"
-            label={direct ? '🧭 Itinéraire vers le client' : `🧭 Itinéraire vers ${dest}`}
-            variant={run.status === 'OUT_FOR_DELIVERY' ? 'orange' : 'outline'}
-            onPress={() => void Linking.openURL(destRoute)}
+            route={run.status === 'OUT_FOR_DELIVERY'}
+            destination={direct ? customerAddress : run.sellerLocation!}
+            externalUrl={destRoute}
           />
         ) : !direct ? (
           <T style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>
