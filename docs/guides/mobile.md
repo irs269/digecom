@@ -10,5 +10,5 @@ Les e-commerçants et les livreurs utilisent l'application mobile (phase 8). En 
 
 ## Livreur
 - **Disponibilité** à activer pour recevoir les courses de votre île.
-- **Course** : accepter (le premier qui accepte l'obtient), retirer au site, remettre (montant encaissé obligatoire pour une livraison directe).
+- **Course** : affectée par la logistique (livreur disponible le plus proche du site) ; itinéraire Google Maps vers le site, retrait, itinéraire vers l'e-commerçant, remise (montant encaissé obligatoire pour une livraison directe).
 - **Argent encaissé** remis à la caisse du site ; frais de course comptés à chaque remise.

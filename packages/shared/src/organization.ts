@@ -113,6 +113,9 @@ export const siteSchema = z.object({
     .max(300)
     .nullish()
     .transform((v) => v || null),
+  /** Position GPS du site (degrés décimaux), utilisée pour la distance des livreurs. */
+  latitude: z.number().min(-90).max(90).nullish(),
+  longitude: z.number().min(-180).max(180).nullish(),
 });
 export type SiteInput = z.infer<typeof siteSchema>;
 export const updateSiteSchema = siteSchema.partial();
@@ -148,6 +151,8 @@ export interface SiteView {
   name: string;
   type: 'SHOP' | 'WAREHOUSE';
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   isActive: boolean;
   island: IslandView;
 }

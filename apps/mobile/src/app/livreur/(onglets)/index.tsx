@@ -1,41 +1,46 @@
-import {
-  DELIVERY_MODE_LABELS,
-  formatKmf,
-  type DeliveryOfferView,
-  type MeResponse,
-  type OrderView,
-} from '@digecom/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { DELIVERY_MODE_LABELS, formatDistance, distanceKm, type MeResponse } from '@digecom/shared';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 import { PendingBanner } from '@/components/pending';
-import { Badge, Button, Card, Empty, Notice, Row, Screen, T } from '@/components/ui';
+import { Badge, Card, Empty, Notice, Screen, T } from '@/components/ui';
 import { api, ApiError, updateUser } from '@/lib/api';
-import { keys, useOffers, useRuns } from '@/lib/hooks';
+import { useRuns } from '@/lib/hooks';
+import { currentPosition, reportLocation } from '@/lib/location';
 import { useSession } from '@/lib/session';
-import { colors, radius } from '@/theme';
+import { colors } from '@/theme';
 
+/**
+ * Accueil du livreur. Plus d'offre « premier qui accepte » : la logistique de l'île affecte les
+ * courses au livreur disponible le plus proche du site, grâce à la position partagée ici.
+ */
 export default function Courses() {
   const { user, logout } = useSession();
-  const qc = useQueryClient();
   const available = user?.isAvailable ?? false;
-  const offers = useOffers(available);
   const runs = useRuns();
-  const [ignored, setIgnored] = useState<string[]>([]);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'red' | 'orange' | 'green'; text: string } | null>(
     null,
   );
+  const [here, setHere] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationOff, setLocationOff] = useState(false);
+
+  useEffect(() => {
+    void currentPosition().then((p) => {
+      setHere(p);
+      setLocationOff(!p);
+    });
+  }, []);
 
   const toggle = async (next: boolean) => {
     if (!user) return;
-    setBusy('dispo');
+    setBusy(true);
     setMessage(null);
     try {
       await api('/courier/availability', { method: 'PATCH', body: { isAvailable: next } });
       updateUser({ ...user, isAvailable: next } as MeResponse);
-      if (next) void offers.refetch();
+      // Position fraîche dès qu'on se déclare disponible : elle sert au classement par distance.
+      if (next) void reportLocation(0);
     } catch (err) {
       setMessage({
         tone: 'red',
@@ -45,47 +50,24 @@ export default function Courses() {
             : (err as Error).message,
       });
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   };
 
-  /** Accepter demande le réseau : la course revient au premier qui accepte. */
-  const accept = async (o: DeliveryOfferView) => {
-    setBusy(o.orderId);
-    setMessage(null);
-    try {
-      const order = await api<OrderView>(`/courier/offers/${o.orderId}/accept`, { method: 'POST' });
-      void qc.invalidateQueries({ queryKey: keys.offers });
-      await qc.invalidateQueries({ queryKey: keys.runs });
-      router.push(`/livreur/course/${order.id}`);
-    } catch (err) {
-      void qc.invalidateQueries({ queryKey: keys.offers });
-      setMessage({
-        tone: err instanceof ApiError && err.status === 409 ? 'orange' : 'red',
-        text:
-          err instanceof ApiError && err.isNetwork
-            ? 'Pas de réseau : impossible d’accepter la course pour l’instant.'
-            : err instanceof ApiError && err.status === 409
-              ? 'Trop tard : un autre livreur a pris cette course.'
-              : (err as Error).message,
-      });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const visibleOffers = (offers.data ?? []).filter((o) => !ignored.includes(o.orderId));
-  const refresh = () => {
-    void offers.refetch();
-    void runs.refetch();
-  };
+  const list = runs.data ?? [];
 
   return (
-    <Screen onRefresh={refresh} refreshing={runs.isRefetching || offers.isRefetching}>
+    <Screen
+      onRefresh={() => {
+        void runs.refetch();
+        void reportLocation(0);
+      }}
+      refreshing={runs.isRefetching}
+    >
       <View
         style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}
       >
-        <View>
+        <View style={{ flex: 1 }}>
           <T weight="bold" style={{ fontSize: 22 }}>
             {user?.fullName}
           </T>
@@ -116,30 +98,61 @@ export default function Courses() {
           backgroundColor: available ? colors.greenSoft : colors.white,
         }}
       >
-        <T
-          weight="semibold"
-          style={{ fontSize: 16, color: available ? colors.green : colors.muted }}
-        >
-          {available ? 'Disponible' : 'Indisponible'}
-        </T>
+        <View style={{ flex: 1 }}>
+          <T
+            weight="semibold"
+            style={{ fontSize: 16, color: available ? colors.green : colors.muted }}
+          >
+            {available ? 'Disponible' : 'Indisponible'}
+          </T>
+          <T style={{ color: colors.muted, fontSize: 12 }}>
+            {available
+              ? 'La logistique peut t’affecter une course.'
+              : 'Aucune course ne te sera affectée.'}
+          </T>
+        </View>
         <Switch
           testID="disponible"
           value={available}
-          disabled={busy === 'dispo'}
+          disabled={busy}
           onValueChange={(v) => void toggle(v)}
           trackColor={{ true: colors.green, false: colors.line }}
         />
       </Card>
 
+      {locationOff ? (
+        <Notice tone="orange">
+          Position non partagée : autorise la localisation pour que la logistique te propose les
+          courses proches de toi et pour obtenir les itinéraires.
+        </Notice>
+      ) : null}
       <PendingBanner />
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
 
-      {runs.data?.length ? (
-        <>
-          <T weight="semibold" style={{ fontSize: 17, marginVertical: 8 }}>
-            Course en cours
-          </T>
-          {runs.data.map((r) => (
+      <T weight="semibold" style={{ fontSize: 17, marginVertical: 8 }}>
+        Mes courses
+      </T>
+      {list.length === 0 ? (
+        <Empty
+          title={available ? 'Aucune course pour le moment' : 'Tu es indisponible'}
+          text={
+            available
+              ? 'Une notification arrive dès que la logistique t’affecte une course.'
+              : 'Repasse en disponible quand tu es prêt.'
+          }
+        />
+      ) : (
+        list.map((r) => {
+          const site =
+            r.site.latitude !== null && r.site.longitude !== null
+              ? { latitude: r.site.latitude, longitude: r.site.longitude }
+              : null;
+          const toSite = here && site && r.status === 'ASSIGNED' ? distanceKm(here, site) : null;
+          const toSeller =
+            here && r.sellerLocation && r.status !== 'ASSIGNED'
+              ? distanceKm(here, r.sellerLocation)
+              : null;
+          return (
             <Pressable
               key={r.id}
               onPress={() => router.push(`/livreur/course/${r.id}`)}
@@ -149,84 +162,25 @@ export default function Courses() {
                 <T style={{ color: colors.muted, fontSize: 12 }}>#{r.number}</T>
                 <T weight="semibold">{r.items.map((i) => i.product.name).join(', ')}</T>
                 <T style={{ color: colors.muted, fontSize: 13, marginBottom: 6 }}>
-                  {DELIVERY_MODE_LABELS[r.deliveryMode]}
+                  {DELIVERY_MODE_LABELS[r.deliveryMode]} · retrait à {r.site.name}
                 </T>
-                <Badge status={r.status} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Badge status={r.status} />
+                  {toSite !== null ? (
+                    <T style={{ fontSize: 12, color: colors.muted }}>
+                      Site à {formatDistance(toSite)}
+                    </T>
+                  ) : null}
+                  {toSeller !== null ? (
+                    <T style={{ fontSize: 12, color: colors.muted }}>
+                      E-commerçant à {formatDistance(toSeller)}
+                    </T>
+                  ) : null}
+                </View>
               </Card>
             </Pressable>
-          ))}
-        </>
-      ) : null}
-
-      {!available ? (
-        <Empty
-          title="Tu es indisponible"
-          text="Aucune course ne te sera proposée. Repasse en disponible quand tu es prêt."
-        />
-      ) : visibleOffers.length === 0 ? (
-        !runs.data?.length ? (
-          <Empty
-            title="Aucune course pour le moment"
-            text={`Tu recevras une notification dès qu’une livraison est prête sur ${user?.island?.name ?? 'ton île'}.`}
-          />
-        ) : null
-      ) : (
-        visibleOffers.map((o) => (
-          <View
-            key={o.orderId}
-            style={{
-              backgroundColor: colors.blue,
-              borderRadius: radius.lg,
-              padding: 16,
-              marginBottom: 12,
-            }}
-            testID={`offre-${o.number}`}
-          >
-            <T weight="semibold" style={{ color: colors.orange, fontSize: 12 }}>
-              NOUVELLE LIVRAISON
-            </T>
-            <T style={{ color: colors.blueSoft }}>Commande #{o.number}</T>
-            <T weight="bold" style={{ color: colors.white, fontSize: 18, marginBottom: 8 }}>
-              {o.items
-                .map((i) => `${i.name}${i.quantity > 1 ? ` × ${i.quantity}` : ''}`)
-                .join(', ')}
-            </T>
-            <View style={{ backgroundColor: colors.white, borderRadius: radius.md, padding: 12 }}>
-              <Row label="Récupérer au site" value={o.site.name} />
-              <Row
-                label={
-                  o.deliveryMode === 'TO_CUSTOMER' ? 'Livrer au client' : 'Livrer à l’e-commerçant'
-                }
-                value={o.zone ?? o.customerAddress ?? '—'}
-              />
-              {o.deliveryMode === 'TO_CUSTOMER' ? (
-                <Row label="À encaisser" value={formatKmf(o.total)} />
-              ) : null}
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  label="Ignorer"
-                  variant="outline"
-                  onPress={() => setIgnored((l) => [...l, o.orderId])}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Button
-                  testID={`accepter-${o.number}`}
-                  label="Accepter"
-                  variant="orange"
-                  loading={busy === o.orderId}
-                  onPress={() => void accept(o)}
-                />
-              </View>
-            </View>
-            <T style={{ color: colors.blueSoft, fontSize: 12, marginTop: 8 }}>
-              Proposée aux livreurs disponibles de {user?.island?.name}. Le premier qui accepte la
-              prend.
-            </T>
-          </View>
-        ))
+          );
+        })
       )}
     </Screen>
   );

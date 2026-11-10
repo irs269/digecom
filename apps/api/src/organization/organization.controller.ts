@@ -43,6 +43,8 @@ const toSiteView = (s: SiteRow): SiteView => ({
   name: s.name,
   type: s.type,
   address: s.address,
+  latitude: s.latitude,
+  longitude: s.longitude,
   isActive: s.isActive,
   island: s.island,
 });

@@ -1,13 +1,14 @@
 import {
   DELIVERY_MODE_LABELS,
   formatKmf,
+  mapPointUrl,
   ORDER_STATUS_LABELS,
   type OrderView,
 } from '@digecom/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { CallButtons, CallLog } from '@/components/CallButtons';
 import { PendingBanner } from '@/components/pending';
 import {
@@ -176,6 +177,14 @@ export default function Commande() {
             peerPhone={order.courier.phone}
             primary={inDelivery}
           />
+          {order.courierLocation ? (
+            <Button
+              testID="position-livreur"
+              label="📍 Voir où est le livreur"
+              variant="ghost"
+              onPress={() => void Linking.openURL(mapPointUrl(order.courierLocation!))}
+            />
+          ) : null}
         </Card>
       ) : order.status === 'READY' && order.deliveryMode !== 'PICKUP' ? (
         <Notice tone="orange">

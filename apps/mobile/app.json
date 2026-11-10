@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "km.digecom.app"
+      "bundleIdentifier": "km.digecom.app",
+      "bitcode": false
     },
     "android": {
       "package": "km.digecom.app",
@@ -25,7 +26,13 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.WAKE_LOCK"
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.BLUETOOTH",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -59,6 +66,20 @@
         {
           "microphonePermission": "Dig'eCom utilise le micro pour les appels entre e-commerçants et livreurs."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "# WebRTC (appels Dig’eCom) : classes natives chargées par JNI, à conserver.\n-keep class org.webrtc.** { *; }\n-dontwarn org.webrtc.**"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Dig’eCom utilise ta position pour proposer les courses au livreur le plus proche et pour afficher l’itinéraire."
+        }
       ]
     ],
     "scheme": "digecom",
@@ -67,8 +88,14 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "8612eb14-cafe-4632-9cab-392d49851771"
+      },
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
       }
-    }
+    },
+    "owner": "irsoid269"
   }
 }
