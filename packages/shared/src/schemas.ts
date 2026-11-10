@@ -84,7 +84,8 @@ export const MOBILE_CLIENT_VALUE = 'mobile';
 // --- Application mobile ------------------------------------------------------------------------
 
 export const registerDeviceSchema = z.object({
-  token: z.string().trim().min(10).max(300),
-  platform: z.enum(['android', 'ios']),
+  /** Jeton Expo (Android) ou abonnement Web Push sérialisé en JSON (PWA iPhone / navigateur). */
+  token: z.string().trim().min(10).max(2000),
+  platform: z.enum(['android', 'ios', 'web']),
 });
 export type RegisterDeviceInput = z.infer<typeof registerDeviceSchema>;

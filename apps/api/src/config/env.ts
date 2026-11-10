@@ -38,6 +38,13 @@ export const envSchema = z.object({
   /** Jeton d'accès Expo (facultatif, recommandé en production : « Enhanced push security »). */
   EXPO_ACCESS_TOKEN: z.string().optional(),
   /**
+   * Web Push (PWA sur iPhone et navigateurs) : paire de clés VAPID (`npx web-push generate-vapid-keys`)
+   * et contact (`mailto:…`). Sans clés : pas de push web, l'in-app reste actif.
+   */
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:contact@digecom.km'),
+  /**
    * Relais TURN (coturn) des appels dans l'application, ex. `turn:digecom.km:3478`.
    * Plusieurs adresses séparées par des virgules. Vide : STUN public seulement (le Wi-Fi marche,
    * les réseaux mobiles souvent pas).

@@ -1,4 +1,5 @@
 import { DELIVERY_MODE_LABELS, formatDistance, distanceKm, type MeResponse } from '@digecom/shared';
+import { PwaBanner } from '@/components/PwaBanner';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
@@ -64,6 +65,7 @@ export default function Courses() {
       }}
       refreshing={runs.isRefetching}
     >
+      <PwaBanner />
       <View
         style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}
       >

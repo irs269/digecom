@@ -11,7 +11,7 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CallScreen } from '@/components/CallScreen';
 import { CallProvider, useCalls } from '@/lib/calls/CallProvider';
@@ -67,6 +67,16 @@ function Root() {
 
   // Une notification (offre de course, commande…) rafraîchit les données et ouvre l'écran lié.
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      // PWA : le service worker signale une notification reçue ou touchée.
+      if (!('serviceWorker' in navigator)) return;
+      const onMsg = (e: MessageEvent<{ type?: string; data?: { type?: string } }>) => {
+        void queryClient.invalidateQueries();
+        if (e.data?.data?.type === 'CALL_INCOMING') void checkRinging();
+      };
+      navigator.serviceWorker.addEventListener('message', onMsg);
+      return () => navigator.serviceWorker.removeEventListener('message', onMsg);
+    }
     const received = Notifications.addNotificationReceivedListener(() => {
       void queryClient.invalidateQueries();
     });

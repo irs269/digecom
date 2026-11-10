@@ -75,7 +75,12 @@ sed -i \
   -e "s#^S3_PUBLIC_ENDPOINT=.*#S3_PUBLIC_ENDPOINT=https://fichiers.digecom.example.km#" \
   .env
 grep -c A-GENERER .env   # doit afficher 0
+# Push de l'application iPhone (PWA) : paire de clés VAPID, à générer une seule fois.
+docker run --rm node:22-alpine npx -y web-push@3.6.7 generate-vapid-keys
+# → recopier « Public Key » dans VAPID_PUBLIC_KEY et « Private Key » dans VAPID_PRIVATE_KEY.
 ```
+
+Ne jamais changer les clés VAPID ensuite : les iPhone déjà abonnés ne recevraient plus de notifications.
 
 L'API **refuse de démarrer**, avec un message explicite dans `docker compose logs api`, dans ces cas :
 - un secret vaut encore `A-GENERER-…` ;

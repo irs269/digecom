@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /**
  * Son de l'appel : sonnerie, tonalité d'attente, haut-parleur, capteur de proximité.
  * Le module natif peut manquer (Expo Go) : chaque appel est protégé et devient sans effet.
@@ -16,6 +18,8 @@ type InCall = {
 let mgr: InCall | null | undefined;
 function inCall(): InCall | null {
   if (mgr !== undefined) return mgr;
+  // Navigateur (PWA) : pas de gestionnaire d'appel système.
+  if (Platform.OS === 'web') return (mgr = null);
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     mgr = (require('react-native-incall-manager') as { default: InCall }).default ?? null;

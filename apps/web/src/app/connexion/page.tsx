@@ -78,6 +78,13 @@ function LoginForm() {
       <Button type="submit" variant="accent" size="lg" disabled={isSubmitting}>
         {isSubmitting ? 'Connexion…' : 'Se connecter'}
       </Button>
+      <p className="text-center text-sm text-ink-muted">
+        E-commerçant ou livreur sur iPhone ?{' '}
+        {/* Application mobile (PWA) : page statique hors du routeur Next. */}
+        <a href="/app" className="font-semibold text-brand-blue hover:underline">
+          Ouvrir l’application Dig’eCom
+        </a>
+      </p>
     </form>
   );
 }
