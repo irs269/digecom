@@ -132,9 +132,11 @@ Capacité du relais tel que configuré : 40 ports, soit environ **20 appels simu
 
 ## 9. iPhone : application web installable (PWA)
 
-Les e-commerçants et livreurs sur iPhone utilisent **la même application**, exportée pour le web (Expo + react-native-web) et servie par le back-office à l'adresse **`https://<domaine>/app`**. Les écrans, les règles et le code sont les mêmes que sur Android.
+Les e-commerçants et livreurs sur iPhone utilisent **la même application**, exportée pour le web (Expo + react-native-web) et servie par le back-office à l'adresse **`https://<domaine>/pwa`**. Les écrans, les règles et le code sont les mêmes que sur Android.
 
-**Installer (une fois)** : ouvrir `https://<domaine>/app` dans **Safari**, toucher **Partager** (carré avec une flèche ↑), puis **« Sur l'écran d'accueil »**. L'icône Dig'eCom apparaît comme une application. Un bandeau l'explique dans l'application, et la page de connexion du back-office a un lien « Ouvrir l'application Dig'eCom ».
+L'ancienne adresse `/app` redirige vers `/pwa` (« /appels » était pris pour une adresse sous /app).
+
+**Installer (une fois)** : ouvrir `https://<domaine>/pwa` dans **Safari**, toucher **Partager** (carré avec une flèche ↑), puis **« Sur l'écran d'accueil »**. L'icône Dig'eCom apparaît comme une application. Un bandeau l'explique dans l'application, et la page de connexion du back-office a un lien « Ouvrir l'application Dig'eCom ».
 
 | Fonction | iPhone (PWA) |
 | --- | --- |
@@ -144,8 +146,8 @@ Les e-commerçants et livreurs sur iPhone utilisent **la même application**, ex
 | Appels Dig'eCom | WebRTC de Safari ; l'application doit être ouverte pour sonner |
 | Notifications push | **iOS 16.4 ou plus**, application **installée** sur l'écran d'accueil, puis bouton « 🔔 Activer les notifications » |
 
-**Push web** : l'application s'abonne avec le service worker (`/app/sw.js`) et enregistre l'abonnement par `POST /me/devices` (plateforme `web`). L'API envoie avec la bibliothèque `web-push`, signée par les clés `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (DEPLOY.md §3). Les abonnements expirés (application supprimée) sont oubliés automatiquement. Le push web ne dépend pas de `PUSH_ENABLED` (réservé au push Expo / Android).
+**Push web** : l'application s'abonne avec le service worker (`/pwa/sw.js`) et enregistre l'abonnement par `POST /me/devices` (plateforme `web`). L'API envoie avec la bibliothèque `web-push`, signée par les clés `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (DEPLOY.md §3). Les abonnements expirés (application supprimée) sont oubliés automatiquement. Le push web ne dépend pas de `PUSH_ENABLED` (réservé au push Expo / Android).
 
 **Limites d'iOS** : pas de sonnerie d'appel quand l'application est fermée (seulement la notification « Appel de … ») ; pas de position en arrière-plan.
 
-**Construire** : l'image Docker du back-office exporte l'application (`apps/web/Dockerfile`, étape `pwa`) : rien à faire de plus au déploiement. En local : `pnpm --filter mobile export:web` copie l'export dans `apps/web/public/app` (ignoré par Git), puis ouvrir `http://localhost:3100/app`.
+**Construire** : l'image Docker du back-office exporte l'application (`apps/web/Dockerfile`, étape `pwa`) : rien à faire de plus au déploiement. En local : `pnpm --filter mobile export:web` copie l'export dans `apps/web/public/pwa` (ignoré par Git), puis ouvrir `http://localhost:3100/pwa`.

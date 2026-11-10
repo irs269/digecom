@@ -85,7 +85,7 @@
     "scheme": "digecom",
     "experiments": {
       "typedRoutes": true,
-      "baseUrl": "/app"
+      "baseUrl": "/pwa"
     },
     "extra": {
       "eas": {

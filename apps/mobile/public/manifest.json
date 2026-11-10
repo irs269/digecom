@@ -3,22 +3,22 @@
   "short_name": "Dig'eCom",
   "description": "E-commerçants et livreurs Dig'eCom",
   "lang": "fr",
-  "id": "/app/",
-  "start_url": "/app/",
-  "scope": "/app/",
+  "id": "/pwa/",
+  "start_url": "/pwa/",
+  "scope": "/pwa/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
   "theme_color": "#0B2FE0",
   "icons": [
     {
-      "src": "/app/icons/icon-192.png",
+      "src": "/pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/app/icons/icon-512.png",
+      "src": "/pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

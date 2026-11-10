@@ -55,7 +55,7 @@
     "test": "jest",
     "lint": "tsc --noEmit",
     "eas-build-post-install": "pnpm --filter @digecom/shared build",
-    "export:web": "expo export -p web --output-dir dist-web && node -e \"require('fs').cpSync('dist-web','../web/public/app',{recursive:true,force:true})\""
+    "export:web": "expo export -p web --output-dir dist-web && node -e \"require('fs').cpSync('dist-web','../web/public/pwa',{recursive:true,force:true})\""
   },
   "private": true,
   "jest": {

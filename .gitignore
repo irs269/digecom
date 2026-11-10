@@ -15,5 +15,6 @@ test-results/
 # Sauvegardes locales et clés (production)
 backups/
 *.agekey
-apps/web/public/app/
+apps/web/public/pwa/
 apps/mobile/dist-web/
+apps/web/public/app/
