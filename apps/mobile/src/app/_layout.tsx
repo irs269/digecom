@@ -16,6 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CallScreen } from '@/components/CallScreen';
 import { CallProvider, useCalls } from '@/lib/calls/CallProvider';
 import { startLive, stopLive, wakeLive } from '@/lib/live';
+import { reportLocation } from '@/lib/location';
 import { setOnSynced, startAutoFlush } from '@/lib/offline';
 import { persister, queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
@@ -42,6 +43,22 @@ function Root() {
       stopLive();
     };
   }, [user?.id]);
+
+  // Position : livreur toutes les 2 min tant que l'application est ouverte (classement par
+  // distance au site) ; e-commerçant à l'ouverture (itinéraire du livreur jusqu'à lui).
+  useEffect(() => {
+    if (!user || (user.role !== 'COURIER' && user.role !== 'SELLER')) return;
+    void reportLocation(0);
+    const timer =
+      user.role === 'COURIER' ? setInterval(() => void reportLocation(), 2 * 60_000) : null;
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') void reportLocation();
+    });
+    return () => {
+      if (timer) clearInterval(timer);
+      sub.remove();
+    };
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     setOnSynced(() => void queryClient.invalidateQueries());

@@ -84,7 +84,7 @@ export class DeliveryJobs implements OnModuleInit, OnModuleDestroy {
     );
     await this.notifications.send(logistics, {
       type: 'NO_COURIER',
-      title: `${order.number} : aucun livreur après ${minutes} min`,
+      title: `${order.number} : toujours sans livreur après ${minutes} min`,
       body: 'Affecte manuellement un livreur de l’île',
       link: `/livraisons?id=${order.id}`,
     });

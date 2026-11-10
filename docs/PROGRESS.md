@@ -302,6 +302,9 @@ Cible : VPS Contabo partagé (Ubuntu 24.04, Docker sans buildx), Nginx de l'hôt
 - 2026-11-09 – Vente et acceptation de course exclues de la file hors ligne – le stock et « le premier qui accepte » doivent être vérifiés en direct.
 - 2026-11-09 – L'app mobile passe par le back-office (`https://<domaine>/api`) – même chemin et même HTTPS que le web, aucun port de l'API exposé.
 
+- 2026-11-10 – Affectation des livreurs par la logistique (plus d'offre « premier qui accepte ») : liste classée disponibilité puis distance au site (haversine sur la dernière position de l'application, sites géolocalisés) – demande métier : la personne qui prépare le colis choisit.
+- 2026-11-10 – Itinéraires et cartes par les URL publiques de Google Maps (sans clé d'API ni facturation) ; positions envoyées seulement application ouverte (pas de suivi en arrière-plan).
+
 ## Écarts et dettes techniques
 
 (À traiter avant la mise en production)

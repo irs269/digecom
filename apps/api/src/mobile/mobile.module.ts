@@ -14,7 +14,9 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   businessToday,
+  locationSchema,
   registerDeviceSchema,
+  type LocationInput,
   settlementCycle,
   type RegisterDeviceInput,
   type SellerBalanceView,
@@ -69,6 +71,36 @@ export class MobileController {
   ): Promise<void> {
     req.audit = { skip: true };
     await this.prisma.device.deleteMany({ where: { token, userId: actor.id } });
+  }
+
+  @Post('location')
+  @HttpCode(204)
+  @AnyAuthenticated()
+  @ApiOperation({
+    summary: 'Ma position GPS (livreur, e-commerçant) : distance au site, itinéraires',
+  })
+  async location(
+    @Body(new ZodValidationPipe(locationSchema)) body: LocationInput,
+    @CurrentUser() actor: AuthUser,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    if (actor.role !== 'COURIER' && actor.role !== 'SELLER') {
+      throw new AppException(
+        'FORBIDDEN',
+        'Réservé aux livreurs et e-commerçants',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    // Position fréquente : pas d'entrée au journal d'activité.
+    req.audit = { skip: true };
+    await this.prisma.user.update({
+      where: { id: actor.id },
+      data: {
+        lastLatitude: body.latitude,
+        lastLongitude: body.longitude,
+        lastLocationAt: new Date(),
+      },
+    });
   }
 
   @Get('balance')

@@ -28,6 +28,7 @@ import {
   Title,
 } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
+import { reportLocation } from '@/lib/location';
 import { cartEarnings, commonSites, type Cart } from '@/lib/cart';
 import { keys, useCatalog } from '@/lib/hooks';
 import { colors, radius } from '@/theme';
@@ -64,6 +65,7 @@ export default function NouvelleVente() {
   const submit = form.handleSubmit(async (values) => {
     setError(null);
     try {
+      void reportLocation(0);
       const order = await api<OrderView>('/me/orders', { method: 'POST', body: values });
       setDone(order);
       setCart({});

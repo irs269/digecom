@@ -174,6 +174,15 @@ export class DeliveriesController {
     return this.deliveries.couriers(actor, q.islandId);
   }
 
+  @Get(':orderId/candidates')
+  @RequirePermission('deliveries:assign_manual')
+  @ApiOperation({
+    summary: 'Livreurs à proposer : disponibles d’abord, puis du plus proche au plus loin du site',
+  })
+  candidates(@Param('orderId') orderId: string, @CurrentUser() actor: AuthUser) {
+    return this.deliveries.candidates(orderId, actor);
+  }
+
   @Post(':orderId/assign')
   @HttpCode(200)
   @RequirePermission('deliveries:assign_manual')

@@ -336,7 +336,7 @@ export interface NetworkView {
 
 export const NOTIFICATION_TYPES = {
   ORDER_NEW: 'Nouvelle commande',
-  DELIVERY_OFFER: 'Commande prête à livrer',
+  ORDER_TO_ASSIGN: 'Commande prête : livreur à choisir',
   ORDER_READY_PICKUP: 'Commande prête au retrait',
   DELIVERY_ASSIGNED: 'Course acceptée / affectée',
   NO_COURIER: 'Aucun livreur après délai',

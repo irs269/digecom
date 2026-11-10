@@ -1,6 +1,8 @@
 import {
   addDays,
   businessToday,
+  isoWeekOf,
+  isoWeekRange,
   settlementCycle,
   startOfBusinessDay,
   type DashboardView,
@@ -366,7 +368,10 @@ describe('Tableaux de bord, réseau et rapports (e2e)', () => {
       .send({ weeklyRevenue: 1 })
       .expect(200);
     const targets = ctx.app.get((await import('../src/reports/insights.module')).SalesTargets);
-    const hasSales = (await reference({ leaderId: ali }, addDays(today, -7), today)).revenue > 0;
+    // Même période que le contrôle : la semaine ISO en cours (lundi → dimanche), pas 7 jours
+    // glissants (sinon le test échoue en début de semaine).
+    const week = isoWeekRange(isoWeekOf(today));
+    const hasSales = (await reference({ leaderId: ali }, week.start, week.end)).revenue > 0;
     const first = await targets.check(ali);
     const second = await targets.check(ali);
     expect(second).toBe(false);

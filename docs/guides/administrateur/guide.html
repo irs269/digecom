@@ -250,20 +250,23 @@
 <figure><img src="img/03b-livraisons-complet.png" alt=""><figcaption>Tableau des livraisons et liste des livreurs.</figcaption></figure>
 <h2>Les colonnes</h2>
 <ul>
-  <li><strong>En attente d’un livreur</strong> : commandes prêtes, proposées aux livreurs <em>disponibles de l’île</em>. Le premier qui accepte la prend.</li>
+  <li><strong>À affecter</strong> : commandes prêtes qui attendent un livreur. Il n’y a <strong>pas d’affectation automatique</strong> : la personne qui prépare le colis (assistant logistique de l’île) choisit le livreur.</li>
   <li><strong>En cours</strong> : livreur affecté ou en livraison.</li>
   <li><strong>Prêtes au retrait</strong> : l’e-commerçant passe au site chercher le produit.</li>
   <li><strong>Refus et échecs</strong> : retours à contrôler, avec le motif (refus du client, échec de livraison) puis remise en stock ou casse.</li>
 </ul>
-<h2>Affecter un livreur à la main</h2>
+<h2>Affecter un livreur : disponible et le plus proche du site</h2>
+<figure><img src="img/03c-affectation.png" alt=""><figcaption>Affectation : livreurs de l’île classés par disponibilité puis par distance au site.</figcaption></figure>
 <ol class="steps">
-  <li>Sur une carte, clique <span class="kbd">Affecter un livreur de l’île</span>.</li>
-  <li>Choisis un livreur : seuls ceux de l’île de la commande sont proposés.</li>
-  <li>Le livreur est notifié, la course apparaît dans son application.</li>
+  <li>Quand une commande passe « Prête », la logistique de l’île reçoit la notification <em>« prête : choisis un livreur »</em>.</li>
+  <li>Sur la carte, clique <span class="kbd">Affecter un livreur de l’île</span>. La liste montre les livreurs de l’île, <strong>disponibles d’abord</strong>, puis <strong>du plus proche au plus loin du site</strong>, avec la distance, l’âge de leur position et leurs courses en cours.</li>
+  <li>Le plus proche des disponibles est présélectionné (badge <em>« Plus proche disponible »</em>) : valide, ou choisis-en un autre.</li>
+  <li>Le livreur est notifié ; la course apparaît dans son application avec l’itinéraire vers le site, puis vers l’e-commerçant.</li>
 </ol>
+<div class="box tip"><strong>D’où viennent les distances ?</strong>De la position GPS du site (Utilisateurs → Sites) et de la dernière position envoyée par l’application du livreur (toutes les 2 minutes quand l’application est ouverte). La distance est à vol d’oiseau. Une position de plus de 30 minutes est marquée « ancienne ».</div>
 <h2>La liste des livreurs</h2>
 <p>Pour chaque livreur : île, livraisons du jour et état (<em>Disponible</em>, <em>En course</em>, <em>Indisponible</em>). Le bouton <span class="kbd">Appeler</span> lance un appel Dig’eCom.</p>
-<div class="box tip"><strong>Alerte « sans livreur »</strong>Si aucune course n’est acceptée après le délai réglé dans les paramètres (10 minutes par défaut), l’assistant logistique de l’île est alerté.</div>
+<div class="box tip"><strong>Alerte « sans livreur »</strong>Si la commande prête n’a toujours pas de livreur après le délai réglé dans les paramètres (10 minutes par défaut), l’assistant logistique de l’île est relancé.</div>
 
 <!-- ============================== 7 ============================== -->
 <h1 id="s7"><span class="num">7</span>Stock</h1>
@@ -468,6 +471,13 @@
 <h2>Matrice des droits</h2>
 <figure><img src="img/15c-matrice-droits.png" alt=""><figcaption>Ce que chaque rôle voit (Lecture) et peut faire (Complet), module par module.</figcaption></figure>
 <p>La matrice est générée depuis la même source que les contrôles du serveur : ce qu’elle affiche est exactement ce qui est appliqué.</p>
+<h2>Sites : position GPS</h2>
+<figure><img src="img/15f-sites.png" alt=""><figcaption>Onglet Sites : position GPS de chaque site, carte Google Maps intégrée.</figcaption></figure>
+<ul>
+  <li>Pour chaque site, colle les coordonnées <em>latitude, longitude</em> (dans Google Maps : clic droit sur le site, puis clic sur les coordonnées) ou, sur place, clique <span class="kbd">Ma position actuelle</span>.</li>
+  <li><span class="kbd">Enregistrer la position</span> : la carte se met à jour ; <span class="kbd">Ouvrir dans Google Maps</span> pour vérifier.</li>
+  <li>Sans position, les distances des livreurs ne peuvent pas être calculées et le livreur n’a pas d’itinéraire vers le site.</li>
+</ul>
 <h2>Équipes et journal d’activité</h2>
 <div class="grid2">
   <figure><img src="img/15e-equipes.png" alt=""><figcaption>Équipes des leaders.</figcaption></figure>
@@ -539,7 +549,8 @@
 <ol class="steps">
   <li>L’e-commerçant enregistre la vente sur son téléphone (ou la logistique la crée « pour le compte de »). Le stock est réservé.</li>
   <li>La logistique de l’île confirme, prépare, puis déclare la commande <strong>prête</strong>.</li>
-  <li>La course est proposée aux livreurs disponibles de l’île ; le premier qui accepte la prend.</li>
+  <li>La logistique de l’île affecte la course au livreur <strong>disponible le plus proche du site</strong>.</li>
+  <li>Le livreur suit l’<strong>itinéraire Google Maps</strong> vers le site, retire le colis, puis l’itinéraire vers l’e-commerçant.</li>
   <li>Le livreur retire le produit au site, puis le remet à l’e-commerçant.</li>
   <li>L’e-commerçant confirme la réception, remet le produit au client et déclare <strong>« le client a pris »</strong>.</li>
   <li>La vente passe « Vendue » : commission, taxes, marge et frais de course sont enregistrés.</li>

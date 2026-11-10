@@ -474,7 +474,17 @@ export interface OrderView {
   sellerType: 'SELLER' | 'TELECONSULTANT';
   leader: { id: string; fullName: string };
   island: IslandView;
-  site: { id: string; name: string };
+  site: {
+    id: string;
+    name: string;
+    address: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  };
+  /** Dernière position de l'e-commerçant (pour le livreur affecté et le back-office). */
+  sellerLocation: { latitude: number; longitude: number; at: string } | null;
+  /** Dernière position du livreur (pour l'e-commerçant et le back-office), pendant la course. */
+  courierLocation: { latitude: number; longitude: number; at: string } | null;
   customerName: string;
   customerPhone: string;
   customerAddress: string | null;
