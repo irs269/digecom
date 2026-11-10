@@ -10,6 +10,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import { CallButtons, CallLog } from '@/components/CallButtons';
+import { MapSection } from '@/components/MapSection';
 import { PendingBanner } from '@/components/pending';
 import {
   Badge,
@@ -178,11 +179,10 @@ export default function Commande() {
             primary={inDelivery}
           />
           {order.courierLocation ? (
-            <Button
+            <MapSection
               testID="position-livreur"
-              label="📍 Voir où est le livreur"
-              variant="ghost"
-              onPress={() => void Linking.openURL(mapPointUrl(order.courierLocation!))}
+              destination={order.courierLocation}
+              externalUrl={mapPointUrl(order.courierLocation)}
             />
           ) : null}
         </Card>

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/theme';
 
 export interface TabDef {
@@ -11,6 +12,8 @@ export interface TabDef {
 
 /** Barre d'onglets commune aux deux profils ; `hidden` : écrans de détail sans onglet. */
 export function AppTabs({ tabs, hidden = [] }: { tabs: TabDef[]; hidden?: string[] }): ReactNode {
+  // Android bord à bord : on ajoute la hauteur des boutons du téléphone (retour, accueil).
+  const { bottom } = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +21,7 @@ export function AppTabs({ tabs, hidden = [] }: { tabs: TabDef[]; hidden?: string
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 12 },
-        tabBarStyle: { height: 64, paddingBottom: 8, paddingTop: 6 },
+        tabBarStyle: { height: 64 + bottom, paddingBottom: 8 + bottom, paddingTop: 6 },
       }}
     >
       {tabs.map((t) => (
