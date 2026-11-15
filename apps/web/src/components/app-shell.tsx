@@ -1,11 +1,13 @@
 'use client';
 
 import { ISLAND_CODES, ISLAND_LABELS, type IslandCode, type MeResponse } from '@digecom/shared';
+import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLiveUpdates } from '@/lib/live';
 import { CallOverlay, CallsButton } from './calls';
@@ -23,6 +25,15 @@ export function useIslandFilter(): IslandFilter {
 }
 
 function Sidebar({ user, onLogout }: { user: MeResponse; onLogout: () => void }) {
+  // Outils de test (simulateur) : seulement si l'API les active (DEV_TOOLS_ENABLED, jamais en
+  // production). Le lien n'apparaît donc pas sur le serveur de production.
+  const devTools = useQuery({
+    queryKey: ['simulator', 'status'],
+    queryFn: () => apiFetch<{ enabled: boolean }>('/dev/status'),
+    enabled: user.role === 'ADMIN',
+    staleTime: Infinity,
+    retry: false,
+  });
   const pathname = usePathname();
   return (
     <aside className="flex w-full flex-col gap-6 bg-brand-blue px-4 py-6 text-white desk:sticky desk:top-0 desk:h-screen desk:w-[260px] desk:shrink-0 desk:overflow-y-auto">
@@ -93,7 +104,7 @@ function Sidebar({ user, onLogout }: { user: MeResponse; onLogout: () => void })
             {user.island ? ` · ${user.island.name}` : ''}
           </span>
         </div>
-        {user.role === 'ADMIN' ? (
+        {user.role === 'ADMIN' && devTools.data?.enabled ? (
           <Link
             href="/simulateur"
             className="flex min-h-touch items-center text-sm font-semibold text-white underline-offset-2 hover:text-white hover:underline"
